@@ -17,13 +17,13 @@
   font-size: 12px;
   font-weight: 700;
   justify-content: center;
-  left: 8px;
   line-height: 1;
   min-height: 25px;
   min-width: 25px;
   padding: 3px 6px;
   pointer-events: none;
   position: absolute;
+  right: 8px;
   top: 8px;
   z-index: 20;
 }
