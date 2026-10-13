@@ -26,7 +26,7 @@ The extension must not imply affiliation or endorsement without explicit permiss
 ## 3. GitHub community setup
 
 - [x] Enable GitHub Issues.
-- [ ] Add issue templates for missing badges, incorrect difficulty, layout problems, new languages, and general bugs.
+- [x] Add structured issue forms for general bugs, badge problems, layout problems, new languages, and feature requests.
 - [ ] Add a pull request template with the test matrix and privacy/security checks.
 - [x] Confirm GitHub secret scanning and push protection are enabled.
 - [ ] Enable private vulnerability reporting.

@@ -1,0 +1,95 @@
+name: Layout or appearance problem
+description: Report badge overlap, clipping, sizing, positioning, or visual accessibility problems
+title: "[Layout]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Screenshots are especially useful for layout reports. Crop or redact all private account information.
+
+        Do not include passwords, cookies, tokens, authorization headers, HAR files, downloaded premium content, or private account information.
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and exact version
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system and version
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Dreaming page or route
+      placeholder: /french/library
+    validations:
+      required: true
+  - type: input
+    id: window-size
+    attributes:
+      label: Browser window or viewport size
+      placeholder: 1440 × 900
+  - type: input
+    id: zoom
+    attributes:
+      label: Browser zoom
+      placeholder: 100%
+    validations:
+      required: true
+  - type: input
+    id: display-scaling
+    attributes:
+      label: Operating-system display scaling
+      placeholder: 125% or Retina default
+  - type: textarea
+    id: settings
+    attributes:
+      label: Extension settings
+      description: Include behavior, style, size, and position.
+      placeholder: Enhanced everywhere, Enhanced, Small, Lower left
+    validations:
+      required: true
+  - type: dropdown
+    id: problem-type
+    attributes:
+      label: Visual problem
+      options:
+        - Badge overlaps thumbnail content
+        - Badge overlaps Dreaming controls or duration
+        - Badge is clipped or outside the thumbnail
+        - Badge is too large or small
+        - Colors or contrast are difficult to read
+        - Layout changes after scrolling or opening a modal
+        - Other visual problem
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Description and reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag a cropped or redacted screenshot here.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive-data confirmation
+      options:
+        - label: I have not included credentials, cookies, tokens, authorization headers, HAR files, premium content, or private account information.
+          required: true
