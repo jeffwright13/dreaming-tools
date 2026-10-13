@@ -19,3 +19,11 @@ The feature requires only catalog indexing, DOM matching, badge insertion, and m
 ## 2026-10-13: Own extension badge styling
 
 Stable data attributes and semantic Dreaming class names identify cards, while extension-specific classes style inserted badges. Generated CSS-module class names are intentionally avoided because they can change between deployments.
+
+## 2026-10-13: Offer behavior and appearance presets
+
+A synchronized options page offers Enhanced everywhere, Fill missing difficulties only, and Original Dreaming behavior. Appearance uses tested style, size, and position presets instead of arbitrary CSS controls to preserve readability and contrast.
+
+## 2026-10-13: Select catalogs from language routes
+
+The product is Dreaming rather than a Spanish-only service. The extension maps `/spanish/` to `es.json` and `/french/` to `fr.json`, uses language-neutral terminology, and keeps the route-to-catalog mapping easy to extend.

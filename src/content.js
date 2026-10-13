@@ -1,5 +1,4 @@
 (() => {
-  const CATALOG_URL = "https://app.dreaming.com/videos/prod/es.json";
   const EXTENSION_BADGE_SELECTOR = ".ds-difficulty-extension-badge";
   const NATIVE_DIFFICULTY_SELECTOR = ".ds-video-thumbnail__badge--vocab-range";
   const SERIES_CARD_SELECTOR = [
@@ -9,10 +8,14 @@
   ].join(",");
 
   const {
+    DEFAULT_SETTINGS,
     buildCatalogIndexes,
     calculateDifficulty,
     extractSeriesId,
     formatDifficultyRange,
+    getCatalogUrl,
+    getLanguageCode,
+    normalizeSettings,
   } = globalThis.DreamingDifficultyCore;
 
   function findAll(root, selector) {
@@ -23,27 +26,60 @@
     return matches;
   }
 
-  function createBadge(text, modifier, label) {
+  function setBadgeClasses(badge, modifier, settings) {
+    badge.className = [
+      "ds-difficulty-extension-badge",
+      `ds-difficulty-extension-badge--${modifier}`,
+      `ds-difficulty-extension-badge--style-${settings.style}`,
+      `ds-difficulty-extension-badge--size-${settings.size}`,
+      `ds-difficulty-extension-badge--position-${settings.position}`,
+    ].join(" ");
+  }
+
+  function createBadge(text, modifier, label, settings) {
     const badge = document.createElement("span");
-    badge.className = `ds-difficulty-extension-badge ds-difficulty-extension-badge--${modifier}`;
+    setBadgeClasses(badge, modifier, settings);
     badge.textContent = text;
     badge.title = label;
     badge.setAttribute("aria-label", label);
     return badge;
   }
 
-  function enhanceVideoCards(root, videosById) {
+  function restorePage(root) {
+    for (const badge of findAll(root, EXTENSION_BADGE_SELECTOR)) {
+      badge.remove();
+    }
+    for (const badge of findAll(root, NATIVE_DIFFICULTY_SELECTOR)) {
+      badge.hidden = false;
+    }
+  }
+
+  function enhanceVideoCards(root, videosById, settings) {
     for (const thumbnail of findAll(root, "[data-video-id] .ds-video-thumbnail")) {
-      if (
-        thumbnail.querySelector(EXTENSION_BADGE_SELECTOR) ||
-        thumbnail.querySelector(NATIVE_DIFFICULTY_SELECTOR)
-      ) {
+      const nativeBadge = thumbnail.querySelector(NATIVE_DIFFICULTY_SELECTOR);
+      const extensionBadge = thumbnail.querySelector(EXTENSION_BADGE_SELECTOR);
+
+      if (nativeBadge && settings.behavior === "fill-missing") {
+        nativeBadge.hidden = false;
+        extensionBadge?.remove();
         continue;
       }
 
       const videoId = thumbnail.closest("[data-video-id]")?.dataset.videoId;
       const difficulty = calculateDifficulty(videosById.get(videoId)?.difficultyScore);
       if (difficulty === null) {
+        if (nativeBadge) {
+          nativeBadge.hidden = false;
+        }
+        continue;
+      }
+
+      if (nativeBadge) {
+        nativeBadge.hidden = true;
+      }
+
+      if (extensionBadge) {
+        setBadgeClasses(extensionBadge, "video", settings);
         continue;
       }
 
@@ -52,6 +88,7 @@
           String(difficulty),
           "video",
           `Difficulty ${difficulty} out of 100`,
+          settings,
         ),
       );
     }
@@ -66,32 +103,40 @@
     return extractSeriesId(card.querySelector('a[href*="series="]')?.href);
   }
 
-  function enhanceSeriesCards(root, seriesRanges) {
+  function enhanceSeriesCards(root, seriesRanges, settings) {
     for (const card of findAll(root, SERIES_CARD_SELECTOR)) {
-      if (card.querySelector(EXTENSION_BADGE_SELECTOR)) {
-        continue;
-      }
-
       const range = seriesRanges.get(getSeriesId(card));
       const text = formatDifficultyRange(range);
       if (!text) {
         continue;
       }
 
+      const extensionBadge = card.querySelector(EXTENSION_BADGE_SELECTOR);
+      if (extensionBadge) {
+        setBadgeClasses(extensionBadge, "series", settings);
+        continue;
+      }
+
       const label = range.minimum === range.maximum
         ? `Difficulty ${range.minimum} out of 100`
         : `Difficulty range ${range.minimum} to ${range.maximum} out of 100`;
-      card.append(createBadge(text, "series", label));
+      card.append(createBadge(text, "series", label, settings));
     }
   }
 
-  function enhancePage(root, indexes) {
-    enhanceVideoCards(root, indexes.videosById);
-    enhanceSeriesCards(root, indexes.seriesRanges);
+  function enhancePage(root, indexes, rawSettings = DEFAULT_SETTINGS) {
+    const settings = normalizeSettings(rawSettings);
+    if (settings.behavior === "original") {
+      restorePage(root);
+      return;
+    }
+
+    enhanceVideoCards(root, indexes.videosById, settings);
+    enhanceSeriesCards(root, indexes.seriesRanges, settings);
   }
 
-  async function loadCatalog() {
-    const response = await fetch(CATALOG_URL, { credentials: "omit" });
+  async function loadCatalog(languageCode) {
+    const response = await fetch(getCatalogUrl(languageCode), { credentials: "omit" });
     if (!response.ok) {
       throw new Error(`Catalog request failed with status ${response.status}`);
     }
@@ -106,11 +151,17 @@
 
   async function initialize() {
     try {
-      const indexes = await loadCatalog();
-      enhancePage(document, indexes);
+      const languageCode = getLanguageCode(location.pathname);
+      if (!languageCode) {
+        return;
+      }
+
+      const indexes = await loadCatalog(languageCode);
+      let settings = normalizeSettings(await chrome.storage.sync.get(DEFAULT_SETTINGS));
+      enhancePage(document, indexes, settings);
 
       let updateScheduled = false;
-      const observer = new MutationObserver(() => {
+      const scheduleUpdate = () => {
         if (updateScheduled) {
           return;
         }
@@ -118,10 +169,27 @@
         updateScheduled = true;
         requestAnimationFrame(() => {
           updateScheduled = false;
-          enhancePage(document, indexes);
+          enhancePage(document, indexes, settings);
         });
-      });
+      };
+
+      const observer = new MutationObserver(scheduleUpdate);
       observer.observe(document.body, { childList: true, subtree: true });
+
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName !== "sync") {
+          return;
+        }
+
+        settings = normalizeSettings({
+          ...settings,
+          ...Object.fromEntries(
+            Object.entries(changes).map(([key, change]) => [key, change.newValue]),
+          ),
+        });
+        restorePage(document);
+        enhancePage(document, indexes, settings);
+      });
     } catch (error) {
       console.error("Dreaming Difficulty could not load the video catalog.", error);
     }

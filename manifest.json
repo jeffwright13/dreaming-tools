@@ -1,15 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Dreaming Difficulty",
-  "version": "0.1.0",
-  "description": "Adds video difficulty ratings and series difficulty ranges to Dreaming Spanish.",
+  "version": "0.2.0",
+  "description": "Adds video difficulty ratings and series difficulty ranges across Dreaming.",
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://app.dreaming.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://app.dreaming.com/spanish/*"
+        "https://app.dreaming.com/spanish/*",
+        "https://app.dreaming.com/french/*"
       ],
       "js": [
         "src/core.js",
@@ -20,5 +24,9 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
+  }
 }

@@ -6,7 +6,50 @@ const {
   calculateDifficulty,
   extractSeriesId,
   formatDifficultyRange,
+  getCatalogUrl,
+  getLanguageCode,
+  normalizeSettings,
 } = globalThis.DreamingDifficultyCore;
+
+describe("settings", () => {
+  it("supplies the recommended defaults", () => {
+    expect(normalizeSettings({})).toEqual({
+      behavior: "enhanced-everywhere",
+      style: "enhanced",
+      size: "medium",
+      position: "lower-right",
+    });
+  });
+
+  it("replaces invalid values with defaults", () => {
+    expect(normalizeSettings({
+      behavior: "invalid",
+      style: "dreaming",
+      size: "large",
+      position: "upper-left",
+    })).toEqual({
+      behavior: "enhanced-everywhere",
+      style: "dreaming",
+      size: "large",
+      position: "upper-left",
+    });
+  });
+});
+
+describe("language selection", () => {
+  it.each([
+    ["/spanish/library", "es"],
+    ["/french/series", "fr"],
+    ["/SPANISH/browse", "es"],
+    ["/german/library", null],
+  ])("maps %s to %s", (pathname, expected) => {
+    expect(getLanguageCode(pathname)).toBe(expected);
+  });
+
+  it("builds the public catalog URL", () => {
+    expect(getCatalogUrl("fr")).toBe("https://app.dreaming.com/videos/prod/fr.json");
+  });
+});
 
 describe("calculateDifficulty", () => {
   it.each([

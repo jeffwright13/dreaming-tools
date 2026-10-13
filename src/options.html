@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dreaming Difficulty options</title>
+    <link rel="stylesheet" href="content.css">
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <h1>Dreaming Difficulty</h1>
+      <p class="intro">Choose how difficulty badges appear across Dreaming.</p>
+
+      <form id="settings-form">
+        <fieldset>
+          <legend>Extension behavior</legend>
+          <label class="radio-option">
+            <input type="radio" name="behavior" value="enhanced-everywhere">
+            <span><strong>Enhanced everywhere</strong><small>Use configured badges on every supported video and series.</small></span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="behavior" value="fill-missing">
+            <span><strong>Fill missing difficulties only</strong><small>Preserve Dreaming badges and add configured badges where they are absent.</small></span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="behavior" value="original">
+            <span><strong>Original Dreaming</strong><small>Do not add, hide, move, or restyle difficulty badges.</small></span>
+          </label>
+        </fieldset>
+
+        <fieldset id="appearance-controls">
+          <legend>Badge appearance</legend>
+          <label>
+            Style
+            <select name="style">
+              <option value="enhanced">Enhanced</option>
+              <option value="dreaming">Dreaming</option>
+            </select>
+          </label>
+          <label>
+            Size
+            <select name="size">
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+          <label>
+            Position
+            <select name="position">
+              <option value="lower-right">Lower right</option>
+              <option value="upper-right">Upper right</option>
+              <option value="lower-left">Lower left</option>
+              <option value="upper-left">Upper left</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <section class="preview-section" aria-labelledby="preview-heading">
+          <h2 id="preview-heading">Preview</h2>
+          <div class="preview-thumbnail ds-video-thumbnail">
+            <span id="preview-badge">42</span>
+            <span id="preview-original">Original Dreaming behavior</span>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit">Save options</button>
+          <output id="status" aria-live="polite"></output>
+        </div>
+      </form>
+    </main>
+    <script src="core.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

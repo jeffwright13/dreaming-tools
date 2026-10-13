@@ -1,6 +1,6 @@
 # Dreaming Difficulty
 
-Dreaming Difficulty is a Chrome extension that adds Dreaming Spanish difficulty ratings to video cards and difficulty ranges to series cards.
+Dreaming Difficulty is a Chrome extension that adds Dreaming difficulty ratings to video cards and difficulty ranges to series cards. It supports Dreaming's Spanish and French sections.
 
 It enhances:
 
@@ -8,8 +8,9 @@ It enhances:
 - Library series cards
 - Series catalog cards
 - Series modal covers and episode cards
+- Native difficulty badges when enhanced-everywhere behavior is selected
 
-The extension downloads Dreaming's public Spanish video catalog. It does not read or store login credentials, cookies, browsing history, or account data.
+The extension downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data.
 
 ## Development
 
@@ -32,23 +33,34 @@ npm test
 2. Enable **Developer mode** in the upper-right corner.
 3. Click **Load unpacked**.
 4. Select this repository directory—not `src/`.
-5. Open or reload a Dreaming Spanish page.
+5. Open or reload a Dreaming page.
 
-After changing extension code, return to `chrome://extensions`, click the extension's reload button, and then reload the Dreaming Spanish tab.
+After changing extension code, return to `chrome://extensions`, click the extension's reload button, and then reload the Dreaming tab.
+
+## Options
+
+Open the extension's **Details** page in `chrome://extensions` and select **Extension options**. Settings synchronize through Chrome when browser sync is enabled.
+
+Behavior choices:
+
+- **Enhanced everywhere** replaces native badges and adds missing video and series badges.
+- **Fill missing difficulties only** preserves native badges and adds badges where Dreaming omits them.
+- **Original Dreaming** makes no badge changes.
+
+Configured badges can use Enhanced or Dreaming style, three sizes, and any corner of the thumbnail. Defaults are Enhanced style, medium size, and lower-right placement.
 
 ## Manual test checklist
 
-Verify that a green difficulty badge appears in each location:
+Test both `/spanish/` and `/french/` where content is available. Verify badges in:
 
-- `/spanish/library`: History videos
-- `/spanish/library`: My list videos
-- `/spanish/library`: My list series ranges
-- `/spanish/series`: Series-card ranges
-- Series popup: Cover range and individual episode scores
+- Library History
+- Library My list videos
+- Library My list series
+- Series catalog cards
+- Series popup cover and individual episodes
+- Browse cards with native difficulty badges
 
-On `/spanish/browse`, verify that cards with Dreaming's native difficulty badge do not receive a duplicate badge.
-
-If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Difficulty`.
+Change each behavior mode in Extension options and verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Difficulty`.
 
 ## Chrome Web Store deployment
 

@@ -34,7 +34,7 @@ describe("enhancePage", () => {
     expect(badge?.getAttribute("aria-label")).toBe("Difficulty 41 out of 100");
   });
 
-  it("does not add a duplicate when Dreaming already renders difficulty", () => {
+  it("replaces Dreaming's native badge in enhanced-everywhere mode", () => {
     document.body.innerHTML = `
       <div data-video-id="${VIDEO_ID}">
         <div class="ds-video-thumbnail">
@@ -43,9 +43,76 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, { behavior: "enhanced-everywhere" });
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")?.textContent).toBe("41");
+    expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(true);
+  });
+
+  it("preserves a native badge when the video is absent from the catalog", () => {
+    document.body.innerHTML = `
+      <div data-video-id="unknown">
+        <div class="ds-video-thumbnail">
+          <span class="ds-video-thumbnail__badge--vocab-range">41</span>
+        </div>
+      </div>
+    `;
+
+    enhancePage(document, indexes, { behavior: "enhanced-everywhere" });
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+    expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
+  });
+
+  it("preserves Dreaming's native badge in fill-missing mode", () => {
+    document.body.innerHTML = `
+      <div data-video-id="${VIDEO_ID}">
+        <div class="ds-video-thumbnail">
+          <span class="ds-video-thumbnail__badge--vocab-range">41</span>
+        </div>
+      </div>
+    `;
+
+    enhancePage(document, indexes, { behavior: "fill-missing" });
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+    expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
+  });
+
+  it("restores the original page in original mode", () => {
+    document.body.innerHTML = `
+      <div data-video-id="${VIDEO_ID}">
+        <div class="ds-video-thumbnail">
+          <span class="ds-video-thumbnail__badge--vocab-range" hidden>41</span>
+          <span class="ds-difficulty-extension-badge">41</span>
+        </div>
+      </div>
+    `;
+
+    enhancePage(document, indexes, { behavior: "original" });
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+    expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
+  });
+
+  it("applies configured style, size, and position", () => {
+    document.body.innerHTML = `
+      <div data-video-id="${VIDEO_ID}">
+        <div class="ds-video-thumbnail"></div>
+      </div>
+    `;
+
+    enhancePage(document, indexes, {
+      behavior: "enhanced-everywhere",
+      style: "dreaming",
+      size: "large",
+      position: "upper-left",
+    });
+
+    const badge = document.querySelector(".ds-difficulty-extension-badge");
+    expect(badge?.classList.contains("ds-difficulty-extension-badge--style-dreaming")).toBe(true);
+    expect(badge?.classList.contains("ds-difficulty-extension-badge--size-large")).toBe(true);
+    expect(badge?.classList.contains("ds-difficulty-extension-badge--position-upper-left")).toBe(true);
   });
 
   it("is idempotent", () => {

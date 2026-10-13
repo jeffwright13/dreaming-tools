@@ -7,27 +7,80 @@
 
 .ds-difficulty-extension-badge {
   align-items: center;
-  background: #00c374;
-  border: 2px solid #ffffff;
   border-radius: 999px;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
   color: #ffffff;
   display: inline-flex;
   font-family: "Readex Pro", sans-serif;
-  font-size: 12px;
-  font-weight: 700;
   justify-content: center;
   line-height: 1;
-  min-height: 25px;
-  min-width: 25px;
-  padding: 3px 6px;
   pointer-events: none;
-  bottom: 8px;
   position: absolute;
-  right: 8px;
   z-index: 20;
 }
 
-.ds-difficulty-extension-badge--series {
+.ds-difficulty-extension-badge--style-enhanced {
+  background: #00c374;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
+  font-weight: 700;
+}
+
+.ds-difficulty-extension-badge--style-dreaming {
+  background: rgb(45 45 45 / 88%);
+  border: 0;
+  box-shadow: none;
+  font-weight: 400;
+}
+
+.ds-difficulty-extension-badge--size-small {
+  font-size: 10px;
+  min-height: 20px;
+  min-width: 20px;
+  padding: 2px 5px;
+}
+
+.ds-difficulty-extension-badge--size-medium {
+  font-size: 12px;
+  min-height: 25px;
+  min-width: 25px;
+  padding: 3px 6px;
+}
+
+.ds-difficulty-extension-badge--size-large {
+  font-size: 14px;
+  min-height: 30px;
+  min-width: 30px;
+  padding: 4px 8px;
+}
+
+.ds-difficulty-extension-badge--position-lower-right {
+  bottom: 8px;
+  right: 8px;
+}
+
+.ds-difficulty-extension-badge--position-upper-right {
+  right: 8px;
+  top: 8px;
+}
+
+.ds-difficulty-extension-badge--position-lower-left {
+  bottom: 8px;
+  left: 8px;
+}
+
+.ds-difficulty-extension-badge--position-upper-left {
+  left: 8px;
+  top: 8px;
+}
+
+.ds-difficulty-extension-badge--series.ds-difficulty-extension-badge--size-small {
+  min-width: 36px;
+}
+
+.ds-difficulty-extension-badge--series.ds-difficulty-extension-badge--size-medium {
   min-width: 42px;
+}
+
+.ds-difficulty-extension-badge--series.ds-difficulty-extension-badge--size-large {
+  min-width: 48px;
 }
