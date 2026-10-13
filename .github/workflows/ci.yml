@@ -45,5 +45,19 @@ jobs:
           node --check src/core.js
           node --check src/content.js
           node --check src/options.js
+          node --check scripts/package-extension.js
           node --check vitest.config.js
           node -e "const manifest = require('./manifest.json'); const pkg = require('./package.json'); if (manifest.version !== pkg.version) throw new Error('Version mismatch'); console.log('Manifest and package versions match:', manifest.version)"
+
+      - name: Build and verify extension package
+        run: |
+          npm run package
+          npm run package:verify
+
+      - name: Upload extension package
+        uses: actions/upload-artifact@v4
+        with:
+          name: dreaming-difficulty-extension
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 14

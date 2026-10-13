@@ -1,10 +1,12 @@
 {
   "name": "dreaming-tools",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Chrome extension that adds difficulty ratings to Dreaming video and series cards.",
   "scripts": {
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "package": "node scripts/package-extension.js",
+    "package:verify": "node scripts/package-extension.js --verify"
   },
   "keywords": [
     "chrome-extension",

@@ -45,6 +45,10 @@ Process the initial document after downloading the catalog. Observe descendant a
 - Series modal cover and episode cards
 - Browse cards with native difficulty badges
 
+## Distribution package
+
+Build `dist/dreaming-difficulty-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and six `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
+
 ## Browser compatibility
 
 Support the current and previous stable desktop Chrome major versions on macOS, Windows, and mainstream Linux environments. Support current stable Microsoft Edge on Windows. Firefox, mobile browsers, and ChromeOS are not currently validated or supported.

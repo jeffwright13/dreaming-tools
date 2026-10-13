@@ -39,3 +39,11 @@ Vitest and jsdom remain the fast gate for logic and DOM behavior. Planned fixtur
 ## 2026-10-13: Keep permissions and data flow minimal
 
 The extension stores only validated display preferences, fetches public catalogs with credentials omitted, and has no developer server or analytics. Chrome synchronized storage may pass preferences through the user's Google account, but the developer does not receive them. Any future permission, network destination, storage field, telemetry, or authentication change requires renewed security review and updated privacy disclosure.
+
+## 2026-10-13: Use neutral original branding for beta icons
+
+The icon combines a play symbol with ascending difficulty bars in the extension's charcoal and green palette. It does not copy Dreaming's logo or imply endorsement, reducing branding risk before outreach to Dreaming Languages.
+
+## 2026-10-13: Package from an exact runtime allowlist
+
+A dependency-free Node script creates a deterministic ZIP from the manifest, four PNG icons, and six runtime source files. It rejects version mismatches, missing manifest references, and unexpected archive contents. Development files, credentials, documentation, tests, and dependencies cannot enter the package through directory-wide copying.
