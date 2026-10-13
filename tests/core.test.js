@@ -90,6 +90,7 @@ describe("extractSeriesId", () => {
 
   it("returns null when no series ID is present", () => {
     expect(extractSeriesId("https://example.com/image.jpg")).toBeNull();
+    expect(extractSeriesId(null)).toBeNull();
   });
 });
 
@@ -111,6 +112,10 @@ describe("buildCatalogIndexes", () => {
 });
 
 describe("formatDifficultyRange", () => {
+  it("returns null when no range is available", () => {
+    expect(formatDifficultyRange(null)).toBeNull();
+  });
+
   it("formats distinct endpoints as a range", () => {
     expect(formatDifficultyRange({ minimum: 32, maximum: 39 })).toBe("32–39");
   });

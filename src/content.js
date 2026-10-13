@@ -190,12 +190,13 @@
         restorePage(document);
         enhancePage(document, indexes, settings);
       });
+      return observer;
     } catch (error) {
       console.error("Dreaming Difficulty could not load the video catalog.", error);
     }
   }
 
-  globalThis.DreamingDifficultyContent = { enhancePage, initialize };
+  globalThis.DreamingDifficultyContent = { enhancePage, initialize, loadCatalog };
 
   if (globalThis.chrome?.runtime?.id && typeof document !== "undefined") {
     initialize();

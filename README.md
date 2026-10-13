@@ -27,6 +27,12 @@ npm install
 npm test
 ```
 
+Generate the V8 coverage report with:
+
+```bash
+npm run test:coverage
+```
+
 ## Load the extension locally
 
 1. Open `chrome://extensions` in Chrome.

@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../src/core.js";
 import "../src/content.js";
 
 const { buildCatalogIndexes } = globalThis.DreamingDifficultyCore;
-const { enhancePage } = globalThis.DreamingDifficultyContent;
+const { enhancePage, initialize, loadCatalog } = globalThis.DreamingDifficultyContent;
 
 const SERIES_ID = "6a1fe0ea4a6295f32ed34f4d";
 const VIDEO_ID = "69aeabe8b0b7b6f88770360c";
@@ -17,6 +17,12 @@ const indexes = buildCatalogIndexes([
 
 beforeEach(() => {
   document.body.replaceChildren();
+  window.history.replaceState({}, "", "/");
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("enhancePage", () => {
@@ -128,6 +134,18 @@ describe("enhancePage", () => {
     expect(document.querySelectorAll(".ds-difficulty-extension-badge")).toHaveLength(1);
   });
 
+  it("omits a series badge when no scored episodes are available", () => {
+    document.body.innerHTML = `
+      <div data-testid="series-catalog-card">
+        <img src="https://example.com/series-000000000000000000000000-vertical.jpg">
+      </div>
+    `;
+
+    enhancePage(document, indexes);
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+  });
+
   it("adds a range to a series catalog card", () => {
     document.body.innerHTML = `
       <div data-testid="series-catalog-card">
@@ -152,5 +170,115 @@ describe("enhancePage", () => {
     enhancePage(document, indexes);
 
     expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
+  });
+
+  it("extracts a series ID from a modal link and updates an existing badge", () => {
+    document.body.innerHTML = `
+      <div class="ds-series-modal__header">
+        <a href="/spanish/watch?series=${SERIES_ID}"></a>
+        <span class="ds-difficulty-extension-badge"></span>
+      </div>
+    `;
+
+    enhancePage(document, indexes, { size: "large" });
+
+    const badge = document.querySelector(".ds-difficulty-extension-badge");
+    expect(badge?.classList.contains("ds-difficulty-extension-badge--series")).toBe(true);
+    expect(badge?.classList.contains("ds-difficulty-extension-badge--size-large")).toBe(true);
+  });
+});
+
+describe("catalog loading", () => {
+  it("downloads and indexes the selected language catalog", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ videos: [{ _id: VIDEO_ID, difficultyScore: 1185 }] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const loaded = await loadCatalog("fr");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.dreaming.com/videos/prod/fr.json",
+      { credentials: "omit" },
+    );
+    expect(loaded.videosById.get(VIDEO_ID)?.difficultyScore).toBe(1185);
+  });
+
+  it("rejects unsuccessful or malformed catalog responses", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+    await expect(loadCatalog("es")).rejects.toThrow("status 503");
+
+    fetch.mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue({ videos: null }) });
+    await expect(loadCatalog("es")).rejects.toThrow("videos array");
+  });
+});
+
+describe("initialization", () => {
+  it("loads settings, enhances the page, and applies synchronized changes", async () => {
+    window.history.replaceState({}, "", "/spanish/library");
+    document.body.innerHTML = `
+      <div data-video-id="${VIDEO_ID}"><div class="ds-video-thumbnail"></div></div>
+    `;
+    const listeners = [];
+    let mutationCallback;
+    const requestAnimationFrameMock = vi.fn();
+    class MutationObserverMock {
+      constructor(callback) {
+        mutationCallback = callback;
+      }
+
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ videos: [{ _id: VIDEO_ID, difficultyScore: 1185 }] }),
+    }));
+    vi.stubGlobal("MutationObserver", MutationObserverMock);
+    vi.stubGlobal("requestAnimationFrame", requestAnimationFrameMock);
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: { get: vi.fn().mockResolvedValue({ size: "small" }) },
+        onChanged: { addListener: (listener) => listeners.push(listener) },
+      },
+    });
+
+    const observer = await initialize();
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")?.textContent).toBe("41");
+    listeners[0]({ size: { newValue: "large" } }, "local");
+    expect(document.querySelector(".ds-difficulty-extension-badge")?.className).toContain("--size-small");
+    listeners[0]({ size: { newValue: "large" } }, "sync");
+    expect(document.querySelector(".ds-difficulty-extension-badge")?.className).toContain("--size-large");
+
+    mutationCallback();
+    mutationCallback();
+    expect(requestAnimationFrameMock).toHaveBeenCalledTimes(1);
+    requestAnimationFrameMock.mock.calls[0][0]();
+    mutationCallback();
+    expect(requestAnimationFrameMock).toHaveBeenCalledTimes(2);
+    observer.disconnect();
+  });
+
+  it("does nothing on an unsupported language path", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const result = await initialize();
+    expect(result).toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports catalog failures without changing the page", async () => {
+    window.history.replaceState({}, "", "/french/library");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    vi.stubGlobal("chrome", { storage: { sync: {}, onChanged: {} } });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await initialize();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      "Dreaming Difficulty could not load the video catalog.",
+      expect.any(Error),
+    );
   });
 });
