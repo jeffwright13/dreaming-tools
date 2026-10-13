@@ -1,0 +1,33 @@
+[data-testid="series-catalog-card"],
+[data-testid="library-series-card"],
+.ds-series-modal__header,
+.ds-video-thumbnail {
+  position: relative;
+}
+
+.ds-difficulty-extension-badge {
+  align-items: center;
+  background: #00c374;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
+  color: #ffffff;
+  display: inline-flex;
+  font-family: "Readex Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: center;
+  left: 8px;
+  line-height: 1;
+  min-height: 25px;
+  min-width: 25px;
+  padding: 3px 6px;
+  pointer-events: none;
+  position: absolute;
+  top: 8px;
+  z-index: 20;
+}
+
+.ds-difficulty-extension-badge--series {
+  min-width: 42px;
+}

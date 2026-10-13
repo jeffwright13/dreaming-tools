@@ -1,0 +1,19 @@
+{
+  "name": "dreaming-tools",
+  "version": "0.1.0",
+  "description": "Chrome extension that adds difficulty ratings to Dreaming Spanish video and series cards.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "keywords": [
+    "chrome-extension",
+    "dreaming-spanish"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.11"
+  }
+}
