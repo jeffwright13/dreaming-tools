@@ -82,6 +82,10 @@ Change each behavior mode in Extension options and verify that an open Dreaming 
 
 Beta installation, update, test, and reporting instructions are in [docs/BETA.md](docs/BETA.md). Install only archives attached to this repository's official GitHub prereleases.
 
+## Support and security reports
+
+Use the [GitHub issue chooser](https://github.com/jeffwright13/dreaming-tools/issues/new/choose) for non-sensitive bugs, badge or layout problems, language requests, and feature requests. Follow [SECURITY.md](SECURITY.md) for vulnerabilities; do not post credentials, cookies, tokens, authorization headers, HAR files, premium content, or private account information.
+
 ## Publishing and maintenance
 
 The staged beta, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness; the repository is not yet claiming Chrome Web Store availability.

@@ -27,15 +27,16 @@ The extension must not imply affiliation or endorsement without explicit permiss
 
 - [x] Enable GitHub Issues.
 - [x] Add structured issue forms for general bugs, badge problems, layout problems, new languages, and feature requests.
-- [ ] Add a pull request template with the test matrix and privacy/security checks.
+- [x] Add a pull request template with the test matrix and privacy/security checks.
 - [x] Confirm GitHub secret scanning and push protection are enabled.
-- [ ] Enable private vulnerability reporting.
+- [x] Enable private vulnerability reporting.
 - [x] Confirm GitHub Actions are enabled for the repository.
 - [x] Add a GitHub Actions workflow for tests with coverage, dependency audit, syntax checks, and manifest validation.
 - [x] Extend CI with package construction, allowlist verification, and artifact upload.
-- [ ] Enable Dependabot security updates after reviewing its update policy.
-- [ ] Protect `main` after CI exists: require a pull request and passing checks.
-- [ ] Add a support link to the repository and Chrome Web Store listing.
+- [x] Enable Dependabot vulnerability alerts and security updates.
+- [x] Protect `main`: require an up-to-date pull request, passing `Test and audit`, linear history, and resolved conversations; block force pushes and deletion.
+- [x] Add a support link to the repository.
+- [ ] Add the support link to the Chrome Web Store listing when it exists.
 
 Do not put Dreaming credentials, browser profiles, session cookies, or Chrome Web Store credentials in repository secrets. Current CI requires no secrets.
 
