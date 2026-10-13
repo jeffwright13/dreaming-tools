@@ -105,7 +105,8 @@ Before release:
 - Confirm the manifest requests only `storage` and Dreaming host access.
 - Confirm catalog fetches use `credentials: "omit"`.
 - Confirm no analytics, trackers, remote code, `eval`, HTML injection, cookies, history, or credential APIs were added.
-- Inspect the package for `.env` files, keys, tokens, browser profiles, cookies, and unrelated files.
+- Run `npm run package` and `npm run package:verify`; independently inspect the ZIP entry list and SHA-256 checksum.
+- Inspect the package for `.env` files, keys, tokens, browser profiles, cookies, documentation, tests, dependencies, and unrelated files.
 - Verify options contain only the four documented enum settings.
 - Verify network activity is limited to Dreaming catalog requests and browser-managed settings sync.
 

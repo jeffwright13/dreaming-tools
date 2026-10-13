@@ -31,11 +31,15 @@ npm install
 npm test
 ```
 
-Generate the V8 coverage report with:
+Generate the V8 coverage report and build the extension package with:
 
 ```bash
 npm run test:coverage
+npm run package
+npm run package:verify
 ```
+
+The package is written to `dist/dreaming-difficulty-VERSION.zip` and contains only allowlisted runtime files.
 
 ## Load the extension locally
 
@@ -73,6 +77,10 @@ The complete browser/platform matrix and security checks are in [docs/TESTING.md
 - Browse cards with native difficulty badges
 
 Change each behavior mode in Extension options and verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Difficulty`.
+
+## Community beta
+
+Beta installation, update, test, and reporting instructions are in [docs/BETA.md](docs/BETA.md). Install only archives attached to this repository's official GitHub prereleases.
 
 ## Publishing and maintenance
 

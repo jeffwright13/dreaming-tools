@@ -4,9 +4,9 @@ This document is the launch and release checklist for Dreaming Difficulty. Compl
 
 ## 1. Community beta
 
-- [ ] Add final extension icons at 16, 32, 48, and 128 pixels.
-- [ ] Add a repeatable packaging command that creates `dist/dreaming-difficulty-VERSION.zip`.
-- [ ] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
+- [x] Add final extension icons at 16, 32, 48, and 128 pixels.
+- [x] Add a repeatable packaging command that creates `dist/dreaming-difficulty-VERSION.zip`.
+- [x] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
 - [ ] Recruit a small group of technically comfortable Dreaming users.
 - [ ] Include Spanish and French users, free and premium accounts, and multiple desktop platforms where possible.
 - [ ] Have testers follow `docs/TESTING.md` and report browser version, operating system, Dreaming route, and extension settings.
@@ -32,7 +32,7 @@ The extension must not imply affiliation or endorsement without explicit permiss
 - [ ] Enable private vulnerability reporting.
 - [x] Confirm GitHub Actions are enabled for the repository.
 - [x] Add a GitHub Actions workflow for tests with coverage, dependency audit, syntax checks, and manifest validation.
-- [ ] Extend CI with store-package inspection after packaging automation exists.
+- [x] Extend CI with package construction, allowlist verification, and artifact upload.
 - [ ] Enable Dependabot security updates after reviewing its update policy.
 - [ ] Protect `main` after CI exists: require a pull request and passing checks.
 - [ ] Add a support link to the repository and Chrome Web Store listing.
