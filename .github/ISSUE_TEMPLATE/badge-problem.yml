@@ -1,0 +1,111 @@
+name: Missing or incorrect badge
+description: Report a missing video difficulty, wrong value, duplicate badge, or incorrect series range
+title: "[Badge]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for difficulty badge data or presence problems. Use the layout form for overlap, size, or positioning problems.
+
+        Do not include passwords, cookies, tokens, authorization headers, HAR files, downloaded premium content, or private account information.
+  - type: dropdown
+    id: problem-type
+    attributes:
+      label: Problem type
+      options:
+        - Missing badge
+        - Incorrect difficulty value
+        - Incorrect series range
+        - Duplicate badge
+        - Native Dreaming badge was changed unexpectedly
+        - Other badge behavior
+    validations:
+      required: true
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: browser-platform
+    attributes:
+      label: Browser, browser version, and operating system
+      placeholder: Chrome 154.0.8037.99 on macOS 26.7.1
+    validations:
+      required: true
+  - type: dropdown
+    id: dreaming-language
+    attributes:
+      label: Dreaming language
+      options:
+        - Spanish
+        - French
+        - Other or unknown
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Dreaming page or route
+      placeholder: /spanish/series
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Video or series title
+    validations:
+      required: true
+  - type: input
+    id: video-or-series-id
+    attributes:
+      label: Video or series ID, if visible
+      description: Include only the public content ID, not account or session identifiers.
+  - type: input
+    id: displayed-value
+    attributes:
+      label: Displayed difficulty or range
+      placeholder: 42 or 38–47
+  - type: input
+    id: expected-value
+    attributes:
+      label: Expected difficulty or range
+      description: Explain the source of the expected value in the details field.
+  - type: dropdown
+    id: native-badge
+    attributes:
+      label: Did Dreaming already show a native difficulty badge?
+      options:
+        - "Yes"
+        - "No"
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Extension settings
+      description: Include behavior, style, size, and position.
+      placeholder: Enhanced everywhere, Enhanced, Small, Lower left
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details and reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag a cropped screenshot here after removing personal information.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive-data confirmation
+      options:
+        - label: I have not included credentials, cookies, tokens, authorization headers, HAR files, premium content, or private account information.
+          required: true

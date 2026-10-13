@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest a new capability or improvement
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the user problem before proposing implementation details. Features that add permissions, data collection, network destinations, or authentication require privacy and security review.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user need is not met today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe what the user would see or do.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: affected-views
+    attributes:
+      label: Dreaming views affected
+      placeholder: Browse, Library History, Series, options page
+  - type: dropdown
+    id: data-impact
+    attributes:
+      label: Would this require new data, permissions, network requests, or authentication?
+      options:
+        - "No"
+        - "Yes"
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: privacy-security
+    attributes:
+      label: Privacy or security considerations
+      description: Do not include credentials, cookies, tokens, authorization headers, HAR files, or private account information.
+  - type: input
+    id: extension-version
+    attributes:
+      label: Current extension version
+      placeholder: 0.4.0

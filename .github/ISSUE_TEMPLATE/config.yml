@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community beta guide
+    url: https://github.com/jeffwright13/dreaming-tools/blob/main/docs/BETA.md
+    about: Read installation, testing, and safe-reporting instructions before filing an issue.
+  - name: Security policy
+    url: https://github.com/jeffwright13/dreaming-tools/security/policy
+    about: Do not post vulnerability details, credentials, tokens, or cookies in a public issue.
+  - name: Privacy policy
+    url: https://github.com/jeffwright13/dreaming-tools/blob/main/PRIVACY.md
+    about: Review what the extension does and does not collect.

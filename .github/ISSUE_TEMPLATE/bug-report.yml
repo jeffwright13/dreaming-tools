@@ -1,0 +1,102 @@
+name: General bug report
+description: Report extension behavior that is not specific to a badge value or layout
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Dreaming Difficulty.
+
+        Do not include passwords, cookies, tokens, authorization headers, HAR files, downloaded premium content, or private account information.
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: Find this on the extension card in the browser's Manage Extensions page.
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and exact version
+      placeholder: Chrome 154.0.8037.99
+    validations:
+      required: true
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system and version
+      placeholder: macOS 26.7.1, Windows 11 24H2, or Ubuntu 26.04
+    validations:
+      required: true
+  - type: dropdown
+    id: dreaming-language
+    attributes:
+      label: Dreaming language
+      options:
+        - Spanish
+        - French
+        - Other or unknown
+    validations:
+      required: true
+  - type: dropdown
+    id: account-type
+    attributes:
+      label: Account type
+      options:
+        - Free
+        - Premium
+        - Unknown or not applicable
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Dreaming page or route
+      description: A route such as /spanish/library is sufficient; remove personal query data.
+      placeholder: /spanish/library
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Extension settings
+      description: Include behavior, style, size, and position.
+      placeholder: Enhanced everywhere, Enhanced, Small, Lower left
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open...
+        2. Select...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or sanitized console output
+      description: Drag screenshots here. Remove personal data and all credentials from console output.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive-data confirmation
+      options:
+        - label: I have not included credentials, cookies, tokens, authorization headers, HAR files, premium content, or private account information.
+          required: true
