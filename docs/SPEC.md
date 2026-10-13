@@ -45,6 +45,16 @@ Process the initial document after downloading the catalog. Observe descendant a
 - Series modal cover and episode cards
 - Browse cards with native difficulty badges
 
+## Browser compatibility
+
+Support the current and previous stable desktop Chrome major versions on macOS, Windows, and mainstream Linux environments. Support current stable Microsoft Edge on Windows. Firefox, mobile browsers, and ChromeOS are not currently validated or supported.
+
+Automated unit and DOM tests are required for every change. Fixture-based browser tests are planned for real extension loading without Dreaming credentials. Live Dreaming compatibility remains a manual release gate using the matrix in `docs/TESTING.md`.
+
+## Security and privacy
+
+Request only synchronized storage and Dreaming host access. Catalog requests must omit credentials. Store only normalized badge preferences. Do not add analytics, advertising, remote code, credential access, cookie access, account-data collection, or premium-access bypass. Public disclosures live in `PRIVACY.md` and `SECURITY.md`.
+
 ## Failure behavior
 
 If the catalog cannot be downloaded or parsed, leave the page unchanged and report one error in the browser console.

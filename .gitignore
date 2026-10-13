@@ -3,3 +3,6 @@ coverage/
 *.zip
 .DS_Store
 .vscode/
+.env
+.env.*
+!.env.example

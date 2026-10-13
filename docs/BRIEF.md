@@ -13,6 +13,7 @@ Dreaming language learners who use difficulty to choose appropriate videos, espe
 - Do not collect credentials, cookies, tokens, or account data.
 - Select the public language catalog from the current Dreaming URL.
 - Support Spanish and French while keeping language selection extensible.
+- Target desktop Chromium browsers first; do not claim Firefox or mobile support without separate validation.
 - Let users enhance all badges, fill only missing badges, or preserve original Dreaming behavior.
 - Support dynamically rendered cards and modals.
 - Avoid dependencies on generated CSS-module class names.

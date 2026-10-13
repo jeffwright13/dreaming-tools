@@ -10,7 +10,11 @@ It enhances:
 - Series modal covers and episode cards
 - Native difficulty badges when enhanced-everywhere behavior is selected
 
-The extension downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data.
+The extension downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete policies.
+
+## Browser support
+
+The initial target is desktop Chrome on macOS, Windows, and Linux, plus current Microsoft Edge on Windows. Firefox and mobile browsers are not currently supported. See [docs/TESTING.md](docs/TESTING.md) for the compatibility policy and release matrix.
 
 ## Development
 
@@ -59,7 +63,7 @@ Saving options updates Dreaming tabs where the current extension content script 
 
 ## Manual test checklist
 
-Test both `/spanish/` and `/french/` where content is available. Verify badges in:
+The complete browser/platform matrix and security checks are in [docs/TESTING.md](docs/TESTING.md). At minimum, test both `/spanish/` and `/french/` where content is available and verify badges in:
 
 - Library History
 - Library My list videos
@@ -70,6 +74,6 @@ Test both `/spanish/` and `/french/` where content is available. Verify badges i
 
 Change each behavior mode in Extension options and verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Difficulty`.
 
-## Chrome Web Store deployment
+## Publishing and maintenance
 
-Before publishing, add store-ready extension icons and screenshots, prepare a privacy-policy statement, and create a ZIP containing `manifest.json` and `src/`. Upload that ZIP in the Chrome Web Store Developer Dashboard. Do not include `node_modules/`, tests, or development documentation in the ZIP.
+The staged beta, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness; the repository is not yet claiming Chrome Web Store availability.

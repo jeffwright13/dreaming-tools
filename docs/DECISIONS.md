@@ -27,3 +27,15 @@ A synchronized options page offers Enhanced everywhere, Fill missing difficultie
 ## 2026-10-13: Select catalogs from language routes
 
 The product is Dreaming rather than a Spanish-only service. The extension maps `/spanish/` to `es.json` and `/french/` to `fr.json`, uses language-neutral terminology, and keeps the route-to-catalog mapping easy to extend.
+
+## 2026-10-13: Support desktop Chromium browsers first
+
+The initial support policy covers the current and previous stable Chrome versions across macOS, Windows, and Linux, plus current Edge on Windows. Shared Chromium internals reduce implementation risk, but release claims still require a manual browser/platform matrix. Firefox and mobile support remain separate future features.
+
+## 2026-10-13: Use layered compatibility testing
+
+Vitest and jsdom remain the fast gate for logic and DOM behavior. Planned fixture-based browser tests will load the real extension without Dreaming credentials, while authenticated live-site smoke tests remain a manual release gate. CI must never store Dreaming credentials, cookies, or browser profiles.
+
+## 2026-10-13: Keep permissions and data flow minimal
+
+The extension stores only validated display preferences, fetches public catalogs with credentials omitted, and has no developer server or analytics. Chrome synchronized storage may pass preferences through the user's Google account, but the developer does not receive them. Any future permission, network destination, storage field, telemetry, or authentication change requires renewed security review and updated privacy disclosure.
