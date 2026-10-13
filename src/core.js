@@ -5,8 +5,8 @@
   const DEFAULT_SETTINGS = Object.freeze({
     behavior: "enhanced-everywhere",
     style: "enhanced",
-    size: "medium",
-    position: "lower-right",
+    size: "small",
+    position: "lower-left",
   });
   const SETTING_VALUES = {
     behavior: new Set(["enhanced-everywhere", "fill-missing", "original"]),

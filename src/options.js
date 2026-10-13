@@ -4,6 +4,7 @@
   const appearanceControls = document.querySelector("#appearance-controls");
   const previewBadge = document.querySelector("#preview-badge");
   const previewOriginal = document.querySelector("#preview-original");
+  const resetButton = document.querySelector("#reset-options");
   const status = document.querySelector("#status");
 
   function readForm() {
@@ -46,6 +47,12 @@
     event.preventDefault();
     await chrome.storage.sync.set(readForm());
     status.textContent = "Options saved.";
+  });
+
+  resetButton.addEventListener("click", async () => {
+    await chrome.storage.sync.set(DEFAULT_SETTINGS);
+    populateForm(DEFAULT_SETTINGS);
+    status.textContent = "Defaults restored.";
   });
 
   chrome.storage.sync.get(DEFAULT_SETTINGS).then((stored) => {

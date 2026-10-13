@@ -28,28 +28,30 @@ form {
   gap: 20px;
 }
 
-fieldset,
-.preview-section {
+.panel {
   background: #ffffff;
   border: 1px solid #d8ddda;
   border-radius: 10px;
   display: grid;
-  gap: 14px;
-  margin: 0;
+  gap: 16px;
   padding: 20px;
 }
 
-fieldset:disabled {
+.control-group {
+  border: 0;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.control-group:disabled {
   opacity: 0.55;
 }
 
-legend,
 h2 {
   font-size: 18px;
   font-weight: 700;
-}
-
-h2 {
   margin: 0;
 }
 
@@ -108,13 +110,18 @@ select {
 
 button {
   background: #00a864;
-  border: 0;
+  border: 1px solid #00a864;
   border-radius: 7px;
   color: #ffffff;
   cursor: pointer;
   font: inherit;
   font-weight: 700;
   padding: 10px 16px;
+}
+
+.secondary-button {
+  background: #ffffff;
+  color: #176a46;
 }
 
 #status {
