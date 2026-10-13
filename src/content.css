@@ -22,9 +22,9 @@
   min-width: 25px;
   padding: 3px 6px;
   pointer-events: none;
+  bottom: 8px;
   position: absolute;
   right: 8px;
-  top: 8px;
   z-index: 20;
 }
 
