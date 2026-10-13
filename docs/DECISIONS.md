@@ -47,3 +47,7 @@ The icon combines a play symbol with ascending difficulty bars in the extension'
 ## 2026-10-13: Package from an exact runtime allowlist
 
 A dependency-free Node script creates a deterministic ZIP from the manifest, four PNG icons, and six runtime source files. It rejects version mismatches, missing manifest references, and unexpected archive contents. Development files, credentials, documentation, tests, and dependencies cannot enter the package through directory-wide copying.
+
+## 2026-10-13: Protect main with mechanical gates
+
+Changes to `main` require an up-to-date pull request, the `Test and audit` status check, linear history, and resolved conversations. Force pushes and branch deletion are blocked, and administrators are subject to the rule. No approving review is required while the project has a single maintainer, avoiding a self-review deadlock while retaining CI and pull-request history.
