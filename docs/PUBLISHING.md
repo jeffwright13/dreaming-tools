@@ -31,7 +31,8 @@ The extension must not imply affiliation or endorsement without explicit permiss
 - [x] Confirm GitHub secret scanning and push protection are enabled.
 - [ ] Enable private vulnerability reporting.
 - [x] Confirm GitHub Actions are enabled for the repository.
-- [ ] Add a GitHub Actions workflow for `npm test`, `npm run test:coverage`, `npm audit`, manifest validation, and package inspection.
+- [x] Add a GitHub Actions workflow for tests with coverage, dependency audit, syntax checks, and manifest validation.
+- [ ] Extend CI with store-package inspection after packaging automation exists.
 - [ ] Enable Dependabot security updates after reviewing its update policy.
 - [ ] Protect `main` after CI exists: require a pull request and passing checks.
 - [ ] Add a support link to the repository and Chrome Web Store listing.
