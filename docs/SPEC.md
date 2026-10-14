@@ -24,8 +24,8 @@ Display the minimum and maximum as `minimum–maximum`. Display one number when 
 
 Store synchronized settings with these defaults:
 
-- Behavior: Enhanced everywhere
-- Style: Enhanced
+- Behavior: Fill missing difficulties only
+- Style: Dreaming
 - Size: Small
 - Position: Lower left
 

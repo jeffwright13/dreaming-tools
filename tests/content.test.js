@@ -40,6 +40,21 @@ describe("enhancePage", () => {
     expect(badge?.getAttribute("aria-label")).toBe("Difficulty 41 out of 100");
   });
 
+  it("preserves Dreaming's native badge by default", () => {
+    document.body.innerHTML = `
+      <div data-video-id="${VIDEO_ID}">
+        <div class="ds-video-thumbnail">
+          <span class="ds-video-thumbnail__badge--vocab-range">41</span>
+        </div>
+      </div>
+    `;
+
+    enhancePage(document, indexes);
+
+    expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+    expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
+  });
+
   it("replaces Dreaming's native badge in enhanced-everywhere mode", () => {
     document.body.innerHTML = `
       <div data-video-id="${VIDEO_ID}">

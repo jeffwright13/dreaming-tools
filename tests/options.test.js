@@ -73,7 +73,7 @@ describe("options page", () => {
 
     await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
     expect(storage.set).toHaveBeenLastCalledWith({
-      behavior: "enhanced-everywhere",
+      behavior: "fill-missing",
       style: "dreaming",
       size: "small",
       position: "lower-left",

@@ -3,8 +3,8 @@
   const DIFFICULTY_MAX = 2600;
   const SERIES_ID_PATTERN = /(?:series[=/\-])([a-f0-9]{24})(?:[&#/?\-]|$)/i;
   const DEFAULT_SETTINGS = Object.freeze({
-    behavior: "enhanced-everywhere",
-    style: "enhanced",
+    behavior: "fill-missing",
+    style: "dreaming",
     size: "small",
     position: "lower-left",
   });

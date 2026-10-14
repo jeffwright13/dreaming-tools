@@ -51,3 +51,7 @@ A dependency-free Node script creates a deterministic ZIP from the manifest, fou
 ## 2026-10-13: Protect main with mechanical gates
 
 Changes to `main` require an up-to-date pull request, the `Test and audit` status check, linear history, and resolved conversations. Force pushes and branch deletion are blocked, and administrators are subject to the rule. No approving review is required while the project has a single maintainer, avoiding a self-review deadlock while retaining CI and pull-request history.
+
+## 2026-10-13: Default to preserving Dreaming's presentation
+
+Fresh installations preserve Dreaming's native badges and add small, lower-left badges in Dreaming style only where difficulty is missing. Enhanced-everywhere behavior and styling remain available as explicit options. This least-intervention default reduces visual disruption while retaining full configurability; valid settings already stored by a user remain unchanged after an update.

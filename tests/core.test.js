@@ -12,10 +12,10 @@ const {
 } = globalThis.DreamingDifficultyCore;
 
 describe("settings", () => {
-  it("supplies the recommended defaults", () => {
+  it("supplies conservative defaults for a fresh installation", () => {
     expect(normalizeSettings({})).toEqual({
-      behavior: "enhanced-everywhere",
-      style: "enhanced",
+      behavior: "fill-missing",
+      style: "dreaming",
       size: "small",
       position: "lower-left",
     });
@@ -24,14 +24,28 @@ describe("settings", () => {
   it("replaces invalid values with defaults", () => {
     expect(normalizeSettings({
       behavior: "invalid",
-      style: "dreaming",
+      style: "invalid",
       size: "large",
       position: "upper-left",
     })).toEqual({
-      behavior: "enhanced-everywhere",
+      behavior: "fill-missing",
       style: "dreaming",
       size: "large",
       position: "upper-left",
+    });
+  });
+
+  it("preserves valid enhanced settings already stored by a user", () => {
+    expect(normalizeSettings({
+      behavior: "enhanced-everywhere",
+      style: "enhanced",
+      size: "medium",
+      position: "lower-right",
+    })).toEqual({
+      behavior: "enhanced-everywhere",
+      style: "enhanced",
+      size: "medium",
+      position: "lower-right",
     });
   });
 });
