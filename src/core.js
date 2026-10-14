@@ -6,13 +6,13 @@
     behavior: "fill-missing",
     style: "dreaming",
     size: "small",
-    position: "lower-left",
+    position: "upper-right",
   });
   const SETTING_VALUES = {
     behavior: new Set(["enhanced-everywhere", "fill-missing", "original"]),
     style: new Set(["enhanced", "dreaming"]),
     size: new Set(["small", "medium", "large"]),
-    position: new Set(["lower-right", "upper-right", "lower-left", "upper-left"]),
+    position: new Set(["upper-right", "lower-left", "upper-left"]),
   };
   const LANGUAGE_CODES = {
     spanish: "es",

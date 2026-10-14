@@ -17,21 +17,21 @@ describe("settings", () => {
       behavior: "fill-missing",
       style: "dreaming",
       size: "small",
-      position: "lower-left",
+      position: "upper-right",
     });
   });
 
-  it("replaces invalid values with defaults", () => {
+  it("replaces invalid and unsupported values with defaults", () => {
     expect(normalizeSettings({
       behavior: "invalid",
       style: "invalid",
       size: "large",
-      position: "upper-left",
+      position: "lower-right",
     })).toEqual({
       behavior: "fill-missing",
       style: "dreaming",
       size: "large",
-      position: "upper-left",
+      position: "upper-right",
     });
   });
 
@@ -40,12 +40,12 @@ describe("settings", () => {
       behavior: "enhanced-everywhere",
       style: "enhanced",
       size: "medium",
-      position: "lower-right",
+      position: "upper-left",
     })).toEqual({
       behavior: "enhanced-everywhere",
       style: "enhanced",
       size: "medium",
-      position: "lower-right",
+      position: "upper-left",
     });
   });
 });

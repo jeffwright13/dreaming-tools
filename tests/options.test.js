@@ -76,7 +76,7 @@ describe("options page", () => {
       behavior: "fill-missing",
       style: "dreaming",
       size: "small",
-      position: "lower-left",
+      position: "upper-right",
     });
     expect(document.querySelector("#status")?.textContent).toBe("Options saved.");
   });
@@ -93,7 +93,7 @@ describe("options page", () => {
     await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
     expect(storage.set).toHaveBeenLastCalledWith(globalThis.DreamingDifficultyCore.DEFAULT_SETTINGS);
     expect(document.querySelector('[name="size"]')?.value).toBe("small");
-    expect(document.querySelector('[name="position"]')?.value).toBe("lower-left");
+    expect(document.querySelector('[name="position"]')?.value).toBe("upper-right");
     expect(document.querySelector("#status")?.textContent).toBe("Defaults restored.");
   });
 });

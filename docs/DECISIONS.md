@@ -54,4 +54,4 @@ Changes to `main` require an up-to-date pull request, the `Test and audit` statu
 
 ## 2026-10-13: Default to preserving Dreaming's presentation
 
-Fresh installations preserve Dreaming's native badges and add small, lower-left badges in Dreaming style only where difficulty is missing. Enhanced-everywhere behavior and styling remain available as explicit options. This least-intervention default reduces visual disruption while retaining full configurability; valid settings already stored by a user remain unchanged after an update.
+Fresh installations preserve Dreaming's native badges and add small, upper-right badges in Dreaming style only where difficulty is missing, matching Dreaming's native placement. Enhanced-everywhere behavior and styling remain available as explicit options. Lower-right placement is excluded because Dreaming reserves that corner for video duration. This least-intervention default reduces visual disruption while retaining safe configurability; valid supported settings already stored by a user remain unchanged after an update.

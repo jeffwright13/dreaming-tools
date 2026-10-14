@@ -27,11 +27,11 @@ Store synchronized settings with these defaults:
 - Behavior: Fill missing difficulties only
 - Style: Dreaming
 - Size: Small
-- Position: Lower left
+- Position: Upper right
 
 Enhanced-everywhere behavior hides native difficulty badges and inserts configured badges. Fill-missing behavior preserves native badges and inserts configured badges only where needed. Original behavior removes extension badges and restores native badges.
 
-Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are all four thumbnail corners. A restore-defaults action saves and displays the default settings. Changes apply to open Dreaming pages through storage change events when the current content script is active.
+Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. A restore-defaults action saves and displays the default settings. Changes apply to open Dreaming pages through storage change events when the current content script is active.
 
 ## Dynamic content
 

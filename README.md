@@ -61,7 +61,7 @@ Behavior choices:
 - **Fill missing difficulties only** preserves native badges and adds badges where Dreaming omits them.
 - **Original Dreaming** makes no badge changes.
 
-Configured badges can use Enhanced or Dreaming style, three sizes, and any corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, lower-left badges using Dreaming style. Select **Restore defaults** to reset all settings.
+Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings.
 
 Saving options updates Dreaming tabs where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
 
