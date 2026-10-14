@@ -53,11 +53,6 @@
   padding: 4px 8px;
 }
 
-.ds-difficulty-extension-badge--position-lower-right {
-  bottom: 8px;
-  right: 8px;
-}
-
 .ds-difficulty-extension-badge--position-upper-right {
   right: 8px;
   top: 8px;

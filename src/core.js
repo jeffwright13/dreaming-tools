@@ -3,16 +3,16 @@
   const DIFFICULTY_MAX = 2600;
   const SERIES_ID_PATTERN = /(?:series[=/\-])([a-f0-9]{24})(?:[&#/?\-]|$)/i;
   const DEFAULT_SETTINGS = Object.freeze({
-    behavior: "enhanced-everywhere",
-    style: "enhanced",
+    behavior: "fill-missing",
+    style: "dreaming",
     size: "small",
-    position: "lower-left",
+    position: "upper-right",
   });
   const SETTING_VALUES = {
     behavior: new Set(["enhanced-everywhere", "fill-missing", "original"]),
     style: new Set(["enhanced", "dreaming"]),
     size: new Set(["small", "medium", "large"]),
-    position: new Set(["lower-right", "upper-right", "lower-left", "upper-left"]),
+    position: new Set(["upper-right", "lower-left", "upper-left"]),
   };
   const LANGUAGE_CODES = {
     spanish: "es",
