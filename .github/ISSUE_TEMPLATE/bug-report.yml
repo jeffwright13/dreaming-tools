@@ -13,7 +13,7 @@ body:
     attributes:
       label: Extension version
       description: Find this on the extension card in the browser's Manage Extensions page.
-      placeholder: 0.4.0
+      placeholder: 0.5.0
     validations:
       required: true
   - type: input
