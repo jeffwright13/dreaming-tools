@@ -55,3 +55,7 @@ Changes to `main` require an up-to-date pull request, the `Test and audit` statu
 ## 2026-10-13: Default to preserving Dreaming's presentation
 
 Fresh installations preserve Dreaming's native badges and add small, upper-right badges in Dreaming style only where difficulty is missing, matching Dreaming's native placement. Enhanced-everywhere behavior and styling remain available as explicit options. Lower-right placement is excluded because Dreaming reserves that corner for video duration. This least-intervention default reduces visual disruption while retaining safe configurability; valid supported settings already stored by a user remain unchanged after an update.
+
+## 2026-10-19: Show watch-page difficulty as metadata chips
+
+Watch pages show video difficulty, plus the series range when applicable, as chips at the start of Dreaming's metadata badge row instead of overlaying the player. An overlay would compete with player controls and changing frames, disappear in fullscreen unless injected into the player, and cannot enter the cross-origin YouTube embed. The row has stable `data-testid` hooks shared by both player variants. The extension does not detect or defer to other extensions that add similar chips, because coupling to third-party markup is fragile; users running both may see duplicate information.

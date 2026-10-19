@@ -20,6 +20,14 @@ Match a series using the 24-character ID in its image URL or `series` URL parame
 
 Display the minimum and maximum as `minimum–maximum`. Display one number when both endpoints are equal. Omit the badge when no scored episodes exist.
 
+## Watch page
+
+On a watch page, read the video ID from the `id` URL parameter and insert chips at the start of the `[data-testid="video-badges"]` row, before Dreaming's level badge. Show `Difficulty N` for a scored video, followed by `Series minimum–maximum` when the video belongs to a series with scored episodes. Omit chips the catalog cannot support.
+
+Watch-to-watch navigation is client-side and may reuse or replace the badge row, so chips are updated when the URL's video ID changes. Because the page observer reruns enhancement on every child-node change, chip updates must not modify child nodes when chips are already current.
+
+Chips apply the configured style. Size and position apply only to thumbnail badges. Original behavior removes the chips. Both other behaviors insert them, because Dreaming shows no difficulty on the watch page.
+
 ## Options
 
 Store synchronized settings with these defaults:
@@ -44,6 +52,7 @@ Process the initial document after downloading the catalog. Observe descendant a
 - Series catalog cards
 - Series modal cover and episode cards
 - Browse cards with native difficulty badges
+- Watch page metadata for Dreaming's player and embedded YouTube videos
 
 ## Distribution package
 

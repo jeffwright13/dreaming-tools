@@ -79,3 +79,25 @@
 .ds-difficulty-extension-badge--series.ds-difficulty-extension-badge--size-large {
   min-width: 48px;
 }
+
+.ds-difficulty-extension-chip {
+  align-items: center;
+  border-radius: 5px;
+  color: #ffffff;
+  display: inline-flex;
+  font-family: "Readex Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 4px;
+  white-space: nowrap;
+}
+
+.ds-difficulty-extension-chip--style-enhanced {
+  background: #00c374;
+  font-weight: 700;
+}
+
+.ds-difficulty-extension-chip--style-dreaming {
+  background: rgb(45 45 45 / 88%);
+}

@@ -9,11 +9,29 @@ const { enhancePage, initialize, loadCatalog } = globalThis.DreamingDifficultyCo
 
 const SERIES_ID = "6a1fe0ea4a6295f32ed34f4d";
 const VIDEO_ID = "69aeabe8b0b7b6f88770360c";
+const STANDALONE_VIDEO_ID = "6acf7cafde6364c576cb8167";
 
 const indexes = buildCatalogIndexes([
   { _id: VIDEO_ID, seriesId: SERIES_ID, difficultyScore: 1185 },
   { _id: "second", seriesId: SERIES_ID, difficultyScore: 1265 },
+  { _id: STANDALONE_VIDEO_ID, difficultyScore: 1400 },
 ]);
+
+const WATCH_PAGE_BADGES = `
+  <div data-testid="video-badges">
+    <div data-testid="video-level-badge">Beginner</div>
+    <div data-testid="video-country-badge">Spain</div>
+  </div>
+`;
+
+function showWatchPage(videoId) {
+  window.history.replaceState({}, "", `/spanish/watch?id=${videoId}`);
+}
+
+function watchPageChipTexts() {
+  return [...document.querySelector('[data-testid="video-badges"]').children]
+    .map((child) => child.textContent.trim());
+}
 
 beforeEach(() => {
   document.body.replaceChildren();
@@ -200,6 +218,99 @@ describe("enhancePage", () => {
     const badge = document.querySelector(".ds-difficulty-extension-badge");
     expect(badge?.classList.contains("ds-difficulty-extension-badge--series")).toBe(true);
     expect(badge?.classList.contains("ds-difficulty-extension-badge--size-large")).toBe(true);
+  });
+});
+
+describe("watch page", () => {
+  it("adds video and series difficulty chips before the level badge", () => {
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+
+    enhancePage(document, indexes);
+
+    expect(watchPageChipTexts()).toEqual(["Difficulty 41", "Series 41–44", "Beginner", "Spain"]);
+    expect(document.querySelector(".ds-difficulty-extension-chip--video")?.getAttribute("aria-label"))
+      .toBe("Difficulty 41 out of 100");
+    expect(document.querySelector(".ds-difficulty-extension-chip--series")?.getAttribute("aria-label"))
+      .toBe("Series difficulty range 41 to 44 out of 100");
+  });
+
+  it("adds only a video chip when the video is not part of a series", () => {
+    showWatchPage(STANDALONE_VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+
+    enhancePage(document, indexes);
+
+    expect(watchPageChipTexts()).toEqual(["Difficulty 50", "Beginner", "Spain"]);
+  });
+
+  it("shows a single series difficulty when all episodes share one score", () => {
+    const uniformSeriesIndexes = buildCatalogIndexes([
+      { _id: VIDEO_ID, seriesId: SERIES_ID, difficultyScore: 1185 },
+      { _id: "second", seriesId: SERIES_ID, difficultyScore: 1185 },
+    ]);
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+
+    enhancePage(document, uniformSeriesIndexes);
+
+    expect(watchPageChipTexts()).toEqual(["Difficulty 41", "Series 41", "Beginner", "Spain"]);
+    expect(document.querySelector(".ds-difficulty-extension-chip--series")?.getAttribute("aria-label"))
+      .toBe("Series difficulty 41 out of 100");
+  });
+
+  it("adds no chips when the video is absent from the catalog", () => {
+    showWatchPage("unknown");
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+
+    enhancePage(document, indexes);
+
+    expect(document.querySelector(".ds-difficulty-extension-chip")).toBeNull();
+  });
+
+  it("updates chips after client-side navigation to another video", () => {
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+    enhancePage(document, indexes);
+
+    showWatchPage(STANDALONE_VIDEO_ID);
+    enhancePage(document, indexes);
+
+    expect(watchPageChipTexts()).toEqual(["Difficulty 50", "Beginner", "Spain"]);
+  });
+
+  it("does not modify child nodes when chips are already current", () => {
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+    enhancePage(document, indexes);
+    const observer = new MutationObserver(() => {});
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+    enhancePage(document, indexes);
+
+    expect(observer.takeRecords()).toEqual([]);
+    observer.disconnect();
+  });
+
+  it("applies the configured style", () => {
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+
+    enhancePage(document, indexes, { style: "enhanced" });
+
+    for (const chip of document.querySelectorAll(".ds-difficulty-extension-chip")) {
+      expect(chip.classList.contains("ds-difficulty-extension-chip--style-enhanced")).toBe(true);
+    }
+  });
+
+  it("removes chips in original mode", () => {
+    showWatchPage(VIDEO_ID);
+    document.body.innerHTML = WATCH_PAGE_BADGES;
+    enhancePage(document, indexes);
+
+    enhancePage(document, indexes, { behavior: "original" });
+
+    expect(watchPageChipTexts()).toEqual(["Beginner", "Spain"]);
   });
 });
 
