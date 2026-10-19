@@ -54,6 +54,7 @@ Test these views where available:
 - My list series
 - Series catalog at each level
 - Series modal cover and episode cards
+- Watch page video and series chips with Dreaming's player and YouTube, including sidebar navigation between videos
 - Spanish and French routes
 - Options page and Restore defaults
 - Enhanced everywhere, Fill missing only, and Original Dreaming

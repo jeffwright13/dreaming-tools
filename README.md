@@ -1,6 +1,6 @@
 # Dreaming Difficulty
 
-Dreaming Difficulty is a Chrome extension that adds Dreaming difficulty ratings to video cards and difficulty ranges to series cards. It supports Dreaming's Spanish and French sections.
+Dreaming Difficulty is a Chrome extension that adds Dreaming difficulty ratings to video cards and watch pages, and difficulty ranges to series cards. It supports Dreaming's Spanish and French sections.
 
 It enhances:
 
@@ -8,6 +8,7 @@ It enhances:
 - Library series cards
 - Series catalog cards
 - Series modal covers and episode cards
+- Watch pages, with video difficulty and series range chips beside the level badge
 - Native difficulty badges when enhanced-everywhere behavior is selected
 
 The extension downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete policies.
@@ -46,8 +47,12 @@ The package is written to `dist/dreaming-difficulty-VERSION.zip` and contains on
 1. Open `chrome://extensions` in Chrome.
 2. Enable **Developer mode** in the upper-right corner.
 3. Click **Load unpacked**.
-4. Select this repository directory—not `src/`.
+4. Select the directory that matches how you are running the extension:
+   - **Development:** this repository directory—not `src/`. Reloading the extension then picks up your working-tree edits.
+   - **Released build:** the directory you extracted from a `dreaming-difficulty-VERSION.zip` archive (see [docs/BETA.md](docs/BETA.md)).
 5. Open or reload a Dreaming page.
+
+Chrome reloads an unpacked extension from the directory it was originally loaded from. If code changes do not appear after reloading, open the extension's **Details** page and check **Source**; an extracted release archive will not reflect repository edits. Remove it and load the repository directory instead.
 
 After changing extension code, return to `chrome://extensions`, click the extension's reload button, and then reload the Dreaming tab.
 

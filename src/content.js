@@ -1,5 +1,7 @@
 (() => {
   const EXTENSION_BADGE_SELECTOR = ".ds-difficulty-extension-badge";
+  const EXTENSION_CHIP_SELECTOR = ".ds-difficulty-extension-chip";
+  const WATCH_PAGE_BADGES_SELECTOR = '[data-testid="video-badges"]';
   const NATIVE_DIFFICULTY_SELECTOR = ".ds-video-thumbnail__badge--vocab-range";
   const SERIES_CARD_SELECTOR = [
     '[data-testid="series-catalog-card"]',
@@ -46,7 +48,7 @@
   }
 
   function restorePage(root) {
-    for (const badge of findAll(root, EXTENSION_BADGE_SELECTOR)) {
+    for (const badge of findAll(root, `${EXTENSION_BADGE_SELECTOR},${EXTENSION_CHIP_SELECTOR}`)) {
       badge.remove();
     }
     for (const badge of findAll(root, NATIVE_DIFFICULTY_SELECTOR)) {
@@ -124,6 +126,70 @@
     }
   }
 
+  function getWatchPageChips(indexes) {
+    const video = indexes.videosById.get(new URLSearchParams(location.search).get("id"));
+    const difficulty = calculateDifficulty(video?.difficultyScore);
+    const range = indexes.seriesRanges.get(video?.seriesId);
+    const chips = {};
+
+    if (difficulty !== null) {
+      chips.video = {
+        text: `Difficulty ${difficulty}`,
+        label: `Difficulty ${difficulty} out of 100`,
+      };
+    }
+
+    if (range) {
+      chips.series = {
+        text: `Series ${formatDifficultyRange(range)}`,
+        label: range.minimum === range.maximum
+          ? `Series difficulty ${range.minimum} out of 100`
+          : `Series difficulty range ${range.minimum} to ${range.maximum} out of 100`,
+      };
+    }
+
+    return chips;
+  }
+
+  // The page observer reruns this on every child-node change, so only touch
+  // the DOM when a chip is missing, stale, or no longer wanted.
+  function updateWatchPageChip(row, modifier, chip, settings) {
+    let element = row.querySelector(`${EXTENSION_CHIP_SELECTOR}--${modifier}`);
+    if (!chip) {
+      element?.remove();
+      return;
+    }
+
+    if (!element) {
+      element = document.createElement("span");
+      if (modifier === "video") {
+        row.prepend(element);
+      } else {
+        const videoChip = row.querySelector(`${EXTENSION_CHIP_SELECTOR}--video`);
+        videoChip ? videoChip.after(element) : row.prepend(element);
+      }
+    }
+
+    element.className = [
+      "ds-difficulty-extension-chip",
+      `ds-difficulty-extension-chip--${modifier}`,
+      `ds-difficulty-extension-chip--style-${settings.style}`,
+    ].join(" ");
+    if (element.textContent !== chip.text) {
+      element.textContent = chip.text;
+    }
+    element.title = chip.label;
+    element.setAttribute("aria-label", chip.label);
+  }
+
+  function enhanceWatchPage(root, indexes, settings) {
+    for (const row of findAll(root, WATCH_PAGE_BADGES_SELECTOR)) {
+      const chips = getWatchPageChips(indexes);
+      updateWatchPageChip(row, "video", chips.video, settings);
+      updateWatchPageChip(row, "series", chips.series, settings);
+    }
+  }
+
   function enhancePage(root, indexes, rawSettings = DEFAULT_SETTINGS) {
     const settings = normalizeSettings(rawSettings);
     if (settings.behavior === "original") {
@@ -133,6 +199,7 @@
 
     enhanceVideoCards(root, indexes.videosById, settings);
     enhanceSeriesCards(root, indexes.seriesRanges, settings);
+    enhanceWatchPage(root, indexes, settings);
   }
 
   async function loadCatalog(languageCode) {
