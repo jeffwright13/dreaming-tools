@@ -1,4 +1,4 @@
-# Dreaming Difficulty Decisions
+# Dreaming Tools Decisions
 
 ## 2026-10-13: Use the public catalog without account authentication
 
@@ -59,3 +59,16 @@ Fresh installations preserve Dreaming's native badges and add small, upper-right
 ## 2026-10-19: Show watch-page difficulty as metadata chips
 
 Watch pages show video difficulty, plus the series range when applicable, as chips at the start of Dreaming's metadata badge row instead of overlaying the player. An overlay would compete with player controls and changing frames, disappear in fullscreen unless injected into the player, and cannot enter the cross-origin YouTube embed. The row has stable `data-testid` hooks shared by both player variants. The extension does not detect or defer to other extensions that add similar chips, because coupling to third-party markup is fragile; users running both may see duplicate information.
+
+## 2026-11-05: Grow into Dreaming Tools as one extension with feature switches
+
+The repository will host more than the difficulty badges, starting with a subtitle de-emphasis tool for listen-only practice. The extension is renamed Dreaming Tools and stays a single extension, with an independent enable switch per feature, rather than becoming several extensions or repositories. All planned tools run on the same Dreaming pages with the same host permission, so separate extensions would add installs, release processes, and duplicated packaging without reducing permissions. The extension was unpublished at the time of the rename, so no store listing or users' installs are broken. Synchronized storage keys are unchanged, so beta testers keep their settings.
+
+## 2026-11-05: Replace Original Dreaming mode with an enable switch
+
+The difficulty feature's Original Dreaming behavior was already an off switch. Keeping it next to a per-feature enable switch would offer two controls for the same state, so it was removed. A stored `behavior: "original"` migrates to `difficultyEnabled: false` during normalization; an explicitly stored switch takes precedence. Settings are read by key list rather than with defaults, because Chrome fills defaults into the result and would otherwise hide the legacy value. A disabled difficulty feature no longer downloads the catalog, which also slightly reduces network use compared with the old Original mode.
+
+## 2026-11-05: Isolate features behind a single update contract
+
+Each feature exposes only `update(settings)` and receives the whole normalized settings object, and `content.js` calls every feature independently, logging rather than propagating a feature's error. This keeps features unaware of one another, lets any combination be enabled at once, and lets a broken feature fail without disabling the rest. Content scripts remain classic scripts sharing `globalThis` namespaces because Manifest V3 content scripts do not support ES module imports.
+

@@ -1,6 +1,6 @@
 # Community Beta Guide
 
-Dreaming Difficulty is not yet published in the Chrome Web Store. Beta testers install an unpacked build from an official GitHub prerelease distributed by this repository.
+Dreaming Tools is not yet published in the Chrome Web Store. Beta testers install an unpacked build from an official GitHub prerelease distributed by this repository.
 
 ## Before testing
 
@@ -10,7 +10,7 @@ Only use an archive downloaded from https://github.com/jeffwright13/dreaming-too
 
 ## Install the beta
 
-1. Download `dreaming-difficulty-VERSION.zip` from the GitHub prerelease.
+1. Download `dreaming-tools-VERSION.zip` from the GitHub prerelease.
 2. Optionally compare its SHA-256 checksum with the checksum in the release notes.
 3. Extract the ZIP into a permanent local directory. Do not delete that directory while testing.
 4. Open `chrome://extensions`.
@@ -38,11 +38,13 @@ To uninstall, select **Remove** on the extension card in `chrome://extensions`, 
 Record the extension version, browser version, operating system, Dreaming language, account type, route, and extension settings. Exercise:
 
 - Spanish and French routes where available
-- Browse with native difficulty badges
+- Browse with no sort and with each non-difficulty sort (Random, Short, Long, Old, New): Dreaming shows only durations, so extension badges appear in both behaviors
+- Browse sorted by Easy and by Hard: Dreaming's own difficulty badges remain in Fill missing only and are replaced by extension badges in Enhanced everywhere
 - Library History
 - My list videos and series
 - Series catalogs and series modals
-- Enhanced everywhere, Fill missing difficulties only, and Original Dreaming
+- Difficulty badges switched on and off
+- Enhanced everywhere and Fill missing difficulties only
 - Enhanced and Dreaming styles
 - Small, Medium, and Large sizes
 - All four badge positions

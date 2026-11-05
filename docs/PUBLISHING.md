@@ -1,11 +1,11 @@
 # Publishing and Maintenance Plan
 
-This document is the launch and release checklist for Dreaming Difficulty. Complete each phase in order; unchecked items are planned work, not claims about the current release.
+This document is the launch and release checklist for Dreaming Tools. Complete each phase in order; unchecked items are planned work, not claims about the current release.
 
 ## 1. Community beta
 
 - [x] Add final extension icons at 16, 32, 48, and 128 pixels.
-- [x] Add a repeatable packaging command that creates `dist/dreaming-difficulty-VERSION.zip`.
+- [x] Add a repeatable packaging command that creates `dist/dreaming-tools-VERSION.zip`.
 - [x] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
 - [ ] Recruit a small group of technically comfortable Dreaming users.
 - [ ] Include Spanish and French users, free and premium accounts, and multiple desktop platforms where possible.
@@ -62,12 +62,14 @@ The packaged ZIP should contain only runtime assets, for example:
 manifest.json
 icons/
 src/
-  content.css
   content.js
-  core.js
+  difficulty-core.js
+  difficulty.css
+  difficulty.js
   options.css
   options.html
   options.js
+  settings.js
 ```
 
 It must exclude development and private material, including:

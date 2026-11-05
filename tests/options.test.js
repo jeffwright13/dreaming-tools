@@ -1,20 +1,22 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import "../src/core.js";
+import "../src/settings.js";
 
 const optionsMarkup = `
   <form id="settings-form">
-    <input type="radio" name="behavior" value="enhanced-everywhere">
-    <input type="radio" name="behavior" value="fill-missing">
-    <input type="radio" name="behavior" value="original">
+    <input type="checkbox" name="difficultyEnabled">
+    <fieldset id="behavior-controls">
+      <input type="radio" name="behavior" value="enhanced-everywhere">
+      <input type="radio" name="behavior" value="fill-missing">
+    </fieldset>
     <fieldset id="appearance-controls">
       <select name="style"><option value="enhanced">Enhanced</option><option value="dreaming">Dreaming</option></select>
       <select name="size"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
       <select name="position"><option value="lower-left">Lower left</option><option value="upper-right">Upper right</option></select>
     </fieldset>
     <span id="preview-badge">42</span>
-    <span id="preview-original"></span>
+    <span id="preview-disabled"></span>
     <button id="reset-options" type="button">Restore defaults</button>
     <output id="status"></output>
   </form>
@@ -52,18 +54,37 @@ describe("options page", () => {
     expect(document.querySelector('input[name="behavior"]:checked')?.value).toBe("fill-missing");
     expect(document.querySelector('[name="style"]')?.value).toBe("dreaming");
     expect(document.querySelector("#preview-badge")?.className).toContain("--size-large");
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(true);
     expect(document.querySelector("#appearance-controls")?.disabled).toBe(false);
   });
 
-  it("disables appearance controls in Original Dreaming mode", async () => {
-    await loadOptions();
-    const original = document.querySelector('input[value="original"]');
-    original.checked = true;
-    original.dispatchEvent(new Event("change", { bubbles: true }));
+  it("reads only stored keys so legacy settings can migrate", async () => {
+    const storage = await loadOptions({ behavior: "original" });
 
+    expect(storage.get).toHaveBeenCalledWith(globalThis.DreamingToolsSettings.SETTING_KEYS);
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(false);
+    expect(document.querySelector('input[name="behavior"]:checked')?.value).toBe("fill-missing");
+  });
+
+  it("disables difficulty controls when the feature is switched off", async () => {
+    await loadOptions();
+    const toggle = document.querySelector('[name="difficultyEnabled"]');
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(document.querySelector("#behavior-controls")?.disabled).toBe(true);
     expect(document.querySelector("#appearance-controls")?.disabled).toBe(true);
     expect(document.querySelector("#preview-badge")?.hidden).toBe(true);
-    expect(document.querySelector("#preview-original")?.hidden).toBe(false);
+    expect(document.querySelector("#preview-disabled")?.hidden).toBe(false);
+  });
+
+  it("saves a switched-off feature as disabled", async () => {
+    const storage = await loadOptions();
+    document.querySelector('[name="difficultyEnabled"]').checked = false;
+    document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
+    expect(storage.set.mock.lastCall[0].difficultyEnabled).toBe(false);
   });
 
   it("saves normalized form settings", async () => {
@@ -73,6 +94,7 @@ describe("options page", () => {
 
     await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
     expect(storage.set).toHaveBeenLastCalledWith({
+      difficultyEnabled: true,
       behavior: "fill-missing",
       style: "dreaming",
       size: "small",
@@ -83,7 +105,7 @@ describe("options page", () => {
 
   it("restores and persists default settings", async () => {
     const storage = await loadOptions({
-      behavior: "original",
+      difficultyEnabled: false,
       style: "dreaming",
       size: "large",
       position: "upper-right",
@@ -91,7 +113,8 @@ describe("options page", () => {
     document.querySelector("#reset-options").click();
 
     await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
-    expect(storage.set).toHaveBeenLastCalledWith(globalThis.DreamingDifficultyCore.DEFAULT_SETTINGS);
+    expect(storage.set).toHaveBeenLastCalledWith(globalThis.DreamingToolsSettings.DEFAULT_SETTINGS);
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(true);
     expect(document.querySelector('[name="size"]')?.value).toBe("small");
     expect(document.querySelector('[name="position"]')?.value).toBe("upper-right");
     expect(document.querySelector("#status")?.textContent).toBe("Defaults restored.");

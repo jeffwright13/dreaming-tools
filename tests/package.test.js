@@ -101,7 +101,7 @@ describe("beta packaging", () => {
 
   it("rejects missing files and invalid icon dimensions", async () => {
     const missing = await fixtureDirectory();
-    await rm(path.join(missing, "src/core.js"));
+    await rm(path.join(missing, "src/difficulty-core.js"));
     await expect(validatePackageInputs(missing)).rejects.toThrow();
 
     const invalidIcon = await fixtureDirectory();

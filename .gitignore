@@ -3,6 +3,7 @@ coverage/
 dist/
 *.zip
 .DS_Store
+*.swp
 .vscode/
 .env
 .env.*

@@ -1,4 +1,22 @@
-# Dreaming Difficulty Specification
+# Dreaming Tools Specification
+
+## Features
+
+Dreaming Tools is one Manifest V3 extension made of independent features. Each feature has its own enable switch in the options page and keeps working whether the other features are on or off.
+
+Content scripts load in this order, sharing state through `globalThis` namespaces because Manifest V3 content scripts cannot use ES module imports:
+
+1. `settings.js` (`DreamingToolsSettings`): defaults, valid values, and normalization for every feature's settings.
+2. Feature files, for example `difficulty-core.js` and `difficulty.js`.
+3. `content.js` (`DreamingToolsContent`): reads settings, creates each feature, and passes it the full normalized settings object at startup and after every synchronized change.
+
+A feature exposes a `name` and one method, `update(settings)`. It starts itself when its switch is on, refreshes when other settings change, and stops and restores the page when its switch is off. `update` may be called again before an earlier call has resolved, for example while a feature is still downloading data; implementations must converge on the settings from the most recent call regardless of the order in which earlier calls finish. Errors thrown by one feature are logged as `Dreaming Tools NAME feature failed to update.` and do not prevent other features from updating.
+
+`content.js` keeps the raw stored values, applies each synchronized change to them (a removed key returns to its default), and normalizes the result for every update, so legacy migrations see whether a key was actually stored. The change listener is registered before the first update so that changes made while a feature is still starting are applied. Features must touch only their own page elements and extension-owned class names so that enabled features do not interfere.
+
+Current features:
+
+- Difficulty badges (`difficultyEnabled`), described below.
 
 ## Language selection
 
@@ -14,6 +32,12 @@ round(clamp((difficultyScore - 200) / 24, 0, 100))
 
 Match rendered videos by their `data-video-id` attribute.
 
+### Dreaming's native behavior
+
+Dreaming shows a difficulty badge on Browse thumbnails only when the list is sorted by difficulty. With no sort (`/spanish/browse`) or with a non-difficulty sort (`?sort=random`, `short`, `long`, `old`, or `new`), thumbnails show only the video duration. With `?sort=easy` or `?sort=hard`, thumbnails also show Dreaming's own difficulty badge (`.ds-video-thumbnail__badge--vocab-range`). Other views, such as Library and series cards, do not show native difficulty.
+
+The extension never reads the `sort` parameter. It decides per thumbnail by checking whether the native badge is present, so it keeps working if Dreaming changes which sorts or views show difficulty. As a result, Fill missing and Enhanced everywhere look different only where native badges exist, which on Browse means the Easy and Hard sorts.
+
 ## Series difficulty
 
 Match a series using the 24-character ID in its image URL or `series` URL parameter. Collect rounded difficulties for all scored catalog videos with that `seriesId`.
@@ -26,24 +50,27 @@ On a watch page, read the video ID from the `id` URL parameter and insert chips 
 
 Watch-to-watch navigation is client-side and may reuse or replace the badge row, so chips are updated when the URL's video ID changes. Because the page observer reruns enhancement on every child-node change, chip updates must not modify child nodes when chips are already current.
 
-Chips apply the configured style. Size and position apply only to thumbnail badges. Original behavior removes the chips. Both other behaviors insert them, because Dreaming shows no difficulty on the watch page.
+Chips apply the configured style. Size and position apply only to thumbnail badges. Disabling the feature removes the chips. Both behaviors insert them, because Dreaming shows no difficulty on the watch page.
 
 ## Options
 
-Store synchronized settings with these defaults:
+Store synchronized settings in one flat object with these defaults:
 
+- Difficulty badges enabled: on
 - Behavior: Fill missing difficulties only
 - Style: Dreaming
 - Size: Small
 - Position: Upper right
 
-Enhanced-everywhere behavior hides native difficulty badges and inserts configured badges. Fill-missing behavior preserves native badges and inserts configured badges only where needed. Original behavior removes extension badges and restores native badges.
+Enhanced-everywhere behavior hides native difficulty badges and inserts configured badges. Fill-missing behavior preserves native badges and inserts configured badges only where needed. Disabling the feature removes extension badges, restores native badges, stops observing the page, and skips the catalog download.
 
 Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. A restore-defaults action saves and displays the default settings. Changes apply to open Dreaming pages through storage change events when the current content script is active.
 
+Read stored settings by key list (`SETTING_KEYS`), not by passing defaults to `chrome.storage.sync.get`, so that missing keys stay distinguishable from stored ones. A legacy stored `behavior: "original"` from versions before the enable switch migrates to `difficultyEnabled: false` with the default behavior, unless `difficultyEnabled` is stored explicitly.
+
 ## Dynamic content
 
-Process the initial document after downloading the catalog. Observe descendant additions and reprocess the document on the next animation frame. Badge insertion must be idempotent.
+When the difficulty feature is enabled, process the initial document after downloading the catalog. Observe descendant additions and reprocess the document on the next animation frame. Badge insertion must be idempotent.
 
 ## Supported views
 
@@ -51,12 +78,12 @@ Process the initial document after downloading the catalog. Observe descendant a
 - Library series cards
 - Series catalog cards
 - Series modal cover and episode cards
-- Browse cards with native difficulty badges
+- Browse cards, with or without native difficulty badges depending on sort order
 - Watch page metadata for Dreaming's player and embedded YouTube videos
 
 ## Distribution package
 
-Build `dist/dreaming-difficulty-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and six `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
+Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and eight `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
 
 ## Browser compatibility
 
@@ -70,4 +97,4 @@ Request only synchronized storage and Dreaming host access. Catalog requests mus
 
 ## Failure behavior
 
-If the catalog cannot be downloaded or parsed, leave the page unchanged and report one error in the browser console.
+If the catalog cannot be downloaded or parsed, leave the page unchanged and report one error in the browser console. The next settings update retries the download.

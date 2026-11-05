@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import "../src/core.js";
+import "../src/difficulty-core.js";
 
 const {
   buildCatalogIndexes,
@@ -8,47 +8,7 @@ const {
   formatDifficultyRange,
   getCatalogUrl,
   getLanguageCode,
-  normalizeSettings,
 } = globalThis.DreamingDifficultyCore;
-
-describe("settings", () => {
-  it("supplies conservative defaults for a fresh installation", () => {
-    expect(normalizeSettings({})).toEqual({
-      behavior: "fill-missing",
-      style: "dreaming",
-      size: "small",
-      position: "upper-right",
-    });
-  });
-
-  it("replaces invalid and unsupported values with defaults", () => {
-    expect(normalizeSettings({
-      behavior: "invalid",
-      style: "invalid",
-      size: "large",
-      position: "lower-right",
-    })).toEqual({
-      behavior: "fill-missing",
-      style: "dreaming",
-      size: "large",
-      position: "upper-right",
-    });
-  });
-
-  it("preserves valid enhanced settings already stored by a user", () => {
-    expect(normalizeSettings({
-      behavior: "enhanced-everywhere",
-      style: "enhanced",
-      size: "medium",
-      position: "upper-left",
-    })).toEqual({
-      behavior: "enhanced-everywhere",
-      style: "enhanced",
-      size: "medium",
-      position: "upper-left",
-    });
-  });
-});
 
 describe("language selection", () => {
   it.each([

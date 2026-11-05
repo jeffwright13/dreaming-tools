@@ -48,7 +48,8 @@ Live-site tests remain manual because Dreaming pages require account state and c
 
 Test these views where available:
 
-- Browse with native difficulty badges
+- Browse with no sort and with each non-difficulty sort (Random, Short, Long, Old, New): Dreaming shows only durations, so extension badges appear in both behaviors
+- Browse sorted by Easy and by Hard: Dreaming's own difficulty badges remain in Fill missing only and are replaced by extension badges in Enhanced everywhere
 - Library History
 - My list videos
 - My list series
@@ -57,7 +58,8 @@ Test these views where available:
 - Watch page video and series chips with Dreaming's player and YouTube, including sidebar navigation between videos
 - Spanish and French routes
 - Options page and Restore defaults
-- Enhanced everywhere, Fill missing only, and Original Dreaming
+- Difficulty badges switched on and off
+- Enhanced everywhere and Fill missing only
 - Enhanced and Dreaming styles
 - Small, Medium, and Large sizes
 - All four positions

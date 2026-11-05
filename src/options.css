@@ -90,7 +90,7 @@ select {
   position: relative;
 }
 
-#preview-original {
+#preview-disabled {
   align-items: center;
   color: #ffffff;
   display: flex;
@@ -98,7 +98,7 @@ select {
   justify-content: center;
 }
 
-#preview-original[hidden] {
+#preview-disabled[hidden] {
   display: none;
 }
 

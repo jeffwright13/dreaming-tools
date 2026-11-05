@@ -1,8 +1,10 @@
-# Dreaming Difficulty
+# Dreaming Tools
 
-Dreaming Difficulty is a Chrome extension that adds Dreaming difficulty ratings to video cards and watch pages, and difficulty ranges to series cards. It supports Dreaming's Spanish and French sections.
+Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool can be switched on or off independently in the extension options. It supports Dreaming's Spanish and French sections.
 
-It enhances:
+## Difficulty badges
+
+Adds Dreaming difficulty ratings to video cards and watch pages, and difficulty ranges to series cards. It enhances:
 
 - Library history and saved-video cards
 - Library series cards
@@ -11,7 +13,7 @@ It enhances:
 - Watch pages, with video difficulty and series range chips beside the level badge
 - Native difficulty badges when enhanced-everywhere behavior is selected
 
-The extension downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete policies.
+The difficulty tool downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete policies.
 
 ## Browser support
 
@@ -32,6 +34,8 @@ npm install
 npm test
 ```
 
+Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
+
 Generate the V8 coverage report and build the extension package with:
 
 ```bash
@@ -40,7 +44,7 @@ npm run package
 npm run package:verify
 ```
 
-The package is written to `dist/dreaming-difficulty-VERSION.zip` and contains only allowlisted runtime files.
+The package is written to `dist/dreaming-tools-VERSION.zip` and contains only allowlisted runtime files.
 
 ## Load the extension locally
 
@@ -49,7 +53,7 @@ The package is written to `dist/dreaming-difficulty-VERSION.zip` and contains on
 3. Click **Load unpacked**.
 4. Select the directory that matches how you are running the extension:
    - **Development:** this repository directory—not `src/`. Reloading the extension then picks up your working-tree edits.
-   - **Released build:** the directory you extracted from a `dreaming-difficulty-VERSION.zip` archive (see [docs/BETA.md](docs/BETA.md)).
+   - **Released build:** the directory you extracted from a `dreaming-tools-VERSION.zip` archive (see [docs/BETA.md](docs/BETA.md)).
 5. Open or reload a Dreaming page.
 
 Chrome reloads an unpacked extension from the directory it was originally loaded from. If code changes do not appear after reloading, open the extension's **Details** page and check **Source**; an extracted release archive will not reflect repository edits. Remove it and load the repository directory instead.
@@ -60,11 +64,14 @@ After changing extension code, return to `chrome://extensions`, click the extens
 
 Open the extension's **Details** page in `chrome://extensions` and select **Extension options**. Settings synchronize through Chrome when browser sync is enabled.
 
+**Show difficulty badges** switches the difficulty tool on or off. When it is off, the extension makes no badge changes and does not download the catalog.
+
 Behavior choices:
 
 - **Enhanced everywhere** replaces native badges and adds missing video and series badges.
 - **Fill missing difficulties only** preserves native badges and adds badges where Dreaming omits them.
-- **Original Dreaming** makes no badge changes.
+
+Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. With no sort or any other sort (Random, Short, Long, Old, New) it shows only durations, so both behaviors add badges there; the two behaviors differ only where native badges are present.
 
 Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings.
 
@@ -79,9 +86,9 @@ The complete browser/platform matrix and security checks are in [docs/TESTING.md
 - Library My list series
 - Series catalog cards
 - Series popup cover and individual episodes
-- Browse cards with native difficulty badges
+- Browse cards with no sort, a non-difficulty sort, and the Easy and Hard sorts
 
-Change each behavior mode in Extension options and verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Difficulty`.
+Switch the difficulty tool off and on and change each behavior mode in Extension options, then verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Tools`.
 
 ## Community beta
 

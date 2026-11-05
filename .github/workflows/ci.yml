@@ -42,7 +42,9 @@ jobs:
 
       - name: Validate manifest
         run: |
-          node --check src/core.js
+          node --check src/settings.js
+          node --check src/difficulty-core.js
+          node --check src/difficulty.js
           node --check src/content.js
           node --check src/options.js
           node --check scripts/package-extension.js
@@ -57,7 +59,7 @@ jobs:
       - name: Upload extension package
         uses: actions/upload-artifact@v4
         with:
-          name: dreaming-difficulty-extension
+          name: dreaming-tools-extension
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 14

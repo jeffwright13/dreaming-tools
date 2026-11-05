@@ -3,19 +3,27 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dreaming Difficulty options</title>
-    <link rel="stylesheet" href="content.css">
+    <title>Dreaming Tools options</title>
+    <link rel="stylesheet" href="difficulty.css">
     <link rel="stylesheet" href="options.css">
   </head>
   <body>
     <main>
-      <h1>Dreaming Difficulty</h1>
-      <p class="intro">Choose how difficulty badges appear across Dreaming.</p>
+      <h1>Dreaming Tools</h1>
+      <p class="intro">Choose which tools run on Dreaming and how they look.</p>
 
       <form id="settings-form">
+        <section class="panel" aria-labelledby="difficulty-heading">
+          <h2 id="difficulty-heading">Difficulty badges</h2>
+          <label class="radio-option">
+            <input type="checkbox" name="difficultyEnabled">
+            <span><strong>Show difficulty badges</strong><small>Add difficulty ratings to video cards, series cards, and watch pages.</small></span>
+          </label>
+        </section>
+
         <section class="panel" aria-labelledby="behavior-heading">
-          <h2 id="behavior-heading">Extension behavior</h2>
-          <fieldset class="control-group" aria-labelledby="behavior-heading">
+          <h2 id="behavior-heading">Badge behavior</h2>
+          <fieldset id="behavior-controls" class="control-group" aria-labelledby="behavior-heading">
             <label class="radio-option">
               <input type="radio" name="behavior" value="enhanced-everywhere">
               <span><strong>Enhanced everywhere</strong><small>Use configured badges on every supported video and series.</small></span>
@@ -23,10 +31,6 @@
             <label class="radio-option">
               <input type="radio" name="behavior" value="fill-missing">
               <span><strong>Fill missing difficulties only</strong><small>Preserve Dreaming badges and add configured badges where they are absent.</small></span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="behavior" value="original">
-              <span><strong>Original Dreaming</strong><small>Do not add, hide, move, or restyle difficulty badges.</small></span>
             </label>
           </fieldset>
         </section>
@@ -64,7 +68,7 @@
           <h2 id="preview-heading">Preview</h2>
           <div class="preview-thumbnail ds-video-thumbnail">
             <span id="preview-badge">42</span>
-            <span id="preview-original">Original Dreaming behavior</span>
+            <span id="preview-disabled">Difficulty badges are off</span>
           </div>
         </section>
 
@@ -75,7 +79,7 @@
         </div>
       </form>
     </main>
-    <script src="core.js"></script>
+    <script src="settings.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

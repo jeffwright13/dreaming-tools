@@ -8,12 +8,14 @@ export const RUNTIME_FILES = Object.freeze([
   "icons/icon-32.png",
   "icons/icon-48.png",
   "icons/icon-128.png",
-  "src/content.css",
   "src/content.js",
-  "src/core.js",
+  "src/difficulty-core.js",
+  "src/difficulty.css",
+  "src/difficulty.js",
   "src/options.css",
   "src/options.html",
   "src/options.js",
+  "src/settings.js",
 ]);
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
@@ -187,7 +189,7 @@ export async function verifyPackage(rootDirectory, archivePath) {
 async function run() {
   const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const { version } = await validatePackageInputs(rootDirectory);
-  const archivePath = path.join(rootDirectory, "dist", `dreaming-difficulty-${version}.zip`);
+  const archivePath = path.join(rootDirectory, "dist", `dreaming-tools-${version}.zip`);
   if (process.argv[2] === "--verify") {
     await verifyPackage(rootDirectory, process.argv[3] ? path.resolve(process.argv[3]) : archivePath);
     console.log(`Verified ${path.relative(rootDirectory, archivePath)}`);
