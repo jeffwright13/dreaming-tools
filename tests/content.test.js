@@ -9,7 +9,7 @@ import "../src/subtitles.js";
 import "../src/content.js";
 
 const { DEFAULT_SETTINGS, SETTING_KEYS } = globalThis.DreamingToolsSettings;
-const { initialize } = globalThis.DreamingToolsContent;
+const { initialize, selectFeatures } = globalThis.DreamingToolsContent;
 
 function stubChromeStorage(stored = {}) {
   const listeners = [];
@@ -21,6 +21,12 @@ function stubChromeStorage(stored = {}) {
     },
   });
   return { get, listeners };
+}
+
+// The parts of window.location that selectFeatures reads.
+function place(href, ancestorOrigins = []) {
+  const { hostname, pathname } = new URL(href);
+  return { hostname, pathname, ancestorOrigins };
 }
 
 function fakeFeature(name = "fake") {
@@ -117,7 +123,7 @@ describe("initialize", () => {
     const { listeners } = stubChromeStorage({ difficultyEnabled: false, subtitlesEnabled: true });
     vi.stubGlobal("fetch", vi.fn());
 
-    await initialize();
+    await initialize(selectFeatures(place("https://app.dreaming.com/spanish/library")));
 
     expect(fetch).not.toHaveBeenCalled();
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
@@ -127,3 +133,34 @@ describe("initialize", () => {
     await vi.waitFor(() => expect(document.documentElement.classList.contains("dt-subtitles")).toBe(false));
   });
 });
+
+describe("selectFeatures", () => {
+  const names = (features) => features.map((feature) => feature.name);
+
+  it("runs every feature on Dreaming pages", () => {
+    expect(names(selectFeatures(place("https://app.dreaming.com/spanish/watch")))).toEqual(["difficulty", "subtitles"]);
+  });
+
+  it("runs only subtitles inside a YouTube embed on a Dreaming page", () => {
+    const youtube = place("https://www.youtube.com/embed/abc", ["https://app.dreaming.com"]);
+    expect(names(selectFeatures(youtube))).toEqual(["subtitles"]);
+  });
+
+  it.each([
+    ["embedded on another site", ["https://example.com"]],
+    ["opened directly", []],
+    ["nested inside another site's frame on Dreaming", ["https://example.com", "https://app.dreaming.com"]],
+  ])("runs nothing in a YouTube embed %s", (_, ancestors) => {
+    expect(selectFeatures(place("https://www.youtube.com/embed/abc", ancestors))).toEqual([]);
+  });
+
+  it("does not read settings or listen for changes when no feature applies", async () => {
+    const { get, listeners } = stubChromeStorage();
+
+    await initialize([]);
+
+    expect(get).not.toHaveBeenCalled();
+    expect(listeners).toHaveLength(0);
+  });
+});
+

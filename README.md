@@ -19,7 +19,7 @@ The difficulty tool downloads the public catalog for the language in the current
 
 For listen-only practice: keeps the player's subtitles unreadable until you deliberately reveal them, for example to check an unfamiliar word. It is off by default.
 
-The player's own **Settings > Subtitles** stays in charge. With it set to Off, nothing changes. With it set to Spanish (or French), the extension blurs, shrinks and fades, or hides the subtitle line, and a reveal key (`S` by default) shows it, either while held or as a toggle with optional auto-hide. The key is ignored while you type in a text field and when Ctrl, Alt, or Cmd is held. Picture-in-picture does not show Dreaming's subtitles, so the tool has no effect there.
+The player's own subtitle control stays in charge: **Settings > Subtitles** on Dreaming's player, or the **CC** button on videos Dreaming serves through YouTube. With subtitles off, nothing changes. With them on, the extension blurs, shrinks and fades, or hides the subtitle line, and a reveal key (`S` by default) shows it, either while held or as a toggle with optional auto-hide. The key is ignored while you type in a text field and when Ctrl, Alt, or Cmd is held. Picture-in-picture does not show Dreaming's subtitles, so the tool has no effect there. For YouTube-served videos the extension also runs inside YouTube's embedded player, only when it is embedded in Dreaming; see [PRIVACY.md](PRIVACY.md).
 
 ## Browser support
 

@@ -3,7 +3,10 @@
   // this container only while the player's Settings > Subtitles is set to a
   // language; with Subtitles off the container is removed from the page. The
   // class comes from the Shaka library, not from Dreaming's generated names.
-  const SUBTITLE_CONTAINER_SELECTOR = ".shaka-text-container";
+  const SHAKA_CONTAINER_SELECTOR = ".shaka-text-container";
+  const MESSAGE_SOURCE = "dreaming-tools";
+  const MESSAGE_TYPE = "subtitles-reveal";
+  const REMOTE_EVENTS = new Set(["press", "release", "blur"]);
   const ROOT_CLASS = "dt-subtitles";
   const REVEALED_CLASS = "dt-subtitles--revealed";
   const STYLE_CLASS_PREFIX = "dt-subtitles--style-";
@@ -19,14 +22,42 @@
   // The feature never edits the player. It only sets classes on <html>, and
   // subtitles.css styles the subtitle container through them, so a container
   // the player removes and re-creates is styled without observing the page.
-  function createSubtitlesFeature({ root = document.documentElement, target = window } = {}) {
+  //
+  // YouTube-served videos draw captions inside a cross-origin YouTube frame,
+  // where a second instance of this feature runs. Keys pressed while focus is
+  // on the Dreaming page never reach that frame, so the Dreaming instance
+  // forwards them (forwardTargets/forwardOrigin) and the frame instance
+  // applies messages only from the Dreaming origin (acceptOrigin).
+  function createSubtitlesFeature({
+    root = document.documentElement,
+    target = window,
+    containerSelector = SHAKA_CONTAINER_SELECTOR,
+    forwardTargets = () => [],
+    forwardOrigin = null,
+    acceptOrigin = null,
+  } = {}) {
     let settings = null;
     let revealed = false;
     let autoHideTimer = null;
     let listening = false;
 
     function subtitlesShown() {
-      return root.ownerDocument.querySelector(SUBTITLE_CONTAINER_SELECTOR) !== null;
+      return root.ownerDocument.querySelector(containerSelector) !== null;
+    }
+
+    function frameTargets() {
+      return forwardOrigin ? forwardTargets() : [];
+    }
+
+    function forward(frames, event) {
+      for (const frame of frames) {
+        frame.postMessage({ source: MESSAGE_SOURCE, type: MESSAGE_TYPE, event }, forwardOrigin);
+      }
+    }
+
+    function consume(event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
 
     function clearAutoHide() {
@@ -49,14 +80,26 @@
     // Listeners run in the capture phase on window, before the player's own
     // handlers, so a handled reveal key can be kept from the player.
     function onKeyDown(event) {
-      if (!isRevealKeyPress(event, settings.revealKey) || isTypingTarget(event.target) || !subtitlesShown()) {
+      if (!isRevealKeyPress(event, settings.revealKey) || isTypingTarget(event.target)) {
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
-      if (!event.repeat) {
-        setRevealed(nextRevealState(revealed, "press", settings));
+      if (subtitlesShown()) {
+        consume(event);
+        if (!event.repeat) {
+          setRevealed(nextRevealState(revealed, "press", settings));
+        }
+        return;
+      }
+
+      // The caption state inside a YouTube frame is not visible from here, so
+      // the key is forwarded whenever a YouTube player is present.
+      const frames = frameTargets();
+      if (frames.length > 0) {
+        consume(event);
+        if (!event.repeat) {
+          forward(frames, "press");
+        }
       }
     }
 
@@ -66,15 +109,27 @@
       }
 
       // Release even if the player's subtitles were turned off while held.
-      if (subtitlesShown()) {
-        event.preventDefault();
-        event.stopPropagation();
+      const frames = frameTargets();
+      if (subtitlesShown() || frames.length > 0) {
+        consume(event);
       }
+      forward(frames, "release");
       setRevealed(nextRevealState(revealed, "release", settings));
     }
 
     function onBlur() {
+      forward(frameTargets(), "blur");
       setRevealed(nextRevealState(revealed, "blur", settings));
+    }
+
+    function onMessage(event) {
+      const { data } = event;
+      if (event.origin !== acceptOrigin || data?.source !== MESSAGE_SOURCE || data.type !== MESSAGE_TYPE
+        || !REMOTE_EVENTS.has(data.event)) {
+        return;
+      }
+
+      setRevealed(nextRevealState(revealed, data.event, settings));
     }
 
     function setStyleClass(style) {
@@ -91,6 +146,9 @@
       target.addEventListener("keydown", onKeyDown, true);
       target.addEventListener("keyup", onKeyUp, true);
       target.addEventListener("blur", onBlur);
+      if (acceptOrigin) {
+        target.addEventListener("message", onMessage);
+      }
       listening = true;
     }
 
@@ -98,6 +156,7 @@
       target.removeEventListener("keydown", onKeyDown, true);
       target.removeEventListener("keyup", onKeyUp, true);
       target.removeEventListener("blur", onBlur);
+      target.removeEventListener("message", onMessage);
       listening = false;
       clearAutoHide();
       revealed = false;

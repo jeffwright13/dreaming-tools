@@ -192,3 +192,109 @@ describe("subtitles feature", () => {
     expect(addListener.mock.calls.filter(([type]) => type === "keydown")).toHaveLength(1);
   });
 });
+
+describe("YouTube-served videos on the Dreaming page", () => {
+  const YOUTUBE_PLAYER = '<div class="ds-youtube-player"><iframe src="about:blank"></iframe></div>';
+  let frameWindow;
+  let topFeature;
+
+  beforeEach(() => {
+    document.body.innerHTML = YOUTUBE_PLAYER;
+    frameWindow = document.querySelector("iframe").contentWindow;
+    vi.spyOn(frameWindow, "postMessage");
+    topFeature = createSubtitlesFeature({
+      forwardTargets: () => [...document.querySelectorAll(".ds-youtube-player iframe")].map((frame) => frame.contentWindow),
+      forwardOrigin: "https://www.youtube.com",
+    });
+  });
+
+  afterEach(async () => {
+    await topFeature.update({ ...DEFAULT_SETTINGS, subtitlesEnabled: false });
+  });
+
+  const message = (event) => ({ source: "dreaming-tools", type: "subtitles-reveal", event });
+
+  it("forwards the reveal key to the YouTube frame and keeps it from the page", async () => {
+    await topFeature.update(ENABLED);
+
+    expect(press("keydown").defaultPrevented).toBe(true);
+    expect(press("keydown", { repeat: true }).defaultPrevented).toBe(true);
+    press("keyup");
+    window.dispatchEvent(new Event("blur"));
+
+    expect(frameWindow.postMessage.mock.calls).toEqual([
+      [message("press"), "https://www.youtube.com"],
+      [message("release"), "https://www.youtube.com"],
+      [message("blur"), "https://www.youtube.com"],
+    ]);
+  });
+
+  it("does not forward while typing, for other keys, or when disabled", async () => {
+    await topFeature.update(ENABLED);
+    document.body.insertAdjacentHTML("beforeend", "<input>");
+    press("keydown", {}, document.querySelector("input"));
+    press("keydown", { code: "KeyD" });
+    await topFeature.update({ ...ENABLED, subtitlesEnabled: false });
+    press("keydown");
+
+    expect(frameWindow.postMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe("inside the YouTube frame", () => {
+  const DREAMING_ORIGIN = "https://app.dreaming.com";
+  const CAPTIONS_ON = '<div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>';
+  let frameFeature;
+
+  function receive(data, origin = DREAMING_ORIGIN) {
+    window.dispatchEvent(new MessageEvent("message", { data, origin }));
+  }
+
+  beforeEach(() => {
+    document.body.innerHTML = CAPTIONS_ON;
+    frameFeature = createSubtitlesFeature({
+      containerSelector: ".ytp-caption-window-container",
+      acceptOrigin: DREAMING_ORIGIN,
+    });
+  });
+
+  afterEach(async () => {
+    await frameFeature.update({ ...DEFAULT_SETTINGS, subtitlesEnabled: false });
+  });
+
+  it("handles the reveal key pressed inside the frame", async () => {
+    await frameFeature.update(ENABLED);
+
+    expect(press("keydown").defaultPrevented).toBe(true);
+    expect(revealed()).toBe(true);
+  });
+
+  it("applies reveal events forwarded from the Dreaming page", async () => {
+    await frameFeature.update(ENABLED);
+
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
+    expect(revealed()).toBe(true);
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "release" });
+    expect(revealed()).toBe(false);
+  });
+
+  it("ignores messages from other origins, other senders, and unknown events", async () => {
+    await frameFeature.update(ENABLED);
+
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" }, "https://example.com");
+    receive({ source: "someone-else", type: "subtitles-reveal", event: "press" });
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "explode" });
+    receive("press");
+
+    expect(revealed()).toBe(false);
+  });
+
+  it("stops listening for messages when disabled", async () => {
+    await frameFeature.update(ENABLED);
+    await frameFeature.update({ ...ENABLED, subtitlesEnabled: false });
+
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
+    expect(revealed()).toBe(false);
+  });
+});
+

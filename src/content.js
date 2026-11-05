@@ -1,11 +1,40 @@
 (() => {
   const { SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
 
-  function createDefaultFeatures() {
-    return [
-      globalThis.DreamingDifficultyFeature.createDifficultyFeature(location.pathname),
-      globalThis.DreamingSubtitlesFeature.createSubtitlesFeature(),
-    ];
+  const DREAMING_ORIGIN = "https://app.dreaming.com";
+  const DREAMING_HOSTNAME = "app.dreaming.com";
+  const YOUTUBE_HOSTNAME = "www.youtube.com";
+  const YOUTUBE_ORIGIN = "https://www.youtube.com";
+  const YOUTUBE_FRAME_SELECTOR = ".ds-youtube-player iframe";
+
+  // This script runs on Dreaming pages and, for YouTube-served videos, inside
+  // YouTube embed frames. The manifest cannot restrict a content script by
+  // the page that embeds a frame, so a YouTube frame checks its immediate
+  // parent and runs nothing unless that parent is Dreaming.
+  function selectFeatures(place) {
+    if (place.hostname === DREAMING_HOSTNAME) {
+      return [
+        globalThis.DreamingDifficultyFeature.createDifficultyFeature(place.pathname),
+        globalThis.DreamingSubtitlesFeature.createSubtitlesFeature({
+          forwardTargets: () => [...document.querySelectorAll(YOUTUBE_FRAME_SELECTOR)]
+            .map((frame) => frame.contentWindow)
+            .filter(Boolean),
+          forwardOrigin: YOUTUBE_ORIGIN,
+        }),
+      ];
+    }
+
+    const parentOrigin = place.ancestorOrigins?.[0];
+    if (place.hostname === YOUTUBE_HOSTNAME && parentOrigin === DREAMING_ORIGIN && place.ancestorOrigins.length === 1) {
+      return [
+        globalThis.DreamingSubtitlesFeature.createSubtitlesFeature({
+          containerSelector: ".ytp-caption-window-container",
+          acceptOrigin: DREAMING_ORIGIN,
+        }),
+      ];
+    }
+
+    return [];
   }
 
   // Each feature updates independently: a failure in one is logged and must
@@ -35,7 +64,11 @@
     return next;
   }
 
-  async function initialize(features = createDefaultFeatures()) {
+  async function initialize(features = selectFeatures(location)) {
+    if (features.length === 0) {
+      return;
+    }
+
     let stored = await chrome.storage.sync.get(SETTING_KEYS);
 
     // Register before the first update so changes made while a feature is
@@ -52,7 +85,7 @@
     await updateFeatures(features, normalizeSettings(stored));
   }
 
-  globalThis.DreamingToolsContent = { initialize };
+  globalThis.DreamingToolsContent = { initialize, selectFeatures };
 
   if (globalThis.chrome?.runtime?.id && typeof document !== "undefined") {
     initialize();

@@ -34,6 +34,22 @@
         "src/subtitles.css"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/embed/*"
+      ],
+      "all_frames": true,
+      "js": [
+        "src/settings.js",
+        "src/subtitles-core.js",
+        "src/subtitles.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/subtitles.css"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "options_ui": {

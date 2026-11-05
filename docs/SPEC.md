@@ -88,6 +88,14 @@ Revealing removes the style. The reveal key is a physical key code (`KeyboardEve
 
 Key listeners run in the capture phase on `window`, before the player's handlers. A matching key press is handled, and kept from the page with `preventDefault` and `stopPropagation`, only when subtitles are shown, the event target is not a text field, select, or editable element, and Ctrl, Alt, and Cmd are not held; Shift is allowed. Otherwise the key reaches the page unchanged. A release always hides in Hold mode, even if the player's subtitles were turned off while the key was held. Losing window focus hides the subtitles, because the release may never arrive. Changing the reveal mode, key, or auto-hide returns to hidden. Disabling the feature removes its classes, listeners, and timer.
 
+### YouTube-served videos
+
+Many Dreaming videos are served through YouTube: the watch page shows `div.ds-youtube-player` containing a cross-origin `https://www.youtube.com/embed/...` iframe, there is no Dreaming settings menu, and captions are switched with YouTube's own CC control. Page scripts and stylesheets cannot reach into that frame, so a second content script runs in YouTube embed frames (`all_frames`) with `settings.js`, `subtitles-core.js`, `subtitles.js`, `content.js`, and `subtitles.css`.
+
+`content.js` chooses features from its location: on `app.dreaming.com` it runs difficulty and subtitles; in `www.youtube.com` it runs subtitles only when `location.ancestorOrigins` is exactly `["https://app.dreaming.com"]`, so YouTube embeds on other sites, nested embeds, and directly opened embeds run nothing and read no settings. The stylesheet is inert elsewhere because its rules require the `<html>` classes. Inside the frame, the feature styles `.ytp-caption-window-container`, YouTube's caption layer, with the same styles; YouTube's CC control decides whether captions exist. YouTube's class names are not a public interface and may change.
+
+Keys go to whichever frame has focus. Inside the YouTube frame, the feature handles the reveal key itself. On the Dreaming page, when Dreaming's own subtitle container is absent but a YouTube player is present, the feature consumes the reveal key (it cannot see whether YouTube captions are on) and forwards `press` (not repeats), `release`, and window `blur` with `postMessage({ source: "dreaming-tools", type: "subtitles-reveal", event }, "https://www.youtube.com")`. The frame applies only messages whose origin is `https://app.dreaming.com` and whose fields match exactly. Focus moving between the page and the frame blurs one of them, which re-hides the captions.
+
 Picture-in-picture shows only the video element, so Shaka's subtitles, and therefore this feature, are not visible there.
 
 The options page reuses `subtitles.css` for a preview by setting the same `<html>` classes, and pressing and holding the preview reveals it. The reveal key is chosen by clicking the key button and pressing a key; Escape cancels and disallowed keys are rejected with a message. Auto-hide is shown only in Toggle mode.
@@ -119,7 +127,7 @@ Automated unit and DOM tests are required for every change. Fixture-based browse
 
 ## Security and privacy
 
-Request only synchronized storage and Dreaming host access. Catalog requests must omit credentials. Store only normalized display and keyboard preferences. Do not add analytics, advertising, remote code, credential access, cookie access, account-data collection, or premium-access bypass. Public disclosures live in `PRIVACY.md` and `SECURITY.md`.
+Request only synchronized storage, Dreaming host access, and a content script for YouTube embedded players that acts only when embedded directly in Dreaming. Catalog requests must omit credentials. Store only normalized display and keyboard preferences. Do not add analytics, advertising, remote code, credential access, cookie access, account-data collection, or premium-access bypass. Public disclosures live in `PRIVACY.md` and `SECURITY.md`.
 
 ## Failure behavior
 

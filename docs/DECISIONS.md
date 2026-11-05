@@ -88,3 +88,7 @@ Learners differ, so reveal is configurable: Hold (default, because releasing the
 
 Saving through `FormData` reset a switched-off feature's settings, because `FormData` omits controls inside a disabled fieldset; the difficulty options had this bug since the enable switch was added. The options page now reads every setting from its control, which also handles checkbox and numeric values explicitly.
 
+## 2026-11-05: Extend subtitles into YouTube embeds with a guarded content script
+
+Dreaming now serves many videos through a cross-origin YouTube embed, whose captions the Dreaming page cannot style or observe. A second content script runs in `https://www.youtube.com/embed/*` frames and acts only when its immediate and only ancestor is `https://app.dreaming.com`; the manifest cannot express that restriction, so the check runs first and exits otherwise. This adds www.youtube.com to Chrome's install warning, which was accepted because otherwise the feature would not work on most current videos; the privacy policy discloses the access. Reveal keys pressed on the Dreaming page are forwarded to the frame by `postMessage` with an exact target origin, and the frame accepts only Dreaming-origin messages of a fixed shape, so other pages cannot drive it. Drawing replacement captions from YouTube caption data was rejected as far more complex and as requiring the extension to handle subtitle text. YouTube's caption class names are not a public interface, a documented maintenance risk.
+

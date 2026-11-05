@@ -35,7 +35,7 @@ The extension stores only these preferences:
 - Badge position
 - Subtitle style, reveal mode, reveal key, and auto-hide delay
 
-The subtitles tool listens for its reveal key on Dreaming pages only to show or hide subtitles. It does not record, store, or transmit keystrokes or subtitle text.
+The subtitles tool listens for its reveal key on Dreaming pages, and inside YouTube video players embedded in Dreaming pages, only to show or hide subtitles. It does not record, store, or transmit keystrokes or subtitle text.
 
 Preferences are stored with `chrome.storage.sync`. Chrome may synchronize them through the user's Google account according to Google's Chrome Sync policies. The developer does not receive or control that synchronization. Users can restore defaults from the options page, clear extension data in Chrome, or uninstall the extension.
 
@@ -43,7 +43,9 @@ Preferences are stored with `chrome.storage.sync`. Chrome may synchronize them t
 
 The `storage` permission saves and synchronizes the preferences listed above.
 
-Access to `https://app.dreaming.com/*` lets the extension add badges to supported Dreaming pages and retrieve public language catalogs. The extension does not use cookie, history, tabs, web-request, or credential permissions.
+Access to `https://app.dreaming.com/*` lets the extension add badges to supported Dreaming pages and retrieve public language catalogs. The extension also runs a small script and stylesheet in YouTube embedded players (`https://www.youtube.com/embed/*`), because Dreaming serves many videos through YouTube and their captions are drawn inside YouTube's player. The script first checks that the player is embedded directly in a Dreaming page and does nothing otherwise. Inside Dreaming it only blurs, fades, or hides YouTube's captions and shows them when the reveal key is pressed; it does not read caption text, YouTube account data, or viewing activity. Chrome describes this access as reading and changing data on www.youtube.com.
+
+The extension does not use cookie, history, tabs, web-request, or credential permissions.
 
 ## Data sharing and retention
 
