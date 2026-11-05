@@ -38,7 +38,8 @@ To uninstall, select **Remove** on the extension card in `chrome://extensions`, 
 Record the extension version, browser version, operating system, Dreaming language, account type, route, and extension settings. Exercise:
 
 - Spanish and French routes where available
-- Browse with native difficulty badges
+- Browse with no sort and with each non-difficulty sort (Random, Short, Long, Old, New): Dreaming shows only durations, so extension badges appear in both behaviors
+- Browse sorted by Easy and by Hard: Dreaming's own difficulty badges remain in Fill missing only and are replaced by extension badges in Enhanced everywhere
 - Library History
 - My list videos and series
 - Series catalogs and series modals

@@ -71,6 +71,8 @@ Behavior choices:
 - **Enhanced everywhere** replaces native badges and adds missing video and series badges.
 - **Fill missing difficulties only** preserves native badges and adds badges where Dreaming omits them.
 
+Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. With no sort or any other sort (Random, Short, Long, Old, New) it shows only durations, so both behaviors add badges there; the two behaviors differ only where native badges are present.
+
 Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings.
 
 Saving options updates Dreaming tabs where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
@@ -84,7 +86,7 @@ The complete browser/platform matrix and security checks are in [docs/TESTING.md
 - Library My list series
 - Series catalog cards
 - Series popup cover and individual episodes
-- Browse cards with native difficulty badges
+- Browse cards with no sort, a non-difficulty sort, and the Easy and Hard sorts
 
 Switch the difficulty tool off and on and change each behavior mode in Extension options, then verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Tools`.
 

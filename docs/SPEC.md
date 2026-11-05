@@ -30,6 +30,12 @@ round(clamp((difficultyScore - 200) / 24, 0, 100))
 
 Match rendered videos by their `data-video-id` attribute.
 
+### Dreaming's native behavior
+
+Dreaming shows a difficulty badge on Browse thumbnails only when the list is sorted by difficulty. With no sort (`/spanish/browse`) or with a non-difficulty sort (`?sort=random`, `short`, `long`, `old`, or `new`), thumbnails show only the video duration. With `?sort=easy` or `?sort=hard`, thumbnails also show Dreaming's own difficulty badge (`.ds-video-thumbnail__badge--vocab-range`). Other views, such as Library and series cards, do not show native difficulty.
+
+The extension never reads the `sort` parameter. It decides per thumbnail by checking whether the native badge is present, so it keeps working if Dreaming changes which sorts or views show difficulty. As a result, Fill missing and Enhanced everywhere look different only where native badges exist, which on Browse means the Easy and Hard sorts.
+
 ## Series difficulty
 
 Match a series using the 24-character ID in its image URL or `series` URL parameter. Collect rounded difficulties for all scored catalog videos with that `seriesId`.
@@ -70,7 +76,7 @@ When the difficulty feature is enabled, process the initial document after downl
 - Library series cards
 - Series catalog cards
 - Series modal cover and episode cards
-- Browse cards with native difficulty badges
+- Browse cards, with or without native difficulty badges depending on sort order
 - Watch page metadata for Dreaming's player and embedded YouTube videos
 
 ## Distribution package
