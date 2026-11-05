@@ -96,7 +96,7 @@ Many Dreaming videos are served through YouTube: the watch page shows `div.ds-yo
 
 Keys go to whichever frame has focus. Inside the YouTube frame, the feature handles the reveal key itself. On the Dreaming page, when Dreaming's own subtitle container is absent but a YouTube player is present, the feature consumes the reveal key (it cannot see whether YouTube captions are on) and forwards `press` (not repeats), `release`, and window `blur` with `postMessage({ source: "dreaming-tools", type: "subtitles-reveal", event }, "https://www.youtube.com")`. The frame applies only messages whose origin is `https://app.dreaming.com` and whose fields match exactly. Focus moving between the page and the frame blurs one of them, which re-hides the captions.
 
-Picture-in-picture shows only the video element, so Shaka's subtitles, and therefore this feature, are not visible there.
+Picture-in-picture (the floating player window) shows only the video element. Shaka's subtitles and YouTube's captions are both drawn outside it, so neither appears there and this feature has no effect; this is a browser limitation, not something the extension can work around. Verified for both players.
 
 The options page reuses `subtitles.css` for a preview by setting the same `<html>` classes, and pressing and holding the preview reveals it. The reveal key is chosen by clicking the key button and pressing a key; Escape cancels and disallowed keys are rejected with a message. Auto-hide is shown only in Toggle mode.
 
