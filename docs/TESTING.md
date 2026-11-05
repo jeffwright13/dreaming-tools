@@ -57,7 +57,8 @@ Test these views where available:
 - Watch page video and series chips with Dreaming's player and YouTube, including sidebar navigation between videos
 - Spanish and French routes
 - Options page and Restore defaults
-- Enhanced everywhere, Fill missing only, and Original Dreaming
+- Difficulty badges switched on and off
+- Enhanced everywhere and Fill missing only
 - Enhanced and Dreaming styles
 - Small, Medium, and Large sizes
 - All four positions

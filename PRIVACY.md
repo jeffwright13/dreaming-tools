@@ -1,12 +1,12 @@
-# Privacy Policy for Dreaming Difficulty
+# Privacy Policy for Dreaming Tools
 
 Effective date: 2026-10-13
 
-Dreaming Difficulty is an independent browser extension that adds difficulty badges and series difficulty ranges to Dreaming pages. It is not affiliated with or endorsed by Dreaming Languages.
+Dreaming Tools is an independent browser extension that adds companion tools to Dreaming pages, currently difficulty badges and series difficulty ranges. It is not affiliated with or endorsed by Dreaming Languages.
 
 ## Data the extension does not collect
 
-Dreaming Difficulty does not collect, read, store, or transmit:
+Dreaming Tools does not collect, read, store, or transmit:
 
 - Dreaming usernames or passwords
 - Authentication tokens, session cookies, or browser cookies
