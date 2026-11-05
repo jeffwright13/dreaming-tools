@@ -87,8 +87,8 @@ body:
     id: settings
     attributes:
       label: Extension settings
-      description: Include behavior, style, size, and position.
-      placeholder: Enhanced everywhere, Enhanced, Small, Lower left
+      description: Include which tools are switched on, plus the difficulty badge behavior, style, size, and position.
+      placeholder: "Difficulty badges on: Enhanced everywhere, Enhanced, Small, Lower left"
     validations:
       required: true
   - type: textarea
