@@ -44,6 +44,11 @@ Record the extension version, browser version, operating system, Dreaming langua
 - My list videos and series
 - Series catalogs and series modals
 - Difficulty badges switched on and off
+- Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
+- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
+- Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
+- Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
+- Difficulty badges and subtitles switched on together, separately, and both off on a watch page
 - Enhanced everywhere and Fill missing difficulties only
 - Enhanced and Dreaming styles
 - Small, Medium, and Large sizes

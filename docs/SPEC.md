@@ -17,6 +17,7 @@ A feature exposes a `name` and one method, `update(settings)`. It starts itself 
 Current features:
 
 - Difficulty badges (`difficultyEnabled`), described below.
+- Subtitle de-emphasis (`subtitlesEnabled`), described in [Subtitles](#subtitles).
 
 ## Language selection
 
@@ -54,7 +55,7 @@ Chips apply the configured style. Size and position apply only to thumbnail badg
 
 ## Options
 
-Store synchronized settings in one flat object with these defaults:
+Store synchronized settings in one flat object. Subtitle settings are listed under [Subtitles](#subtitles). Difficulty defaults:
 
 - Difficulty badges enabled: on
 - Behavior: Fill missing difficulties only
@@ -64,9 +65,34 @@ Store synchronized settings in one flat object with these defaults:
 
 Enhanced-everywhere behavior hides native difficulty badges and inserts configured badges. Fill-missing behavior preserves native badges and inserts configured badges only where needed. Disabling the feature removes extension badges, restores native badges, stops observing the page, and skips the catalog download.
 
-Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. A restore-defaults action saves and displays the default settings. Changes apply to open Dreaming pages through storage change events when the current content script is active.
+Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. A restore-defaults action saves and displays the default settings for every feature. Saving reads each control directly, not through `FormData`, because `FormData` omits controls inside a disabled fieldset and would reset a switched-off feature's settings to defaults. Changes apply to open Dreaming pages through storage change events when the current content script is active.
 
 Read stored settings by key list (`SETTING_KEYS`), not by passing defaults to `chrome.storage.sync.get`, so that missing keys stay distinguishable from stored ones. A legacy stored `behavior: "original"` from versions before the enable switch migrates to `difficultyEnabled: false` with the default behavior, unless `difficultyEnabled` is stored explicitly.
+
+## Subtitles
+
+Dreaming's player is built on Shaka Player. While the player's **Settings > Subtitles** is set to a language, Shaka renders the current line inside `.shaka-text-container`; with Subtitles set to Off the container is removed from the page. The extension never changes that player setting, and none of its subtitle behavior applies while the container is absent.
+
+The feature does not modify the player. When enabled it sets classes on `<html>` (`dt-subtitles`, `dt-subtitles--style-STYLE`, and `dt-subtitles--revealed` while revealed), and `subtitles.css` styles `.shaka-text-container` through them. A container the player removes and re-creates is therefore styled without observing the page, and fullscreen keeps the styling because the player stays in the document.
+
+Styles:
+
+- **Blur** (default): `filter: blur(6px)`. Unreadable, but shows that a line is present.
+- **Small and faint**: scaled to 60% from the bottom center at 40% opacity. Readable with deliberate effort, for learners who prefer a light de-emphasis.
+- **Hidden**: fully transparent until revealed.
+
+Revealing removes the style. The reveal key is a physical key code (`KeyboardEvent.code`, default `KeyS`), so it is layout independent, and is limited to letter, digit, and punctuation keys; Space, arrows, Enter, Escape, Tab, function keys, and modifiers are rejected because the player or browser uses them. Pressing `S` was verified on a live watch page to trigger no player action.
+
+- **Hold** (default): revealed while the key is down; held-key repeats are ignored.
+- **Toggle**: each press flips the state. Auto-hide (Off, 3, 5 default, or 10 seconds) hides again after the delay; each reveal restarts the timer, and toggling off cancels it.
+
+Key listeners run in the capture phase on `window`, before the player's handlers. A matching key press is handled, and kept from the page with `preventDefault` and `stopPropagation`, only when subtitles are shown, the event target is not a text field, select, or editable element, and Ctrl, Alt, and Cmd are not held; Shift is allowed. Otherwise the key reaches the page unchanged. A release always hides in Hold mode, even if the player's subtitles were turned off while the key was held. Losing window focus hides the subtitles, because the release may never arrive. Changing the reveal mode, key, or auto-hide returns to hidden. Disabling the feature removes its classes, listeners, and timer.
+
+Picture-in-picture shows only the video element, so Shaka's subtitles, and therefore this feature, are not visible there.
+
+The options page reuses `subtitles.css` for a preview by setting the same `<html>` classes, and pressing and holding the preview reveals it. The reveal key is chosen by clicking the key button and pressing a key; Escape cancels and disallowed keys are rejected with a message. Auto-hide is shown only in Toggle mode.
+
+Subtitle settings and defaults: `subtitlesEnabled` off, so existing users see no change until they opt in; `subtitleStyle` Blur; `revealMode` Hold; `revealKey` `KeyS`; `revealAutoHide` 5 seconds.
 
 ## Dynamic content
 
@@ -83,7 +109,7 @@ When the difficulty feature is enabled, process the initial document after downl
 
 ## Distribution package
 
-Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and eight `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
+Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and eleven `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
 
 ## Browser compatibility
 
@@ -93,7 +119,7 @@ Automated unit and DOM tests are required for every change. Fixture-based browse
 
 ## Security and privacy
 
-Request only synchronized storage and Dreaming host access. Catalog requests must omit credentials. Store only normalized badge preferences. Do not add analytics, advertising, remote code, credential access, cookie access, account-data collection, or premium-access bypass. Public disclosures live in `PRIVACY.md` and `SECURITY.md`.
+Request only synchronized storage and Dreaming host access. Catalog requests must omit credentials. Store only normalized display and keyboard preferences. Do not add analytics, advertising, remote code, credential access, cookie access, account-data collection, or premium-access bypass. Public disclosures live in `PRIVACY.md` and `SECURITY.md`.
 
 ## Failure behavior
 

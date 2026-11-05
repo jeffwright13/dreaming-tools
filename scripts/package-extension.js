@@ -16,6 +16,9 @@ export const RUNTIME_FILES = Object.freeze([
   "src/options.html",
   "src/options.js",
   "src/settings.js",
+  "src/subtitles-core.js",
+  "src/subtitles.css",
+  "src/subtitles.js",
 ]);
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {

@@ -70,6 +70,9 @@ src/
   options.html
   options.js
   settings.js
+  subtitles-core.js
+  subtitles.css
+  subtitles.js
 ```
 
 It must exclude development and private material, including:

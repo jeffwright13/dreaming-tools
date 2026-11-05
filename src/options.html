@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dreaming Tools options</title>
     <link rel="stylesheet" href="difficulty.css">
+    <link rel="stylesheet" href="subtitles.css">
     <link rel="stylesheet" href="options.css">
   </head>
   <body>
@@ -72,6 +73,50 @@
           </div>
         </section>
 
+        <section class="panel" aria-labelledby="subtitles-heading">
+          <h2 id="subtitles-heading">Subtitles</h2>
+          <label class="radio-option">
+            <input type="checkbox" name="subtitlesEnabled">
+            <span><strong>De-emphasize subtitles</strong><small>Keep subtitles unreadable until you use the reveal key. Applies only while the player's Settings &gt; Subtitles is set to a language; the player's Off setting always wins.</small></span>
+          </label>
+          <fieldset id="subtitle-controls" class="control-group" aria-labelledby="subtitles-heading">
+            <label>
+              Style
+              <select name="subtitleStyle">
+                <option value="blur">Blur</option>
+                <option value="small-faint">Small and faint</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <label>
+              Reveal
+              <select name="revealMode">
+                <option value="hold">While holding the key</option>
+                <option value="toggle">Toggle on each press</option>
+              </select>
+            </label>
+            <label id="auto-hide-control">
+              Auto-hide after reveal
+              <select name="revealAutoHide">
+                <option value="0">Off</option>
+                <option value="3">3 seconds</option>
+                <option value="5">5 seconds</option>
+                <option value="10">10 seconds</option>
+              </select>
+            </label>
+            <label>
+              Reveal key
+              <button id="reveal-key-button" class="secondary-button key-button" type="button" aria-describedby="reveal-key-help"></button>
+              <input type="hidden" name="revealKey">
+            </label>
+            <small id="reveal-key-help" class="control-help">Click, then press a letter, digit, or punctuation key. Escape cancels.</small>
+          </fieldset>
+          <div id="subtitle-preview" class="preview-player" title="Press and hold to preview the reveal">
+            <div class="shaka-text-container"><span>Vamos a poner el litro de agua en la olla.</span></div>
+          </div>
+          <small class="control-help">Press and hold the preview to see the subtitles revealed.</small>
+        </section>
+
         <div class="actions">
           <button type="submit">Save options</button>
           <button id="reset-options" class="secondary-button" type="button">Restore defaults</button>
@@ -80,6 +125,7 @@
       </form>
     </main>
     <script src="settings.js"></script>
+    <script src="subtitles-core.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

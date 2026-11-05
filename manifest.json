@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Dreaming Tools",
-  "version": "0.5.0",
-  "description": "Companion tools for Dreaming, starting with video difficulty ratings and series difficulty ranges.",
+  "version": "0.6.0",
+  "description": "Companion tools for Dreaming: video difficulty ratings and series ranges, plus subtitle de-emphasis for listen-only practice.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -25,10 +25,13 @@
         "src/settings.js",
         "src/difficulty-core.js",
         "src/difficulty.js",
+        "src/subtitles-core.js",
+        "src/subtitles.js",
         "src/content.js"
       ],
       "css": [
-        "src/difficulty.css"
+        "src/difficulty.css",
+        "src/subtitles.css"
       ],
       "run_at": "document_idle"
     }

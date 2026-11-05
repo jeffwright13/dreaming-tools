@@ -1,0 +1,32 @@
+/*
+ * Subtitle de-emphasis. The subtitles feature sets these classes on <html>;
+ * .shaka-text-container exists only while the player's Settings > Subtitles is
+ * set to a language, so nothing here applies when the player's subtitles are
+ * off. The options page reuses this file for its preview.
+ */
+:root.dt-subtitles .shaka-text-container {
+  transition: filter 120ms ease, opacity 120ms ease, transform 120ms ease;
+}
+
+:root.dt-subtitles--style-blur .shaka-text-container {
+  filter: blur(6px);
+}
+
+/* Scaled rather than resized so the preset works whatever font size the
+   player sets on the inner cue elements. */
+:root.dt-subtitles--style-small-faint .shaka-text-container {
+  opacity: 0.4;
+  transform: scale(0.6);
+  transform-origin: bottom center;
+}
+
+:root.dt-subtitles--style-hidden .shaka-text-container {
+  opacity: 0;
+}
+
+/* The extra class makes this outrank every style rule above. */
+:root.dt-subtitles.dt-subtitles--revealed .shaka-text-container {
+  filter: none;
+  opacity: 1;
+  transform: none;
+}

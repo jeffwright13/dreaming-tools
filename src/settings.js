@@ -8,13 +8,39 @@
     style: "dreaming",
     size: "small",
     position: "upper-right",
+    subtitlesEnabled: false,
+    subtitleStyle: "blur",
+    revealMode: "hold",
+    revealKey: "KeyS",
+    revealAutoHide: 5,
   });
-  const SETTING_VALUES = {
-    difficultyEnabled: new Set([true, false]),
-    behavior: new Set(["enhanced-everywhere", "fill-missing"]),
-    style: new Set(["enhanced", "dreaming"]),
-    size: new Set(["small", "medium", "large"]),
-    position: new Set(["upper-right", "lower-left", "upper-left"]),
+  // Reveal keys are physical key codes (KeyboardEvent.code). Only letter,
+  // digit, and punctuation keys are allowed: Space, arrows, Enter, Escape,
+  // Tab, function keys, and modifiers belong to the player and the browser.
+  const REVEAL_KEY_PATTERN =
+    /^(Key[A-Z]|Digit[0-9]|Backquote|Backslash|BracketLeft|BracketRight|Comma|Equal|Minus|Period|Quote|Semicolon|Slash)$/;
+
+  function oneOf(...values) {
+    const allowed = new Set(values);
+    return (value) => allowed.has(value);
+  }
+
+  function isRevealKeyCode(value) {
+    return typeof value === "string" && REVEAL_KEY_PATTERN.test(value);
+  }
+
+  const SETTING_VALIDATORS = {
+    difficultyEnabled: oneOf(true, false),
+    behavior: oneOf("enhanced-everywhere", "fill-missing"),
+    style: oneOf("enhanced", "dreaming"),
+    size: oneOf("small", "medium", "large"),
+    position: oneOf("upper-right", "lower-left", "upper-left"),
+    subtitlesEnabled: oneOf(true, false),
+    subtitleStyle: oneOf("blur", "small-faint", "hidden"),
+    revealMode: oneOf("hold", "toggle"),
+    revealKey: isRevealKeyCode,
+    // Seconds; 0 turns auto-hide off. Applies only in toggle mode.
+    revealAutoHide: oneOf(0, 3, 5, 10),
   };
   // Read storage with this key list rather than with DEFAULT_SETTINGS: passing
   // defaults would fill in difficultyEnabled: true and hide a legacy
@@ -36,7 +62,7 @@
     return Object.fromEntries(
       Object.entries(DEFAULT_SETTINGS).map(([key, defaultValue]) => [
         key,
-        SETTING_VALUES[key].has(migrated[key]) ? migrated[key] : defaultValue,
+        SETTING_VALIDATORS[key](migrated[key]) ? migrated[key] : defaultValue,
       ]),
     );
   }
@@ -44,6 +70,7 @@
   globalThis.DreamingToolsSettings = {
     DEFAULT_SETTINGS,
     SETTING_KEYS,
+    isRevealKeyCode,
     normalizeSettings,
   };
 })();

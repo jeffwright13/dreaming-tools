@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import "../src/settings.js";
 import "../src/difficulty-core.js";
 import "../src/difficulty.js";
+import "../src/subtitles-core.js";
+import "../src/subtitles.js";
 import "../src/content.js";
 
 const { DEFAULT_SETTINGS, SETTING_KEYS } = globalThis.DreamingToolsSettings;
@@ -109,15 +111,19 @@ describe("initialize", () => {
     expect(feature.update).toHaveBeenLastCalledWith({ ...DEFAULT_SETTINGS, size: "large" });
   });
 
-  it("wires the difficulty feature by default", async () => {
+  it("wires the difficulty and subtitles features by default", async () => {
     window.history.replaceState({}, "", "/spanish/library");
     document.body.innerHTML = '<div data-video-id="abc"><div class="ds-video-thumbnail"></div></div>';
-    stubChromeStorage({ difficultyEnabled: false });
+    const { listeners } = stubChromeStorage({ difficultyEnabled: false, subtitlesEnabled: true });
     vi.stubGlobal("fetch", vi.fn());
 
     await initialize();
 
     expect(fetch).not.toHaveBeenCalled();
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
+    expect(document.documentElement.classList.contains("dt-subtitles")).toBe(true);
+
+    listeners[0]({ subtitlesEnabled: { newValue: false } }, "sync");
+    await vi.waitFor(() => expect(document.documentElement.classList.contains("dt-subtitles")).toBe(false));
   });
 });

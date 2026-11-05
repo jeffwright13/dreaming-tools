@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide small, independent companion tools for Dreaming that support comprehensible-input learning without changing what Dreaming offers. The first tool shows Dreaming's existing relative difficulty information consistently wherever users encounter videos or series.
+Provide small, independent companion tools for Dreaming that support comprehensible-input learning without changing what Dreaming offers. The difficulty tool shows Dreaming's existing relative difficulty information consistently wherever users encounter videos or series. The subtitles tool supports listen-only practice by keeping subtitles unreadable until the learner deliberately reveals them to check a word.
 
 ## Users
 
@@ -19,3 +19,5 @@ Dreaming language learners, for example those who use difficulty to choose appro
 - Let users enhance all difficulty badges or fill only missing badges.
 - Support dynamically rendered cards and modals.
 - Avoid dependencies on generated CSS-module class names.
+- Never turn the player's subtitles on or off; the player's own Settings > Subtitles choice always decides whether subtitles exist.
+- Keyboard handling must not capture keys while the user is typing, and must not take keys the player or browser relies on.

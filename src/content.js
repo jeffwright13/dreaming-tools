@@ -4,6 +4,7 @@
   function createDefaultFeatures() {
     return [
       globalThis.DreamingDifficultyFeature.createDifficultyFeature(location.pathname),
+      globalThis.DreamingSubtitlesFeature.createSubtitlesFeature(),
     ];
   }
 

@@ -28,10 +28,14 @@ Catalog data is processed in memory to match video and series IDs and calculate 
 
 The extension stores only these preferences:
 
+- Whether each tool (difficulty badges, subtitles) is switched on
 - Badge behavior
 - Badge style
 - Badge size
 - Badge position
+- Subtitle style, reveal mode, reveal key, and auto-hide delay
+
+The subtitles tool listens for its reveal key on Dreaming pages only to show or hide subtitles. It does not record, store, or transmit keystrokes or subtitle text.
 
 Preferences are stored with `chrome.storage.sync`. Chrome may synchronize them through the user's Google account according to Google's Chrome Sync policies. The developer does not receive or control that synchronization. Users can restore defaults from the options page, clear extension data in Chrome, or uninstall the extension.
 

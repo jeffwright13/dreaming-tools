@@ -72,3 +72,19 @@ The difficulty feature's Original Dreaming behavior was already an off switch. K
 
 Each feature exposes only `update(settings)` and receives the whole normalized settings object, and `content.js` calls every feature independently, logging rather than propagating a feature's error. This keeps features unaware of one another, lets any combination be enabled at once, and lets a broken feature fail without disabling the rest. Content scripts remain classic scripts sharing `globalThis` namespaces because Manifest V3 content scripts do not support ES module imports.
 
+## 2026-11-05: Style subtitles through root classes, never the player
+
+The subtitles feature sets classes on `<html>` and a static stylesheet targets Shaka Player's `.shaka-text-container`, instead of editing the player or observing subtitle mutations. The container exists only while the player's own Subtitles setting is on, so the player's choice remains the single source of truth and the extension never turns subtitles on. Styling through CSS survives the player re-creating the container, works in fullscreen, and needs no page observer. The class comes from the Shaka library rather than Dreaming's generated CSS-module names, consistent with the brief.
+
+## 2026-11-05: Make subtitle de-emphasis opt-in with blur as the default
+
+Subtitles default to off so the update changes nothing until a learner chooses it. Blur is the default style because it is unreadable at a glance yet still shows that a line is present; Small and faint keeps the learner's existing habit of tiny on-screen text, and Hidden removes even the blurred bar. All three are presets, matching the earlier decision to offer tested presets rather than arbitrary CSS.
+
+## 2026-11-05: Reveal with a configurable physical key, hold or toggle
+
+Learners differ, so reveal is configurable: Hold (default, because releasing the key always restores the listen-only state) or Toggle with auto-hide (default 5 seconds, so a toggle cannot be forgotten). The key is stored as `KeyboardEvent.code` so it is layout independent and limited to letter, digit, and punctuation keys; `S` was verified on a live watch page to trigger no player shortcut. Key handling runs in the capture phase and consumes the key only while subtitles are shown and the user is not typing, so other pages and the comment box behave normally. Losing window focus re-hides because the key release may never arrive. Replaying the previous line was considered and deferred to keep the first version small.
+
+## 2026-11-05: Read options controls directly instead of FormData
+
+Saving through `FormData` reset a switched-off feature's settings, because `FormData` omits controls inside a disabled fieldset; the difficulty options had this bug since the enable switch was added. The options page now reads every setting from its control, which also handles checkbox and numeric values explicitly.
+
