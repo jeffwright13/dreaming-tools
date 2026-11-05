@@ -10,7 +10,9 @@ Content scripts load in this order, sharing state through `globalThis` namespace
 2. Feature files, for example `difficulty-core.js` and `difficulty.js`.
 3. `content.js` (`DreamingToolsContent`): reads settings, creates each feature, and passes it the full normalized settings object at startup and after every synchronized change.
 
-A feature exposes one method, `update(settings)`. It starts itself when its switch is on, refreshes when other settings change, and stops and restores the page when its switch is off. Errors thrown by one feature are logged as `Dreaming Tools feature failed to update.` and do not prevent other features from updating. Features must touch only their own page elements and extension-owned class names so that enabled features do not interfere.
+A feature exposes a `name` and one method, `update(settings)`. It starts itself when its switch is on, refreshes when other settings change, and stops and restores the page when its switch is off. `update` may be called again before an earlier call has resolved, for example while a feature is still downloading data; implementations must converge on the settings from the most recent call regardless of the order in which earlier calls finish. Errors thrown by one feature are logged as `Dreaming Tools NAME feature failed to update.` and do not prevent other features from updating.
+
+`content.js` keeps the raw stored values, applies each synchronized change to them (a removed key returns to its default), and normalizes the result for every update, so legacy migrations see whether a key was actually stored. The change listener is registered before the first update so that changes made while a feature is still starting are applied. Features must touch only their own page elements and extension-owned class names so that enabled features do not interfere.
 
 Current features:
 

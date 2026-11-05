@@ -15,7 +15,7 @@ Dreaming language learners, for example those who use difficulty to choose appro
 - Support Spanish and French while keeping language selection extensible.
 - Target desktop Chromium browsers first; do not claim Firefox or mobile support without separate validation.
 - Ship as one extension in which every tool can be enabled or disabled independently, and any combination of enabled tools works together on the same page.
-- A disabled tool makes no page changes and no network requests.
+- A disabled tool makes no page changes and starts no network requests.
 - Let users enhance all difficulty badges or fill only missing badges.
 - Support dynamically rendered cards and modals.
 - Avoid dependencies on generated CSS-module class names.

@@ -371,6 +371,10 @@ describe("difficulty feature", () => {
     document.body.innerHTML = VIDEO_CARD;
   });
 
+  it("identifies itself for error reports", () => {
+    expect(createDifficultyFeature(location.pathname).name).toBe("difficulty");
+  });
+
   it("loads the catalog, enhances the page, and restyles on settings changes", async () => {
     stubCatalog();
     stubObserver();
@@ -438,6 +442,26 @@ describe("difficulty feature", () => {
 
     expect(badge()).toBeNull();
     expect(observer.observe).not.toHaveBeenCalled();
+  });
+
+  it("ends enabled when toggled on, off, and on again while the catalog is downloading", async () => {
+    let resolveFetch;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise((resolve) => { resolveFetch = resolve; })));
+    const observer = stubObserver();
+    const feature = createDifficultyFeature(location.pathname);
+
+    const updates = [
+      feature.update(DEFAULT_SETTINGS),
+      feature.update({ ...DEFAULT_SETTINGS, difficultyEnabled: false }),
+      feature.update({ ...DEFAULT_SETTINGS, size: "large" }),
+    ];
+    resolveFetch({ ok: true, json: vi.fn().mockResolvedValue(CATALOG) });
+    await Promise.all(updates);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(document.querySelectorAll(".ds-difficulty-extension-badge")).toHaveLength(1);
+    expect(badge()?.className).toContain("--size-large");
+    expect(observer.observe).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing on an unsupported language path", async () => {

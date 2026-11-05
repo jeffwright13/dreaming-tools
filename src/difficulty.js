@@ -289,7 +289,7 @@
       }
     }
 
-    return { update };
+    return { name: "difficulty", update };
   }
 
   globalThis.DreamingDifficultyFeature = {

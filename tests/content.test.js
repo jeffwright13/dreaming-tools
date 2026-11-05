@@ -21,8 +21,8 @@ function stubChromeStorage(stored = {}) {
   return { get, listeners };
 }
 
-function fakeFeature() {
-  return { update: vi.fn().mockResolvedValue(undefined) };
+function fakeFeature(name = "fake") {
+  return { name, update: vi.fn().mockResolvedValue(undefined) };
 }
 
 afterEach(() => {
@@ -65,15 +65,48 @@ describe("initialize", () => {
   it("keeps other features running when one fails", async () => {
     stubChromeStorage();
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    const throwing = { update: vi.fn(() => { throw new Error("sync failure"); }) };
-    const rejecting = { update: vi.fn().mockRejectedValue(new Error("async failure")) };
+    const throwing = { name: "throwing", update: vi.fn(() => { throw new Error("sync failure"); }) };
+    const rejecting = { name: "rejecting", update: vi.fn().mockRejectedValue(new Error("async failure")) };
     const healthy = fakeFeature();
 
     await initialize([throwing, rejecting, healthy]);
 
     expect(healthy.update).toHaveBeenCalledWith(DEFAULT_SETTINGS);
     expect(consoleError).toHaveBeenCalledTimes(2);
-    expect(consoleError).toHaveBeenCalledWith("Dreaming Tools feature failed to update.", expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith("Dreaming Tools throwing feature failed to update.", expect.any(Error));
+    expect(consoleError).toHaveBeenCalledWith("Dreaming Tools rejecting feature failed to update.", expect.any(Error));
+  });
+
+  it("migrates a legacy Original Dreaming value that arrives as a change event", async () => {
+    const { listeners } = stubChromeStorage({});
+    const feature = fakeFeature();
+    await initialize([feature]);
+
+    listeners[0]({ behavior: { newValue: "original" } }, "sync");
+
+    expect(feature.update).toHaveBeenLastCalledWith({ ...DEFAULT_SETTINGS, difficultyEnabled: false });
+  });
+
+  it("returns a removed setting to its default", async () => {
+    const { listeners } = stubChromeStorage({ size: "large" });
+    const feature = fakeFeature();
+    await initialize([feature]);
+
+    listeners[0]({ size: { oldValue: "large" } }, "sync");
+
+    expect(feature.update).toHaveBeenLastCalledWith(DEFAULT_SETTINGS);
+  });
+
+  it("applies settings changes made while the first update is still running", async () => {
+    const { listeners } = stubChromeStorage();
+    const feature = fakeFeature();
+    feature.update.mockReturnValueOnce(new Promise(() => {}));
+
+    initialize([feature]);
+    await vi.waitFor(() => expect(feature.update).toHaveBeenCalledTimes(1));
+    listeners[0]({ size: { newValue: "large" } }, "sync");
+
+    expect(feature.update).toHaveBeenLastCalledWith({ ...DEFAULT_SETTINGS, size: "large" });
   });
 
   it("wires the difficulty feature by default", async () => {
