@@ -123,7 +123,7 @@ Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Requi
 
 Support the current and previous stable desktop Chrome major versions on macOS, Windows, and mainstream Linux environments. Support current stable Microsoft Edge on Windows. Firefox, mobile browsers, and ChromeOS are not currently validated or supported.
 
-Automated unit and DOM tests are required for every change. Fixture-based browser tests are planned for real extension loading without Dreaming credentials. Live Dreaming compatibility remains a manual release gate using the matrix in `docs/TESTING.md`.
+Automated unit and DOM tests are required for every change. Fixture-based browser tests, including subtitle layout at windowed and fullscreen sizes, are planned for real extension loading without Dreaming credentials. Live Dreaming compatibility remains a manual release gate using the matrix in `docs/TESTING.md`.
 
 ## Security and privacy
 

@@ -48,7 +48,7 @@ Record the extension version, browser version, operating system, Dreaming langua
 - Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
-- Subtitles on a YouTube-served video: with YouTube's CC on, captions follow the chosen style; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
+- Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
 - Subtitles in picture-in-picture: expected to show no subtitles on either player (known browser limitation)
 - Difficulty badges and subtitles switched on together, separately, and both off on a watch page, for both a Dreaming-player video and a YouTube-served video
 - Enhanced everywhere and Fill missing difficulties only
