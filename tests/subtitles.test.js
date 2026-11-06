@@ -90,6 +90,15 @@ describe("subtitles feature", () => {
     expect(revealed()).toBe(false);
   });
 
+  it("lets the key release reach a text field but still hides", async () => {
+    await feature.update(ENABLED);
+    press("keydown");
+    document.body.insertAdjacentHTML("beforeend", "<input>");
+
+    expect(press("keyup", {}, document.querySelector("input")).defaultPrevented).toBe(false);
+    expect(revealed()).toBe(false);
+  });
+
   it("uses the configured reveal key", async () => {
     await feature.update({ ...ENABLED, revealKey: "KeyJ" });
 
@@ -243,7 +252,10 @@ describe("YouTube-served videos on the Dreaming page", () => {
 
 describe("inside the YouTube frame", () => {
   const DREAMING_ORIGIN = "https://app.dreaming.com";
-  const CAPTIONS_ON = '<div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>';
+  const captions = (pressed) => `
+    <div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>
+    <button class="ytp-subtitles-button" aria-pressed="${pressed}"></button>
+  `;
   let frameFeature;
 
   function receive(data, origin = DREAMING_ORIGIN) {
@@ -251,9 +263,9 @@ describe("inside the YouTube frame", () => {
   }
 
   beforeEach(() => {
-    document.body.innerHTML = CAPTIONS_ON;
+    document.body.innerHTML = captions(true);
     frameFeature = createSubtitlesFeature({
-      containerSelector: ".ytp-caption-window-container",
+      shownSelector: '.ytp-subtitles-button[aria-pressed="true"]',
       acceptOrigin: DREAMING_ORIGIN,
     });
   });
@@ -286,6 +298,15 @@ describe("inside the YouTube frame", () => {
     receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "explode" });
     receive("press");
 
+    expect(revealed()).toBe(false);
+  });
+
+  it("ignores the key and forwarded presses while YouTube's CC is off", async () => {
+    document.body.innerHTML = captions(false);
+    await frameFeature.update(ENABLED);
+
+    expect(press("keydown").defaultPrevented).toBe(false);
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
     expect(revealed()).toBe(false);
   });
 

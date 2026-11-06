@@ -28,7 +28,9 @@
     if (place.hostname === YOUTUBE_HOSTNAME && parentOrigin === DREAMING_ORIGIN && place.ancestorOrigins.length === 1) {
       return [
         globalThis.DreamingSubtitlesFeature.createSubtitlesFeature({
-          containerSelector: ".ytp-caption-window-container",
+          // YouTube may keep its caption container mounted with CC off, so
+          // the CC button's pressed state decides whether captions are on.
+          shownSelector: '.ytp-subtitles-button[aria-pressed="true"]',
           acceptOrigin: DREAMING_ORIGIN,
         }),
       ];

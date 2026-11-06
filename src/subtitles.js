@@ -31,7 +31,9 @@
   function createSubtitlesFeature({
     root = document.documentElement,
     target = window,
-    containerSelector = SHAKA_CONTAINER_SELECTOR,
+    // Matches only while the player's own subtitles are on. Styling always
+    // comes from subtitles.css; this decides whether a key press is handled.
+    shownSelector = SHAKA_CONTAINER_SELECTOR,
     forwardTargets = () => [],
     forwardOrigin = null,
     acceptOrigin = null,
@@ -42,7 +44,7 @@
     let listening = false;
 
     function subtitlesShown() {
-      return root.ownerDocument.querySelector(containerSelector) !== null;
+      return root.ownerDocument.querySelector(shownSelector) !== null;
     }
 
     function frameTargets() {
@@ -108,9 +110,11 @@
         return;
       }
 
-      // Release even if the player's subtitles were turned off while held.
+      // Release even if the player's subtitles were turned off while held,
+      // or focus moved into a text field, but let a typed key's release
+      // reach that field.
       const frames = frameTargets();
-      if (subtitlesShown() || frames.length > 0) {
+      if (!isTypingTarget(event.target) && (subtitlesShown() || frames.length > 0)) {
         consume(event);
       }
       forward(frames, "release");
@@ -122,10 +126,20 @@
       setRevealed(nextRevealState(revealed, "blur", settings));
     }
 
+    // Accepts any sender with the Dreaming origin, not only the parent window
+    // (event.source is not checked). This is deliberate: a message can only
+    // show or hide captions, and pinning the source would add frame-identity
+    // bookkeeping for no meaningful protection.
     function onMessage(event) {
       const { data } = event;
       if (event.origin !== acceptOrigin || data?.source !== MESSAGE_SOURCE || data.type !== MESSAGE_TYPE
         || !REMOTE_EVENTS.has(data.event)) {
+        return;
+      }
+
+      // A press while the player's captions are off would flip the state
+      // invisibly; releases and blurs always apply so nothing stays revealed.
+      if (data.event === "press" && !subtitlesShown()) {
         return;
       }
 
