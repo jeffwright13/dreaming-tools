@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Dreaming Tools",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Companion tools for Dreaming: video difficulty ratings and series ranges, plus subtitle de-emphasis for listen-only practice.",
   "icons": {
     "16": "icons/icon-16.png",

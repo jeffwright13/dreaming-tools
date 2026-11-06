@@ -6,7 +6,7 @@ const { DEFAULT_SETTINGS, SETTING_KEYS, normalizeSettings } = globalThis.Dreamin
 describe("settings", () => {
   it("supplies conservative defaults for a fresh installation", () => {
     expect(normalizeSettings({})).toEqual({
-      difficultyEnabled: true,
+      difficultyEnabled: false,
       behavior: "fill-missing",
       style: "dreaming",
       size: "small",
@@ -36,7 +36,7 @@ describe("settings", () => {
       revealKey: "Space",
       revealAutoHide: 7,
     })).toEqual({
-      difficultyEnabled: true,
+      difficultyEnabled: false,
       behavior: "fill-missing",
       style: "dreaming",
       size: "large",
@@ -103,6 +103,9 @@ describe("legacy Original Dreaming behavior", () => {
   });
 
   it("yields to an explicitly stored enable switch", () => {
-    expect(normalizeSettings({ behavior: "original", difficultyEnabled: true })).toEqual(DEFAULT_SETTINGS);
+    expect(normalizeSettings({ behavior: "original", difficultyEnabled: true })).toEqual({
+      ...DEFAULT_SETTINGS,
+      difficultyEnabled: true,
+    });
   });
 });

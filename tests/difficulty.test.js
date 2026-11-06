@@ -7,6 +7,8 @@ import "../src/difficulty.js";
 
 const { buildCatalogIndexes } = globalThis.DreamingDifficultyCore;
 const { DEFAULT_SETTINGS } = globalThis.DreamingToolsSettings;
+// Difficulty badges are opt-in, so tests that need them on say so explicitly.
+const ENABLED = { ...DEFAULT_SETTINGS, difficultyEnabled: true };
 const { createDifficultyFeature, enhancePage, loadCatalog } = globalThis.DreamingDifficultyFeature;
 
 const SERIES_ID = "6a1fe0ea4a6295f32ed34f4d";
@@ -53,7 +55,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     const badge = document.querySelector(".ds-difficulty-extension-badge--video");
     expect(badge?.textContent).toBe("41");
@@ -69,7 +71,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
     expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
@@ -84,7 +86,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes, { behavior: "enhanced-everywhere" });
+    enhancePage(document, indexes, { ...ENABLED, behavior: "enhanced-everywhere" });
 
     expect(document.querySelector(".ds-difficulty-extension-badge")?.textContent).toBe("41");
     expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(true);
@@ -99,7 +101,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes, { behavior: "enhanced-everywhere" });
+    enhancePage(document, indexes, { ...ENABLED, behavior: "enhanced-everywhere" });
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
     expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
@@ -114,7 +116,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes, { behavior: "fill-missing" });
+    enhancePage(document, indexes, { ...ENABLED, behavior: "fill-missing" });
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
     expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
@@ -130,7 +132,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes, { difficultyEnabled: false });
+    enhancePage(document, indexes, { ...ENABLED, difficultyEnabled: false });
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
     expect(document.querySelector(".ds-video-thumbnail__badge--vocab-range")?.hidden).toBe(false);
@@ -144,6 +146,7 @@ describe("enhancePage", () => {
     `;
 
     enhancePage(document, indexes, {
+      ...ENABLED,
       behavior: "enhanced-everywhere",
       style: "dreaming",
       size: "large",
@@ -163,8 +166,8 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
+    enhancePage(document, indexes, ENABLED);
 
     expect(document.querySelectorAll(".ds-difficulty-extension-badge")).toHaveLength(1);
   });
@@ -176,7 +179,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(document.querySelector(".ds-difficulty-extension-badge")).toBeNull();
   });
@@ -188,7 +191,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     const badge = document.querySelector(".ds-difficulty-extension-badge--series");
     expect(badge?.textContent).toBe("41–44");
@@ -202,7 +205,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
   });
@@ -215,7 +218,7 @@ describe("enhancePage", () => {
       </div>
     `;
 
-    enhancePage(document, indexes, { size: "large" });
+    enhancePage(document, indexes, { ...ENABLED, size: "large" });
 
     const badge = document.querySelector(".ds-difficulty-extension-badge");
     expect(badge?.classList.contains("ds-difficulty-extension-badge--series")).toBe(true);
@@ -228,7 +231,7 @@ describe("watch page", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(watchPageChipTexts()).toEqual(["Difficulty 41", "Series 41–44", "Beginner", "Spain"]);
     expect(document.querySelector(".ds-difficulty-extension-chip--video")?.getAttribute("aria-label"))
@@ -241,7 +244,7 @@ describe("watch page", () => {
     showWatchPage(STANDALONE_VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(watchPageChipTexts()).toEqual(["Difficulty 50", "Beginner", "Spain"]);
   });
@@ -254,7 +257,7 @@ describe("watch page", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
 
-    enhancePage(document, uniformSeriesIndexes);
+    enhancePage(document, uniformSeriesIndexes, ENABLED);
 
     expect(watchPageChipTexts()).toEqual(["Difficulty 41", "Series 41", "Beginner", "Spain"]);
     expect(document.querySelector(".ds-difficulty-extension-chip--series")?.getAttribute("aria-label"))
@@ -265,7 +268,7 @@ describe("watch page", () => {
     showWatchPage("unknown");
     document.body.innerHTML = WATCH_PAGE_BADGES;
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(document.querySelector(".ds-difficulty-extension-chip")).toBeNull();
   });
@@ -273,10 +276,10 @@ describe("watch page", () => {
   it("updates chips after client-side navigation to another video", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     showWatchPage(STANDALONE_VIDEO_ID);
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(watchPageChipTexts()).toEqual(["Difficulty 50", "Beginner", "Spain"]);
   });
@@ -284,11 +287,11 @@ describe("watch page", () => {
   it("does not modify child nodes when chips are already current", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
     const observer = new MutationObserver(() => {});
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
     expect(observer.takeRecords()).toEqual([]);
     observer.disconnect();
@@ -298,7 +301,7 @@ describe("watch page", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
 
-    enhancePage(document, indexes, { style: "enhanced" });
+    enhancePage(document, indexes, { ...ENABLED, style: "enhanced" });
 
     for (const chip of document.querySelectorAll(".ds-difficulty-extension-chip")) {
       expect(chip.classList.contains("ds-difficulty-extension-chip--style-enhanced")).toBe(true);
@@ -308,9 +311,9 @@ describe("watch page", () => {
   it("removes chips when the feature is disabled", () => {
     showWatchPage(VIDEO_ID);
     document.body.innerHTML = WATCH_PAGE_BADGES;
-    enhancePage(document, indexes);
+    enhancePage(document, indexes, ENABLED);
 
-    enhancePage(document, indexes, { difficultyEnabled: false });
+    enhancePage(document, indexes, { ...ENABLED, difficultyEnabled: false });
 
     expect(watchPageChipTexts()).toEqual(["Beginner", "Spain"]);
   });
@@ -380,11 +383,11 @@ describe("difficulty feature", () => {
     stubObserver();
     const feature = createDifficultyFeature(location.pathname);
 
-    await feature.update(DEFAULT_SETTINGS);
+    await feature.update(ENABLED);
     expect(badge()?.textContent).toBe("41");
     expect(badge()?.className).toContain("--size-small");
 
-    await feature.update({ ...DEFAULT_SETTINGS, size: "large" });
+    await feature.update({ ...ENABLED, size: "large" });
     expect(badge()?.className).toContain("--size-large");
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -394,7 +397,7 @@ describe("difficulty feature", () => {
     const observer = stubObserver();
     const requestAnimationFrameMock = vi.fn();
     vi.stubGlobal("requestAnimationFrame", requestAnimationFrameMock);
-    await createDifficultyFeature(location.pathname).update(DEFAULT_SETTINGS);
+    await createDifficultyFeature(location.pathname).update(ENABLED);
 
     expect(observer.observe).toHaveBeenCalledWith(document.body, { childList: true, subtree: true });
     observer.callback();
@@ -421,7 +424,7 @@ describe("difficulty feature", () => {
     const feature = createDifficultyFeature(location.pathname);
     await feature.update({ ...DEFAULT_SETTINGS, difficultyEnabled: false });
 
-    await feature.update(DEFAULT_SETTINGS);
+    await feature.update(ENABLED);
     expect(badge()?.textContent).toBe("41");
 
     await feature.update({ ...DEFAULT_SETTINGS, difficultyEnabled: false });
@@ -435,7 +438,7 @@ describe("difficulty feature", () => {
     const observer = stubObserver();
     const feature = createDifficultyFeature(location.pathname);
 
-    const enabling = feature.update(DEFAULT_SETTINGS);
+    const enabling = feature.update(ENABLED);
     const disabling = feature.update({ ...DEFAULT_SETTINGS, difficultyEnabled: false });
     resolveFetch({ ok: true, json: vi.fn().mockResolvedValue(CATALOG) });
     await Promise.all([enabling, disabling]);
@@ -451,9 +454,9 @@ describe("difficulty feature", () => {
     const feature = createDifficultyFeature(location.pathname);
 
     const updates = [
-      feature.update(DEFAULT_SETTINGS),
+      feature.update(ENABLED),
       feature.update({ ...DEFAULT_SETTINGS, difficultyEnabled: false }),
-      feature.update({ ...DEFAULT_SETTINGS, size: "large" }),
+      feature.update({ ...ENABLED, size: "large" }),
     ];
     resolveFetch({ ok: true, json: vi.fn().mockResolvedValue(CATALOG) });
     await Promise.all(updates);
@@ -468,7 +471,7 @@ describe("difficulty feature", () => {
     stubCatalog();
     window.history.replaceState({}, "", "/german/library");
 
-    await createDifficultyFeature(location.pathname).update(DEFAULT_SETTINGS);
+    await createDifficultyFeature(location.pathname).update(ENABLED);
 
     expect(fetch).not.toHaveBeenCalled();
     expect(badge()).toBeNull();
@@ -480,7 +483,7 @@ describe("difficulty feature", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const feature = createDifficultyFeature(location.pathname);
 
-    await feature.update(DEFAULT_SETTINGS);
+    await feature.update(ENABLED);
     expect(consoleError).toHaveBeenCalledWith(
       "Dreaming Tools could not load the video catalog.",
       expect.any(Error),
@@ -488,7 +491,7 @@ describe("difficulty feature", () => {
     expect(badge()).toBeNull();
 
     fetch.mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue(CATALOG) });
-    await feature.update(DEFAULT_SETTINGS);
+    await feature.update(ENABLED);
     expect(badge()?.textContent).toBe("41");
   });
 });

@@ -55,9 +55,11 @@ Chips apply the configured style. Size and position apply only to thumbnail badg
 
 ## Options
 
+The options page has one card per feature, Subtitles first and Difficulty badges second. Each card starts with the feature's enable switch, followed by subsections with smaller headings: Subtitle appearance, Reveal, and Preview for subtitles; Badge behavior, Badge appearance, and Preview for difficulty. A switched-off feature's controls stay visible but disabled. A note under the intro tells users to reload Dreaming tabs that were open before the extension was installed or updated, because Chrome does not inject the new content script into them and the old one no longer receives settings changes. Every feature is off by default, so a fresh install changes nothing on Dreaming until a feature is switched on.
+
 Store synchronized settings in one flat object. Subtitle settings are listed under [Subtitles](#subtitles). Difficulty defaults:
 
-- Difficulty badges enabled: on
+- Difficulty badges enabled: off
 - Behavior: Fill missing difficulties only
 - Style: Dreaming
 - Size: Small
@@ -65,7 +67,7 @@ Store synchronized settings in one flat object. Subtitle settings are listed und
 
 Enhanced-everywhere behavior hides native difficulty badges and inserts configured badges. Fill-missing behavior preserves native badges and inserts configured badges only where needed. Disabling the feature removes extension badges, restores native badges, stops observing the page, and skips the catalog download.
 
-Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. A restore-defaults action saves and displays the default settings for every feature. Saving reads each control directly, not through `FormData`, because `FormData` omits controls inside a disabled fieldset and would reset a switched-off feature's settings to defaults. Changes apply to open Dreaming pages through storage change events when the current content script is active.
+Styles are Enhanced and Dreaming. Sizes are Small, Medium, and Large. Positions are Upper right, Upper left, and Lower left; Lower right is unavailable because Dreaming uses that corner for video duration. Every change saves immediately; there is no Save button, so nothing can be left unsaved. Choosing a new reveal key saves too, although it sets a hidden input that fires no change event. A failed write, including Restore defaults, is shown in the page's status line. A restore-defaults action saves the default settings for every feature and displays them once the write succeeds; if it fails, the form keeps the current settings. Saving reads each control directly, not through `FormData`, because `FormData` omits controls inside a disabled fieldset and would reset a switched-off feature's settings to defaults. Changes apply to open Dreaming pages through storage change events when the current content script is active.
 
 Read stored settings by key list (`SETTING_KEYS`), not by passing defaults to `chrome.storage.sync.get`, so that missing keys stay distinguishable from stored ones. A legacy stored `behavior: "original"` from versions before the enable switch migrates to `difficultyEnabled: false` with the default behavior, unless `difficultyEnabled` is stored explicitly.
 
@@ -100,7 +102,7 @@ Picture-in-picture (the floating player window) shows only the video element. Sh
 
 The options page reuses `subtitles.css` for a preview by setting the same `<html>` classes, and pressing and holding the preview reveals it. The reveal key is chosen by clicking the key button and pressing a key; Escape cancels and disallowed keys are rejected with a message. Auto-hide is shown only in Toggle mode.
 
-Subtitle settings and defaults: `subtitlesEnabled` off, so existing users see no change until they opt in; `subtitleStyle` Blur; `revealMode` Hold; `revealKey` `KeyS`; `revealAutoHide` 5 seconds.
+Subtitle settings and defaults: `subtitlesEnabled` off; `subtitleStyle` Blur; `revealMode` Hold; `revealKey` `KeyS`; `revealAutoHide` 5 seconds.
 
 ## Dynamic content
 
