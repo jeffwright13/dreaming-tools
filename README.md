@@ -72,7 +72,7 @@ The options page opens automatically after a first install. To open it later, go
 
 The page has one section per tool, Subtitles first and Difficulty badges second, and follows the browser's light or dark setting. Both tools are off by default. The subtitle preview shows how each player's subtitles look: Dreaming's own player and YouTube-served videos.
 
-**De-emphasize subtitles** switches the subtitles tool on or off. Choose **Blur** (default), **Small and faint**, or **Hidden**; reveal **While holding the key** (default) or **Toggle on each press** with auto-hide after 3, 5 (default), or 10 seconds, or never. To change the reveal key, click the key button and press a letter, digit, or punctuation key. Press and hold the preview to see a reveal.
+**De-emphasize subtitles** switches the subtitles tool on or off. Choose **Blur** (default), **Small and faint**, or **Hidden**; reveal **While holding the key** (default) or **Toggle on each press** with auto-hide after 3, 5 (default), or 10 seconds, or never. To change the reveal key, click the key button and press a letter, digit, or punctuation key. Press the reveal key, or press a preview, to see a reveal on the options page; both follow the chosen Hold or Toggle mode.
 
 **Show difficulty badges** switches the difficulty tool on or off. When it is off, the extension makes no badge changes and does not download the catalog.
 

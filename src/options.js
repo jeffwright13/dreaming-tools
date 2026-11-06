@@ -5,7 +5,12 @@
     isRevealKeyCode,
     normalizeSettings,
   } = globalThis.DreamingToolsSettings;
-  const { formatKeyCode } = globalThis.DreamingSubtitlesCore;
+  const {
+    formatKeyCode,
+    isRevealKeyPress,
+    isTypingTarget,
+    nextRevealState,
+  } = globalThis.DreamingSubtitlesCore;
   const form = document.querySelector("#settings-form");
   const behaviorControls = document.querySelector("#behavior-controls");
   const appearanceControls = document.querySelector("#appearance-controls");
@@ -21,6 +26,19 @@
   const root = document.documentElement;
   const CAPTURE_PROMPT = "Press a key…";
   const NUMERIC_SETTINGS = new Set(["revealAutoHide"]);
+  const REVEALED_CLASS = "dt-subtitles--revealed";
+  const REVEAL_SETTINGS = ["revealMode", "revealKey", "revealAutoHide"];
+  const MILLISECONDS_PER_SECOND = 1000;
+
+  // The previews can be revealed with the configured key, page-wide, or by
+  // pressing a preview, following the chosen mode as on Dreaming. This uses
+  // the shared reveal logic in subtitles-core.js rather than the content
+  // script's feature: that feature listens in the capture phase on window,
+  // which would swallow the key press while a new reveal key is being
+  // chosen, and it offers no way for a mouse press to share its state.
+  let previewSettings = null;
+  let previewRevealed = false;
+  let autoHideTimer = null;
 
   // Read each control directly rather than through FormData: FormData skips
   // controls inside a disabled fieldset, which would reset a switched-off
@@ -60,6 +78,11 @@
     if (revealKeyButton.textContent !== CAPTURE_PROMPT) {
       revealKeyButton.textContent = formatKeyCode(settings.revealKey);
     }
+    const previous = previewSettings;
+    previewSettings = settings;
+    if (!settings.subtitlesEnabled || REVEAL_SETTINGS.some((key) => previous && previous[key] !== settings[key])) {
+      setPreviewRevealed(false);
+    }
     for (const name of [...root.classList]) {
       if (name.startsWith("dt-subtitles")) {
         root.classList.remove(name);
@@ -67,6 +90,47 @@
     }
     if (settings.subtitlesEnabled) {
       root.classList.add("dt-subtitles", `dt-subtitles--style-${settings.subtitleStyle}`);
+      root.classList.toggle(REVEALED_CLASS, previewRevealed);
+    }
+  }
+
+  function setPreviewRevealed(next) {
+    previewRevealed = next;
+    root.classList.toggle(REVEALED_CLASS, previewRevealed);
+    clearTimeout(autoHideTimer);
+    autoHideTimer = null;
+    const { revealMode, revealAutoHide } = previewSettings ?? {};
+    if (previewRevealed && revealMode === "toggle" && revealAutoHide > 0) {
+      autoHideTimer = setTimeout(
+        () => setPreviewRevealed(nextRevealState(previewRevealed, "timeout", previewSettings)),
+        revealAutoHide * MILLISECONDS_PER_SECOND,
+      );
+    }
+  }
+
+  function applyRevealEvent(event) {
+    if (previewSettings?.subtitlesEnabled) {
+      setPreviewRevealed(nextRevealState(previewRevealed, event, previewSettings));
+    }
+  }
+
+  // Bubble-phase listeners: while a new key is being chosen, the capture
+  // listener (onCaptureKey) stops the event before it gets here.
+  function onPreviewKeyDown(event) {
+    if (!previewSettings?.subtitlesEnabled || revealKeyButton.textContent === CAPTURE_PROMPT
+      || !isRevealKeyPress(event, previewSettings.revealKey) || isTypingTarget(event.target)) {
+      return;
+    }
+
+    event.preventDefault();
+    if (!event.repeat) {
+      applyRevealEvent("press");
+    }
+  }
+
+  function onPreviewKeyUp(event) {
+    if (event.code === previewSettings?.revealKey) {
+      applyRevealEvent("release");
     }
   }
 
@@ -138,13 +202,18 @@
   });
 
   // One preview per player. The reveal class is on <html>, so pressing
-  // either preview reveals both.
+  // either preview reveals both. A press acts like the reveal key, so in
+  // Toggle mode a click toggles and leaving the preview does not hide.
   for (const preview of subtitlePreviews) {
-    preview.addEventListener("pointerdown", () => root.classList.add("dt-subtitles--revealed"));
+    preview.addEventListener("pointerdown", () => applyRevealEvent("press"));
     for (const type of ["pointerup", "pointerleave"]) {
-      preview.addEventListener(type, () => root.classList.remove("dt-subtitles--revealed"));
+      preview.addEventListener(type, () => applyRevealEvent("release"));
     }
   }
+
+  document.addEventListener("keydown", onPreviewKeyDown);
+  document.addEventListener("keyup", onPreviewKeyUp);
+  window.addEventListener("blur", () => applyRevealEvent("blur"));
 
   form.addEventListener("change", () => {
     status.textContent = "";

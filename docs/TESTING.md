@@ -61,6 +61,7 @@ Test these views where available:
 - Spanish and French routes
 - First install (remove the extension, then load it again) opens the options page once; reloading or updating the extension does not
 - With a Dreaming tab open and subtitles on, reload the extension in `chrome://extensions`: without reloading the tab, a settings change still applies, and the reveal key reveals once (not twice, which would show two copies running)
+- Options page, subtitles on: holding the reveal key reveals both previews in Hold mode; in Toggle mode each press (or a click on a preview) toggles and auto-hide applies; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
 - Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen

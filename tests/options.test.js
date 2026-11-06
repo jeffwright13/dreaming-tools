@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../src/settings.js";
 import "../src/subtitles-core.js";
 
@@ -44,7 +44,24 @@ const realOptionsMarkup = new DOMParser()
   .parseFromString(readFileSync(OPTIONS_HTML_PATH, "utf8"), "text/html")
   .body.innerHTML;
 
+// Each test imports a fresh options.js, but listeners it adds to document
+// and window outlive the test, still holding that copy's settings. A real
+// options page has only one copy, so remove the previous copy's listeners
+// before loading the next.
+let pageListenerSpies = [];
+
+function removePreviousPageListeners() {
+  for (const { target, spy } of pageListenerSpies) {
+    for (const args of spy.mock.calls) {
+      target.removeEventListener(...args);
+    }
+    spy.mockRestore();
+  }
+  pageListenerSpies = [document, window].map((target) => ({ target, spy: vi.spyOn(target, "addEventListener") }));
+}
+
 async function loadOptions(stored = {}, markup = optionsMarkup) {
+  removePreviousPageListeners();
   const storage = {
     get: vi.fn().mockResolvedValue(stored),
     set: vi.fn().mockResolvedValue(undefined),
@@ -215,14 +232,114 @@ describe("subtitle options", () => {
   const root = () => document.documentElement;
   const keyButton = () => document.querySelector("#reveal-key-button");
 
-  function pressKey(code) {
-    const event = new KeyboardEvent("keydown", { code, bubbles: true, cancelable: true });
-    document.dispatchEvent(event);
+  function pressKey(code, init = {}, target = document) {
+    const event = new KeyboardEvent("keydown", { code, bubbles: true, cancelable: true, ...init });
+    target.dispatchEvent(event);
     return event;
   }
 
+  function releaseKey(code, target = document) {
+    target.dispatchEvent(new KeyboardEvent("keyup", { code, bubbles: true, cancelable: true }));
+  }
+
+  const revealed = () => root().classList.contains("dt-subtitles--revealed");
+
   beforeEach(() => {
     root().className = "";
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("previewing the reveal key", () => {
+    it("reveals while the key is held in Hold mode and ignores repeats", async () => {
+      await loadOptions({ subtitlesEnabled: true });
+
+      expect(pressKey("KeyS").defaultPrevented).toBe(true);
+      expect(revealed()).toBe(true);
+      pressKey("KeyS", { repeat: true });
+      expect(revealed()).toBe(true);
+      releaseKey("KeyS");
+      expect(revealed()).toBe(false);
+    });
+
+    it("toggles on each press in Toggle mode and auto-hides after the delay", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 3 });
+      vi.useFakeTimers();
+
+      pressKey("KeyS");
+      releaseKey("KeyS");
+      expect(revealed()).toBe(true);
+      pressKey("KeyS");
+      expect(revealed()).toBe(false);
+
+      pressKey("KeyS");
+      vi.advanceTimersByTime(2999);
+      expect(revealed()).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(revealed()).toBe(false);
+    });
+
+    it("follows a newly chosen key", async () => {
+      await loadOptions({ subtitlesEnabled: true });
+      keyButton().click();
+      pressKey("KeyJ", {}, keyButton());
+
+      pressKey("KeyS");
+      expect(revealed()).toBe(false);
+      pressKey("KeyJ");
+      expect(revealed()).toBe(true);
+    });
+
+    it("records the current key without revealing while a new key is being chosen", async () => {
+      const storage = await loadOptions({ subtitlesEnabled: true });
+      keyButton().click();
+
+      pressKey("KeyS", {}, keyButton());
+
+      expect(revealed()).toBe(false);
+      expect(keyButton().textContent).toBe("S");
+      expect((await lastSaved(storage)).revealKey).toBe("KeyS");
+    });
+
+    it("does nothing while subtitles are off, in a select, or with Ctrl held", async () => {
+      await loadOptions();
+      expect(pressKey("KeyS").defaultPrevented).toBe(false);
+      expect(revealed()).toBe(false);
+
+      await loadOptions({ subtitlesEnabled: true });
+      pressKey("KeyS", {}, document.querySelector('[name="subtitleStyle"]'));
+      expect(revealed()).toBe(false);
+      pressKey("KeyS", { ctrlKey: true });
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides when the reveal mode changes or the window loses focus", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
+
+      pressKey("KeyS");
+      expect(revealed()).toBe(true);
+      change('[name="revealMode"]', (control) => { control.value = "hold"; });
+      expect(revealed()).toBe(false);
+
+      pressKey("KeyS");
+      expect(revealed()).toBe(true);
+      window.dispatchEvent(new Event("blur"));
+      expect(revealed()).toBe(false);
+    });
+
+    it("makes a click on the preview toggle in Toggle mode", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
+      const preview = document.querySelector("#subtitle-preview");
+
+      preview.dispatchEvent(new Event("pointerdown"));
+      preview.dispatchEvent(new Event("pointerup"));
+      preview.dispatchEvent(new Event("pointerleave"));
+      expect(revealed()).toBe(true);
+      preview.dispatchEvent(new Event("pointerdown"));
+      expect(revealed()).toBe(false);
+    });
   });
 
   it("starts with subtitle de-emphasis off and its controls disabled", async () => {
