@@ -1,10 +1,10 @@
 # Dreaming Tools
 
-Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool can be switched on or off independently in the extension options. It supports Dreaming's Spanish and French sections.
+Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool is off until you switch it on in the extension options, and each can be switched on or off independently. It supports Dreaming's Spanish and French sections.
 
 ## Difficulty badges
 
-Adds Dreaming difficulty ratings to video cards and watch pages, and difficulty ranges to series cards. It enhances:
+Adds Dreaming difficulty ratings to video cards and watch pages, and difficulty ranges to series cards. It is off by default. It enhances:
 
 - Library history and saved-video cards
 - Library series cards
@@ -70,6 +70,10 @@ After changing extension code, return to `chrome://extensions`, click the extens
 
 Open the extension's **Details** page in `chrome://extensions` and select **Extension options**. Settings synchronize through Chrome when browser sync is enabled.
 
+The page has one section per tool, Subtitles first and Difficulty badges second. Both tools are off by default.
+
+**De-emphasize subtitles** switches the subtitles tool on or off. Choose **Blur** (default), **Small and faint**, or **Hidden**; reveal **While holding the key** (default) or **Toggle on each press** with auto-hide after 3, 5 (default), or 10 seconds, or never. To change the reveal key, click the key button and press a letter, digit, or punctuation key. Press and hold the preview to see a reveal.
+
 **Show difficulty badges** switches the difficulty tool on or off. When it is off, the extension makes no badge changes and does not download the catalog.
 
 Behavior choices:
@@ -79,9 +83,7 @@ Behavior choices:
 
 Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. With no sort or any other sort (Random, Short, Long, Old, New) it shows only durations, so both behaviors add badges there; the two behaviors differ only where native badges are present.
 
-Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings.
-
-**De-emphasize subtitles** switches the subtitles tool on or off. Choose **Blur** (default), **Small and faint**, or **Hidden**; reveal **While holding the key** (default) or **Toggle on each press** with auto-hide after 3, 5 (default), or 10 seconds, or never. To change the reveal key, click the key button and press a letter, digit, or punctuation key. Press and hold the preview to see a reveal.
+Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings, which also switches both tools off.
 
 Saving options updates Dreaming tabs where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
 

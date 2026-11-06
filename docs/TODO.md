@@ -8,8 +8,6 @@ Open work items not yet designed or scheduled. When an item is decided, record t
 
 Ideas captured 2026-11-06 during PR #10 review. Choices are deferred until each item is planned.
 
-- **One Difficulty section with subsections.** Group the difficulty enable switch, Badge behavior, Badge appearance, and Preview under one Difficulty card, so the page reads as two features rather than one Subtitles panel and four Difficulty panels.
-- **Subtitles section first, Difficulty second.** Subtitles is the main draw. A separate difficulty extension already exists in the Chrome Web Store, and this one should not compete with it by default. Pairs with making difficulty badges opt-in (`difficultyEnabled` off by default).
 - **Mock video image in the previews** instead of the blank dark-gray blocks, blurred to signal that the content doesn't matter. Must be original artwork (for example a simple SVG scene in the repo), not Dreaming frames; add it to the package allowlist if it is a separate file.
 - **Two subtitle previews, one per player** (Dreaming/Shaka and YouTube), since the players render captions differently (Shaka draws a black box behind the line; YouTube uses its own caption style). Difficulty needs only one preview. The previews can double as fixtures for the browser tests above.
 - **Configurable subtitle text size**, possibly Small/Medium/Large like the difficulty badges.

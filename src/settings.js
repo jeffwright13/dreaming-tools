@@ -3,7 +3,7 @@
   // chrome.storage.sync. Keys are flat (not nested per feature) so that
   // difficulty settings saved by earlier versions keep working unchanged.
   const DEFAULT_SETTINGS = Object.freeze({
-    difficultyEnabled: true,
+    difficultyEnabled: false,
     behavior: "fill-missing",
     style: "dreaming",
     size: "small",
@@ -43,8 +43,8 @@
     revealAutoHide: oneOf(0, 3, 5, 10),
   };
   // Read storage with this key list rather than with DEFAULT_SETTINGS: passing
-  // defaults would fill in difficultyEnabled: true and hide a legacy
-  // behavior: "original" that should migrate to a disabled feature.
+  // defaults would make a never-stored difficultyEnabled look explicitly saved,
+  // which the legacy behavior: "original" migration treats as overriding it.
   const SETTING_KEYS = Object.freeze(Object.keys(DEFAULT_SETTINGS));
   const LEGACY_ORIGINAL_BEHAVIOR = "original";
 

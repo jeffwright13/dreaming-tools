@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../src/settings.js";
 import "../src/subtitles-core.js";
@@ -32,13 +35,24 @@ const optionsMarkup = `
   </form>
 `;
 
-async function loadOptions(stored = {}) {
+// The shipped page, for tests of its structure. The other tests use the
+// trimmed optionsMarkup above, which would not catch a reshuffled layout.
+// A plain path rather than new URL(...): under jsdom the global URL is jsdom's,
+// which readFileSync does not accept.
+const OPTIONS_HTML_PATH = join(dirname(fileURLToPath(import.meta.url)), "../src/options.html");
+const realOptionsMarkup = new DOMParser()
+  .parseFromString(readFileSync(OPTIONS_HTML_PATH, "utf8"), "text/html")
+  .body.innerHTML;
+
+async function loadOptions(stored = {}, markup = optionsMarkup) {
   const storage = {
     get: vi.fn().mockResolvedValue(stored),
     set: vi.fn().mockResolvedValue(undefined),
   };
   vi.stubGlobal("chrome", { storage: { sync: storage } });
-  document.body.innerHTML = optionsMarkup;
+  // Scripts in the real page's markup are inert under innerHTML; options.js
+  // is imported explicitly below.
+  document.body.innerHTML = markup;
   vi.resetModules();
   await import("../src/options.js");
   await vi.waitFor(() => {
@@ -55,6 +69,7 @@ beforeEach(() => {
 describe("options page", () => {
   it("loads stored settings and renders the configured preview", async () => {
     await loadOptions({
+      difficultyEnabled: true,
       behavior: "fill-missing",
       style: "dreaming",
       size: "large",
@@ -76,8 +91,17 @@ describe("options page", () => {
     expect(document.querySelector('input[name="behavior"]:checked')?.value).toBe("fill-missing");
   });
 
-  it("disables difficulty controls when the feature is switched off", async () => {
+  it("starts with difficulty badges off and their controls disabled", async () => {
     await loadOptions();
+
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(false);
+    expect(document.querySelector("#behavior-controls")?.disabled).toBe(true);
+    expect(document.querySelector("#appearance-controls")?.disabled).toBe(true);
+    expect(document.querySelector("#preview-badge")?.hidden).toBe(true);
+  });
+
+  it("disables difficulty controls when the feature is switched off", async () => {
+    await loadOptions({ difficultyEnabled: true });
     const toggle = document.querySelector('[name="difficultyEnabled"]');
     toggle.checked = false;
     toggle.dispatchEvent(new Event("change", { bubbles: true }));
@@ -89,7 +113,7 @@ describe("options page", () => {
   });
 
   it("saves a switched-off feature as disabled", async () => {
-    const storage = await loadOptions();
+    const storage = await loadOptions({ difficultyEnabled: true });
     document.querySelector('[name="difficultyEnabled"]').checked = false;
     document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -112,7 +136,7 @@ describe("options page", () => {
 
   it("restores and persists default settings", async () => {
     const storage = await loadOptions({
-      difficultyEnabled: false,
+      difficultyEnabled: true,
       style: "dreaming",
       size: "large",
       position: "upper-right",
@@ -121,7 +145,7 @@ describe("options page", () => {
 
     await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
     expect(storage.set).toHaveBeenLastCalledWith(globalThis.DreamingToolsSettings.DEFAULT_SETTINGS);
-    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(true);
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(false);
     expect(document.querySelector('[name="size"]')?.value).toBe("small");
     expect(document.querySelector('[name="position"]')?.value).toBe("upper-right");
     expect(document.querySelector("#status")?.textContent).toBe("Defaults restored.");
@@ -247,3 +271,68 @@ describe("subtitle options", () => {
   });
 });
 
+
+describe("options page layout", () => {
+  const FEATURE_CONTROLS = {
+    "subtitles-feature": [
+      '[name="subtitlesEnabled"]',
+      "#subtitle-controls",
+      '[name="subtitleStyle"]',
+      '[name="revealMode"]',
+      '[name="revealAutoHide"]',
+      "#reveal-key-button",
+      "#subtitle-preview",
+    ],
+    "difficulty-feature": [
+      '[name="difficultyEnabled"]',
+      "#behavior-controls",
+      "#appearance-controls",
+      '[name="style"]',
+      '[name="size"]',
+      '[name="position"]',
+      "#preview-badge",
+      "#preview-disabled",
+    ],
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = realOptionsMarkup;
+  });
+
+  it("presents Subtitles first and Difficulty badges second, one card each", () => {
+    const features = [...document.querySelectorAll("#settings-form > .feature")];
+
+    expect(features.map((section) => section.id)).toEqual(["subtitles-feature", "difficulty-feature"]);
+    expect(features.map((section) => section.querySelector("h2")?.textContent)).toEqual(["Subtitles", "Difficulty badges"]);
+  });
+
+  it("keeps each feature's controls inside its own card", () => {
+    for (const [featureId, selectors] of Object.entries(FEATURE_CONTROLS)) {
+      const feature = document.getElementById(featureId);
+      for (const selector of selectors) {
+        expect(feature.querySelector(selector), `${selector} in #${featureId}`).not.toBeNull();
+      }
+    }
+  });
+
+  it("puts each feature's enable switch before its subsections", () => {
+    for (const featureId of Object.keys(FEATURE_CONTROLS)) {
+      const feature = document.getElementById(featureId);
+      const enableSwitch = feature.querySelector('input[type="checkbox"]');
+      const firstSubsection = feature.querySelector(".subsection");
+
+      expect(firstSubsection, `subsection in #${featureId}`).not.toBeNull();
+      expect(enableSwitch.compareDocumentPosition(firstSubsection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("works with the options script", async () => {
+    document.documentElement.className = "";
+    await loadOptions({ subtitlesEnabled: true, difficultyEnabled: true, size: "large" }, realOptionsMarkup);
+
+    expect(document.querySelector("#subtitle-controls")?.disabled).toBe(false);
+    expect(document.querySelector("#appearance-controls")?.disabled).toBe(false);
+    expect(document.querySelector("#preview-badge")?.className).toContain("--size-large");
+    expect(document.documentElement.classList.contains("dt-subtitles--style-blur")).toBe(true);
+  });
+});

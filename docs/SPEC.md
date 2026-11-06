@@ -55,9 +55,11 @@ Chips apply the configured style. Size and position apply only to thumbnail badg
 
 ## Options
 
+The options page has one card per feature, Subtitles first and Difficulty badges second. Each card starts with the feature's enable switch, followed by subsections with smaller headings: Subtitle appearance, Reveal, and Preview for subtitles; Badge behavior, Badge appearance, and Preview for difficulty. A switched-off feature's controls stay visible but disabled. Every feature is off by default, so a fresh install changes nothing on Dreaming until a feature is switched on.
+
 Store synchronized settings in one flat object. Subtitle settings are listed under [Subtitles](#subtitles). Difficulty defaults:
 
-- Difficulty badges enabled: on
+- Difficulty badges enabled: off
 - Behavior: Fill missing difficulties only
 - Style: Dreaming
 - Size: Small
@@ -100,7 +102,7 @@ Picture-in-picture (the floating player window) shows only the video element. Sh
 
 The options page reuses `subtitles.css` for a preview by setting the same `<html>` classes, and pressing and holding the preview reveals it. The reveal key is chosen by clicking the key button and pressing a key; Escape cancels and disallowed keys are rejected with a message. Auto-hide is shown only in Toggle mode.
 
-Subtitle settings and defaults: `subtitlesEnabled` off, so existing users see no change until they opt in; `subtitleStyle` Blur; `revealMode` Hold; `revealKey` `KeyS`; `revealAutoHide` 5 seconds.
+Subtitle settings and defaults: `subtitlesEnabled` off; `subtitleStyle` Blur; `revealMode` Hold; `revealKey` `KeyS`; `revealAutoHide` 5 seconds.
 
 ## Dynamic content
 
