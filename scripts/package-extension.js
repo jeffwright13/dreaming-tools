@@ -8,6 +8,7 @@ export const RUNTIME_FILES = Object.freeze([
   "icons/icon-32.png",
   "icons/icon-48.png",
   "icons/icon-128.png",
+  "src/background.js",
   "src/content.js",
   "src/difficulty-core.js",
   "src/difficulty.css",
@@ -145,6 +146,7 @@ export async function validatePackageInputs(rootDirectory) {
     ...Object.values(manifest.icons ?? {}),
     ...manifest.content_scripts.flatMap((script) => [...(script.js ?? []), ...(script.css ?? [])]),
     manifest.options_ui?.page,
+    manifest.background?.service_worker,
   ].filter(Boolean));
   for (const file of referencedFiles) {
     if (!RUNTIME_FILES.includes(file)) {

@@ -59,6 +59,7 @@ Test these views where available:
 - Series modal cover and episode cards
 - Watch page video and series chips with Dreaming's player and YouTube, including sidebar navigation between videos
 - Spanish and French routes
+- First install (remove the extension, then load it again) opens the options page once; reloading or updating the extension does not
 - Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen

@@ -97,6 +97,10 @@ describe("beta packaging", () => {
     const directory = await fixtureDirectory();
     await updateJson(directory, "manifest.json", (value) => { value.options_ui.page = "unexpected.html"; });
     await expect(validatePackageInputs(directory)).rejects.toThrow("outside the runtime allowlist");
+
+    const background = await fixtureDirectory();
+    await updateJson(background, "manifest.json", (value) => { value.background.service_worker = "src/unexpected.js"; });
+    await expect(validatePackageInputs(background)).rejects.toThrow("outside the runtime allowlist");
   });
 
   it("rejects missing files and invalid icon dimensions", async () => {
