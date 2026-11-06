@@ -47,6 +47,7 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 - [ ] Link to the repository `PRIVACY.md` using a stable public URL.
 - [ ] Complete the privacy questionnaire consistently with `PRIVACY.md` and `SECURITY.md`.
 - [ ] Justify the `storage` permission as synchronized user preferences.
+- [ ] Justify the `scripting` permission as re-injecting the extension's own packaged content script into Dreaming tabs that were open during an install or update, so they keep responding to settings changes. It injects only files from the package, never remote or generated code.
 - [ ] Justify host access to `https://app.dreaming.com/*` as page enhancement and public catalog retrieval.
 - [ ] Confirm that no remote code, analytics, advertising, credential access, or premium-access bypass exists.
 - [ ] Run the release checks in `docs/TESTING.md`.

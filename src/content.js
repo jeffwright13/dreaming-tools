@@ -1,11 +1,20 @@
 (() => {
-  const { SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
+  const { DEFAULT_SETTINGS, SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
 
   const DREAMING_ORIGIN = "https://app.dreaming.com";
   const DREAMING_HOSTNAME = "app.dreaming.com";
   const YOUTUBE_HOSTNAME = "www.youtube.com";
   const YOUTUBE_ORIGIN = "https://www.youtube.com";
   const YOUTUBE_FRAME_SELECTOR = ".ds-youtube-player iframe";
+  // After an install or update, the background worker injects this script
+  // into Dreaming tabs that were already open, where the previous copy is
+  // still running: its storage listener no longer fires, but its key
+  // listeners and page observer do. Each copy announces itself with this DOM
+  // event, which every copy in the page receives, and a running copy that
+  // hears it switches its features off.
+  const REPLACED_EVENT = "dreaming-tools:replaced";
+  // Every feature's enable switch, so a replaced copy can turn them all off.
+  const FEATURE_SWITCHES = Object.keys(DEFAULT_SETTINGS).filter((key) => key.endsWith("Enabled"));
 
   // This script runs on Dreaming pages and, for YouTube-served videos, inside
   // YouTube embed frames. The manifest cannot restrict a content script by
@@ -67,17 +76,35 @@
     return next;
   }
 
+  function withFeaturesOff(settings) {
+    return { ...settings, ...Object.fromEntries(FEATURE_SWITCHES.map((key) => [key, false])) };
+  }
+
   async function initialize(features = selectFeatures(location)) {
     if (features.length === 0) {
       return;
     }
 
-    let stored = await chrome.storage.sync.get(SETTING_KEYS);
+    // Announce before listening, so this copy does not stop itself. The old
+    // copy's features stop synchronously inside this dispatch, before this
+    // copy reads settings and starts its own.
+    document.dispatchEvent(new Event(REPLACED_EVENT));
+    let replaced = false;
+    let stored = {};
+    document.addEventListener(REPLACED_EVENT, () => {
+      replaced = true;
+      updateFeatures(features, withFeaturesOff(normalizeSettings(stored)));
+    }, { once: true });
+
+    stored = await chrome.storage.sync.get(SETTING_KEYS);
+    if (replaced) {
+      return;
+    }
 
     // Register before the first update so changes made while a feature is
     // still starting (for example, downloading the catalog) are not lost.
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName !== "sync") {
+      if (replaced || areaName !== "sync") {
         return;
       }
 

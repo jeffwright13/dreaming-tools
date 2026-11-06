@@ -16,11 +16,12 @@ Non-sensitive bugs and compatibility problems may be reported at https://github.
 
 The extension:
 
-- Requests only `storage` and access to `https://app.dreaming.com/*`
-- Runs content scripts only on supported Spanish and French Dreaming routes
+- Requests only the `storage` and `scripting` permissions and host access to `https://app.dreaming.com/*`; a test pins this list
+- Runs content scripts only on supported Spanish and French Dreaming routes, and in YouTube embed frames only when embedded directly in a Dreaming page
+- Uses `scripting` only to inject the extension's own packaged content-script files into open Dreaming tabs after an install or update, never code strings, functions, or remote code
 - Fetches public catalogs with `credentials: "omit"`
-- Stores only validated behavior, style, size, and position enums
-- Does not request cookie, history, tabs, scripting, web-request, identity, or credential permissions
+- Stores only validated enum and boolean preferences (feature switches, badge behavior, style, size, and position, and subtitle style, reveal mode, reveal key code, and auto-hide delay)
+- Does not request cookie, history, tabs, web-request, identity, or credential permissions
 - Does not use remote code, dynamic evaluation, HTML injection, analytics, advertising, or a developer server
 - Creates badge content with `textContent` and fixed CSS classes
 - Has no runtime npm dependencies in the packaged extension
