@@ -1,39 +1,36 @@
 /*
  * Subtitle de-emphasis. The subtitles feature sets these classes on <html>.
  * .shaka-text-container is Dreaming's own player and exists only while its
- * Settings > Subtitles is set to a language. .ytp-caption-window-container is
- * YouTube's caption layer; this file is also injected into YouTube embed
- * frames, where the classes are set only when the frame is inside Dreaming.
- * The options page reuses this file for its preview.
+ * Settings > Subtitles is set to a language. In YouTube embed frames (where
+ * the classes are set only when the frame is inside Dreaming) the styles go on
+ * the children of .ytp-caption-window-container, not the container: YouTube
+ * positions each caption window absolutely against the player, and a filter
+ * or transform on the container would become their containing block and push
+ * the captions out of view in windowed mode.
+ *
+ * Every style applies only while not revealed, so revealing hands control
+ * back to the player's own styles instead of resetting them. Shrinking uses
+ * the standalone `scale` property, which composes with any transform the
+ * player sets instead of replacing it. The options page reuses this file.
  */
 :root.dt-subtitles .shaka-text-container,
-:root.dt-subtitles .ytp-caption-window-container {
-  transition: filter 120ms ease, opacity 120ms ease, transform 120ms ease;
+:root.dt-subtitles .ytp-caption-window-container > * {
+  transition: filter 120ms ease, opacity 120ms ease, scale 120ms ease;
 }
 
-:root.dt-subtitles--style-blur .shaka-text-container,
-:root.dt-subtitles--style-blur .ytp-caption-window-container {
+:root.dt-subtitles--style-blur:not(.dt-subtitles--revealed) .shaka-text-container,
+:root.dt-subtitles--style-blur:not(.dt-subtitles--revealed) .ytp-caption-window-container > * {
   filter: blur(6px);
 }
 
-/* Scaled rather than resized so the preset works whatever font size the
-   player sets on the inner cue elements. */
-:root.dt-subtitles--style-small-faint .shaka-text-container,
-:root.dt-subtitles--style-small-faint .ytp-caption-window-container {
+:root.dt-subtitles--style-small-faint:not(.dt-subtitles--revealed) .shaka-text-container,
+:root.dt-subtitles--style-small-faint:not(.dt-subtitles--revealed) .ytp-caption-window-container > * {
   opacity: 0.4;
-  transform: scale(0.6);
+  scale: 0.6;
   transform-origin: bottom center;
 }
 
-:root.dt-subtitles--style-hidden .shaka-text-container,
-:root.dt-subtitles--style-hidden .ytp-caption-window-container {
+:root.dt-subtitles--style-hidden:not(.dt-subtitles--revealed) .shaka-text-container,
+:root.dt-subtitles--style-hidden:not(.dt-subtitles--revealed) .ytp-caption-window-container > * {
   opacity: 0;
-}
-
-/* The extra class makes this outrank every style rule above. */
-:root.dt-subtitles.dt-subtitles--revealed .shaka-text-container,
-:root.dt-subtitles.dt-subtitles--revealed .ytp-caption-window-container {
-  filter: none;
-  opacity: 1;
-  transform: none;
 }
