@@ -23,6 +23,12 @@ h1 {
   margin-top: 0;
 }
 
+.intro-note {
+  color: #626864;
+  font-size: 14px;
+  margin: -8px 0 16px;
+}
+
 form {
   display: grid;
   gap: 20px;

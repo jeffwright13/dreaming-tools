@@ -55,7 +55,7 @@ Chips apply the configured style. Size and position apply only to thumbnail badg
 
 ## Options
 
-The options page has one card per feature, Subtitles first and Difficulty badges second. Each card starts with the feature's enable switch, followed by subsections with smaller headings: Subtitle appearance, Reveal, and Preview for subtitles; Badge behavior, Badge appearance, and Preview for difficulty. A switched-off feature's controls stay visible but disabled. Every feature is off by default, so a fresh install changes nothing on Dreaming until a feature is switched on.
+The options page has one card per feature, Subtitles first and Difficulty badges second. Each card starts with the feature's enable switch, followed by subsections with smaller headings: Subtitle appearance, Reveal, and Preview for subtitles; Badge behavior, Badge appearance, and Preview for difficulty. A switched-off feature's controls stay visible but disabled. A note under the intro tells users to reload Dreaming tabs that were open before the extension was installed or updated, because Chrome does not inject the new content script into them and the old one no longer receives settings changes. Every feature is off by default, so a fresh install changes nothing on Dreaming until a feature is switched on.
 
 Store synchronized settings in one flat object. Subtitle settings are listed under [Subtitles](#subtitles). Difficulty defaults:
 
