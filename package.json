@@ -1,6 +1,6 @@
 {
   "name": "dreaming-tools",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Chrome extension with small tools for Dreaming, starting with video and series difficulty ratings.",
   "scripts": {
     "test": "vitest run",

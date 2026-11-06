@@ -79,6 +79,16 @@
       }
     }
 
+    // A press while the player shows no subtitles would flip the state
+    // invisibly, so it only hides. Otherwise a Toggle reveal made before the
+    // player's subtitles were turned off would still be in effect when they
+    // are turned back on.
+    function hideWithoutSubtitles() {
+      if (revealed) {
+        setRevealed(false);
+      }
+    }
+
     // Listeners run in the capture phase on window, before the player's own
     // handlers, so a handled reveal key can be kept from the player.
     function onKeyDown(event) {
@@ -93,6 +103,10 @@
         }
         return;
       }
+
+      // The key is not consumed here: with no subtitles on screen it belongs
+      // to the page.
+      hideWithoutSubtitles();
 
       // The caption state inside a YouTube frame is not visible from here, so
       // the key is forwarded whenever a YouTube player is present.
@@ -137,9 +151,9 @@
         return;
       }
 
-      // A press while the player's captions are off would flip the state
-      // invisibly; releases and blurs always apply so nothing stays revealed.
+      // Releases and blurs always apply so nothing stays revealed.
       if (data.event === "press" && !subtitlesShown()) {
+        hideWithoutSubtitles();
         return;
       }
 

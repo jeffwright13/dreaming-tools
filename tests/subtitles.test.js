@@ -127,6 +127,23 @@ describe("subtitles feature", () => {
   describe("toggle mode", () => {
     const TOGGLE = { ...ENABLED, revealMode: "toggle" };
 
+    it("hides on a press after the player's subtitles were turned off while revealed", async () => {
+      await feature.update({ ...TOGGLE, revealAutoHide: 0 });
+      press("keydown");
+      press("keyup");
+      expect(revealed()).toBe(true);
+
+      document.querySelector(".shaka-text-container").remove();
+      const event = press("keydown");
+
+      expect(revealed()).toBe(false);
+      // With no subtitles on screen the key still belongs to the page.
+      expect(event.defaultPrevented).toBe(false);
+
+      document.querySelector(".ds-shaka-player").insertAdjacentHTML("beforeend", '<div class="shaka-text-container"></div>');
+      expect(revealed()).toBe(false);
+    });
+
     it("flips on each press and ignores held-key repeats", async () => {
       await feature.update({ ...TOGGLE, revealAutoHide: 0 });
 
@@ -305,6 +322,32 @@ describe("inside the YouTube frame", () => {
     expect(press("keydown").defaultPrevented).toBe(false);
     receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
     expect(revealed()).toBe(false);
+  });
+
+  describe("after captions are turned off while revealed in toggle mode", () => {
+    const TOGGLE = { ...ENABLED, revealMode: "toggle", revealAutoHide: 0 };
+
+    async function revealThenTurnCaptionsOff() {
+      await frameFeature.update(TOGGLE);
+      press("keydown");
+      press("keyup");
+      expect(revealed()).toBe(true);
+      document.querySelector(".ytp-caption-window-container").remove();
+    }
+
+    it("hides on a key press inside the frame", async () => {
+      await revealThenTurnCaptionsOff();
+
+      expect(press("keydown").defaultPrevented).toBe(false);
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides on a press forwarded from the Dreaming page", async () => {
+      await revealThenTurnCaptionsOff();
+
+      receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
+      expect(revealed()).toBe(false);
+    });
   });
 
   it("stops listening for messages when disabled", async () => {
