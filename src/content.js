@@ -12,6 +12,14 @@
   // listeners and page observer do. Each copy announces itself with this DOM
   // event, which every copy in the page receives, and a running copy that
   // hears it switches its features off.
+  //
+  // This is not a security boundary. Any script on the page can dispatch the
+  // event and switch the features off in that tab, and it cannot be
+  // authenticated: isTrusted is false for every script-created event,
+  // including the real one, and any token in it would be readable by the
+  // page. That is accepted because the page could already undo the features
+  // itself, and the next injection restores them. Use the event only to shut
+  // features down, never to grant or change anything.
   const REPLACED_EVENT = "dreaming-tools:replaced";
   // Every feature's enable switch, so a replaced copy can turn them all off.
   const FEATURE_SWITCHES = Object.keys(DEFAULT_SETTINGS).filter((key) => key.endsWith("Enabled"));
