@@ -88,4 +88,4 @@ Do not attach HAR files or include credentials, cookies, authorization headers, 
 - Existing Dreaming tabs must be reloaded once after installing or updating the extension.
 - Firefox, mobile browsers, and ChromeOS are not currently supported.
 - Microsoft Edge is a compatibility target but must be tested separately on Windows.
-- This project is independent and is not currently endorsed by Dreaming Languages.
+- This project is independent and is not currently endorsed by Dreaming.
