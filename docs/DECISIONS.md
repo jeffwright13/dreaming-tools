@@ -95,3 +95,8 @@ Dreaming now serves many videos through a cross-origin YouTube embed, whose capt
 ## 2026-11-06: Lead with subtitles and make difficulty badges opt-in
 
 The options page now has one card per feature, Subtitles first and Difficulty badges second, each with its enable switch followed by subsections. Previously difficulty filled four panels and subtitles one, so the page did not read as two features. Subtitles is the extension's main draw, and a separate difficulty extension already exists in the Chrome Web Store; this one should not compete with it by default. Reordering alone would still show badges on a fresh install, so `difficultyEnabled` now defaults to off, matching subtitles. The cost is that a fresh install does nothing visible until the options page is opened; opening it automatically on install is recorded in TODO.md. Users who never saved options run on the defaults, so changing a default would normally switch the feature off for them on update; that was acceptable here because the extension had no users besides its author.
+
+## 2026-11-06: Save options automatically
+
+Leaving the options page with unsaved changes silently discarded them. A leave-page warning (`beforeunload`) was considered, but Chrome shows only a fixed generic message and it treats the symptom. Saving every change immediately removes the unsaved state altogether, matches Chrome's own settings pages and most extension options pages, and fits the existing behavior of open Dreaming tabs updating live through storage change events. The cost is that a set of trial changes cannot be abandoned as a group; Restore defaults remains. Each write is one `chrome.storage.sync.set` per user action, far below sync's write-rate limits, and a failed write is reported on the page.
+

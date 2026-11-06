@@ -61,6 +61,17 @@ async function loadOptions(stored = {}, markup = optionsMarkup) {
   return storage;
 }
 
+function change(selector, update = () => {}) {
+  const control = document.querySelector(selector);
+  update(control);
+  control.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+async function lastSaved(storage) {
+  await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
+  return storage.set.mock.lastCall[0];
+}
+
 beforeEach(() => {
   vi.unstubAllGlobals();
   document.body.replaceChildren();
@@ -114,24 +125,37 @@ describe("options page", () => {
 
   it("saves a switched-off feature as disabled", async () => {
     const storage = await loadOptions({ difficultyEnabled: true });
-    document.querySelector('[name="difficultyEnabled"]').checked = false;
-    document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    change('[name="difficultyEnabled"]', (control) => { control.checked = false; });
 
-    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
-    expect(storage.set.mock.lastCall[0].difficultyEnabled).toBe(false);
+    expect((await lastSaved(storage)).difficultyEnabled).toBe(false);
   });
 
-  it("saves normalized form settings", async () => {
-    const storage = await loadOptions();
-    document.querySelector('[name="style"]').value = "dreaming";
-    document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  it("does not save when the page only loads settings", async () => {
+    const storage = await loadOptions({ difficultyEnabled: true, size: "large" });
 
-    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
-    expect(storage.set).toHaveBeenLastCalledWith({
+    expect(storage.set).not.toHaveBeenCalled();
+  });
+
+  it("saves normalized form settings as soon as a control changes", async () => {
+    const storage = await loadOptions({ difficultyEnabled: true });
+    change('[name="style"]', (control) => { control.value = "enhanced"; });
+
+    expect(await lastSaved(storage)).toEqual({
       ...globalThis.DreamingToolsSettings.DEFAULT_SETTINGS,
-      style: "dreaming",
+      difficultyEnabled: true,
+      style: "enhanced",
     });
-    expect(document.querySelector("#status")?.textContent).toBe("Options saved.");
+    await vi.waitFor(() => expect(document.querySelector("#status")?.textContent).toBe("Saved."));
+  });
+
+  it("reports a save that fails", async () => {
+    const storage = await loadOptions({ difficultyEnabled: true });
+    storage.set.mockRejectedValueOnce(new Error("MAX_WRITE_OPERATIONS_PER_MINUTE quota exceeded"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    change('[name="size"]', (control) => { control.value = "large"; });
+
+    await vi.waitFor(() => expect(document.querySelector("#status")?.textContent).toContain("couldn't be saved"));
+    expect(document.querySelector("#status")?.textContent).toContain("quota exceeded");
   });
 
   it("restores and persists default settings", async () => {
@@ -162,10 +186,10 @@ describe("saving with a feature switched off", () => {
       subtitleStyle: "hidden",
       revealKey: "KeyJ",
     });
-    document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    // Any change saves the whole form, including the disabled fieldsets.
+    change('[name="difficultyEnabled"]');
 
-    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
-    expect(storage.set.mock.lastCall[0]).toMatchObject({
+    expect(await lastSaved(storage)).toMatchObject({
       difficultyEnabled: false,
       behavior: "enhanced-everywhere",
       size: "large",
@@ -180,22 +204,10 @@ describe("subtitle options", () => {
   const root = () => document.documentElement;
   const keyButton = () => document.querySelector("#reveal-key-button");
 
-  function change(selector, update) {
-    const control = document.querySelector(selector);
-    update(control);
-    control.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
   function pressKey(code) {
     const event = new KeyboardEvent("keydown", { code, bubbles: true, cancelable: true });
     document.dispatchEvent(event);
     return event;
-  }
-
-  async function save(storage) {
-    document.querySelector("#settings-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
-    return storage.set.mock.lastCall[0];
   }
 
   beforeEach(() => {
@@ -241,7 +253,7 @@ describe("subtitle options", () => {
     expect(document.querySelector("#auto-hide-control")?.hidden).toBe(false);
     change('[name="revealAutoHide"]', (control) => { control.value = "10"; });
 
-    const saved = await save(storage);
+    const saved = await lastSaved(storage);
     expect(saved).toMatchObject({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 10 });
   });
 
@@ -253,11 +265,12 @@ describe("subtitle options", () => {
     expect(pressKey("KeyJ").defaultPrevented).toBe(true);
     expect(keyButton().textContent).toBe("J");
 
-    expect((await save(storage)).revealKey).toBe("KeyJ");
+    // Capture writes a hidden input, which fires no change event; it saves directly.
+    expect((await lastSaved(storage)).revealKey).toBe("KeyJ");
   });
 
   it("keeps the current key when capture is cancelled or the key is not allowed", async () => {
-    await loadOptions({ subtitlesEnabled: true, revealKey: "KeyD" });
+    const storage = await loadOptions({ subtitlesEnabled: true, revealKey: "KeyD" });
 
     keyButton().click();
     pressKey("Escape");
@@ -268,6 +281,7 @@ describe("subtitle options", () => {
     expect(keyButton().textContent).toBe("D");
     expect(document.querySelector("#status")?.textContent).toContain("can't be used");
     expect(document.querySelector('[name="revealKey"]')?.value).toBe("KeyD");
+    expect(storage.set).not.toHaveBeenCalled();
   });
 });
 
@@ -304,6 +318,10 @@ describe("options page layout", () => {
 
     expect(features.map((section) => section.id)).toEqual(["subtitles-feature", "difficulty-feature"]);
     expect(features.map((section) => section.querySelector("h2")?.textContent)).toEqual(["Subtitles", "Difficulty badges"]);
+  });
+
+  it("has no Save button, because changes save automatically", () => {
+    expect(document.querySelector('#settings-form [type="submit"]')).toBeNull();
   });
 
   it("keeps each feature's controls inside its own card", () => {

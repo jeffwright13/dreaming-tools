@@ -88,6 +88,19 @@
     renderPreview();
   }
 
+  // Every change saves at once; there is no Save button. Each write carries the
+  // whole form, and chrome.storage applies writes in order, so the last change
+  // wins even if several are in flight.
+  async function saveForm() {
+    try {
+      await chrome.storage.sync.set(readForm());
+      status.textContent = "Saved.";
+    } catch (error) {
+      console.error("Dreaming Tools options couldn't be saved.", error);
+      status.textContent = `Options couldn't be saved: ${error.message}`;
+    }
+  }
+
   function onCaptureKey(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -107,6 +120,8 @@
     revealKeyInput.value = event.code;
     status.textContent = "";
     renderPreview();
+    // Setting a hidden input fires no change event, so save here.
+    saveForm();
   }
 
   revealKeyButton.addEventListener("click", () => {
@@ -122,12 +137,7 @@
   form.addEventListener("change", () => {
     status.textContent = "";
     renderPreview();
-  });
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await chrome.storage.sync.set(readForm());
-    status.textContent = "Options saved.";
+    saveForm();
   });
 
   resetButton.addEventListener("click", async () => {

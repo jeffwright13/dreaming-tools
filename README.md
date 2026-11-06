@@ -85,7 +85,7 @@ Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. 
 
 Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings, which also switches both tools off.
 
-Saving options updates Dreaming tabs where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
+Changes save as soon as you make them; there is no Save button. Open Dreaming tabs update without reloading where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
 
 ## Manual test checklist
 

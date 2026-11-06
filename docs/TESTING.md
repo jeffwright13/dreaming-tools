@@ -59,7 +59,7 @@ Test these views where available:
 - Series modal cover and episode cards
 - Watch page video and series chips with Dreaming's player and YouTube, including sidebar navigation between videos
 - Spanish and French routes
-- Options page and Restore defaults
+- Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
 - Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
