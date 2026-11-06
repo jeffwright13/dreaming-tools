@@ -15,7 +15,7 @@
   const autoHideControl = document.querySelector("#auto-hide-control");
   const revealKeyButton = document.querySelector("#reveal-key-button");
   const revealKeyInput = form.elements.namedItem("revealKey");
-  const subtitlePreview = document.querySelector("#subtitle-preview");
+  const subtitlePreviews = document.querySelectorAll("#subtitle-preview, #youtube-subtitle-preview");
   const resetButton = document.querySelector("#reset-options");
   const status = document.querySelector("#status");
   const root = document.documentElement;
@@ -137,9 +137,13 @@
     document.addEventListener("keydown", onCaptureKey, true);
   });
 
-  subtitlePreview.addEventListener("pointerdown", () => root.classList.add("dt-subtitles--revealed"));
-  for (const type of ["pointerup", "pointerleave"]) {
-    subtitlePreview.addEventListener(type, () => root.classList.remove("dt-subtitles--revealed"));
+  // One preview per player. The reveal class is on <html>, so pressing
+  // either preview reveals both.
+  for (const preview of subtitlePreviews) {
+    preview.addEventListener("pointerdown", () => root.classList.add("dt-subtitles--revealed"));
+    for (const type of ["pointerup", "pointerleave"]) {
+      preview.addEventListener(type, () => root.classList.remove("dt-subtitles--revealed"));
+    }
   }
 
   form.addEventListener("change", () => {

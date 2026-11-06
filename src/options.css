@@ -1,69 +1,124 @@
+/* Theme tokens. Every color on the page comes from here, and the dark-mode
+   block below redefines each one. Text sizes are in rem so the page follows
+   the browser's default font size. */
 :root {
-  color: #242424;
+  color-scheme: light dark;
+  --page: #f5f7f6;
+  --surface: #ffffff;
+  --text: #242424;
+  --muted: #5c625f;
+  --subheading: #3d4440;
+  --border: #d8ddda;
+  --divider: #e6e9e7;
+  --accent: #00a864;
+  --accent-text: #176a46;
+  --on-accent: #ffffff;
+  --info: #2f6f9f;
+  --on-info: #ffffff;
+  --preview-frame: #26312c;
+
+  color: var(--text);
   font-family: "Readex Pro", system-ui, sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #121614;
+    --surface: #1c2120;
+    --text: #e4e8e6;
+    --muted: #a2aaa6;
+    --subheading: #c8cfcb;
+    --border: #343c39;
+    --divider: #2a302e;
+    --accent: #13a868;
+    --accent-text: #63d39e;
+    --on-accent: #ffffff;
+    --info: #7db4df;
+    --on-info: #121614;
+    --preview-frame: #0d1110;
+  }
+}
+
+/* Fixed colors, the same in both themes: the previews imitate the players,
+   whose captions do not follow the page theme. */
+:root {
+  --overlay-text: #ffffff;
+  --shaka-caption-background: rgba(0, 0, 0, 0.8);
+  --youtube-caption-background: rgba(8, 8, 8, 0.75);
+  --scene-shade: rgba(0, 0, 0, 0.18);
+  --overlay-pill: rgba(0, 0, 0, 0.7);
+}
+
 body {
-  background: #f5f7f6;
+  background: var(--page);
   margin: 0;
 }
 
 main {
   margin: 0 auto;
-  max-width: 680px;
-  padding: 32px 24px 48px;
+  max-width: 45rem;
+  padding: 2rem 1.5rem 3rem;
 }
 
 h1 {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
+}
+
+/* Three levels under the heading: what the extension is (plain), how the
+   page works (info), and, at the bottom, the reload fallback (quiet note). */
+.tagline {
+  margin: 0 0 0.75rem;
+}
+
+.intro,
+.reload-note {
+  align-items: start;
+  color: var(--muted);
+  display: flex;
+  gap: 0.5rem;
 }
 
 .intro {
-  color: #5c625f;
-  margin-top: 0;
+  margin: 0 0 1.25rem;
 }
 
-/* A warning, not just information: amber callout with an icon. No font-size,
-   so it matches the intro and follows the browser's default text size. */
-.intro-note {
-  align-items: start;
-  background: #fff8e6;
-  border: 1px solid #f0d58c;
-  border-left: 4px solid #d99a00;
-  border-radius: 8px;
-  color: #5c4300;
-  display: flex;
-  gap: 10px;
-  margin: 0 0 20px;
-  padding: 10px 14px;
+.reload-note {
+  font-size: 0.875rem;
+  margin: 1.5rem 0 0;
 }
 
-.intro-note-icon {
-  color: #d99a00;
+.note-icon {
+  color: var(--info);
   flex: none;
-  height: 1.25em;
-  width: 1.25em;
+  height: 1.15em;
+  margin-top: 0.1em;
+  width: 1.15em;
+}
+
+.note-icon-mark {
+  fill: var(--on-info);
 }
 
 form {
   display: grid;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .panel {
-  background: #ffffff;
-  border: 1px solid #d8ddda;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 1rem;
+  padding: 1.25rem;
 }
 
 .control-group {
   border: 0;
   display: grid;
-  gap: 14px;
+  gap: 0.875rem;
   margin: 0;
+  min-width: 0;
   padding: 0;
 }
 
@@ -72,7 +127,7 @@ form {
 }
 
 h2 {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
 }
@@ -80,19 +135,19 @@ h2 {
 /* A feature card holds the enable switch, then subsections separated by a
    rule, each with a smaller heading. */
 .feature {
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 .subsection {
-  border-top: 1px solid #e6e9e7;
+  border-top: 1px solid var(--divider);
   display: grid;
-  gap: 12px;
-  padding-top: 16px;
+  gap: 0.75rem;
+  padding-top: 1rem;
 }
 
 h3 {
-  color: #3d4440;
-  font-size: 15px;
+  color: var(--subheading);
+  font-size: 0.9375rem;
   font-weight: 700;
   margin: 0;
 }
@@ -106,7 +161,7 @@ h3 {
 .radio-option {
   align-items: start;
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .radio-option small,
@@ -115,36 +170,110 @@ h3 {
 }
 
 .radio-option small {
-  color: #626864;
-  margin-top: 3px;
+  color: var(--muted);
+  margin-top: 0.2rem;
 }
 
 #appearance-controls label,
 #subtitle-controls .subsection > label {
   align-items: center;
   display: flex;
+  gap: 1rem;
   justify-content: space-between;
 }
 
 select {
-  min-width: 180px;
-  padding: 7px;
+  font: inherit;
+  font-size: 0.875rem;
+  min-width: 11.25rem;
+  padding: 0.4rem;
 }
 
-.preview-thumbnail {
-  background: linear-gradient(145deg, #52635b, #26312c);
+.actions {
+  align-items: center;
+  display: flex;
+  gap: 0.875rem;
+}
+
+button {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  color: var(--on-accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.625rem 1rem;
+}
+
+.secondary-button {
+  background: var(--surface);
+  color: var(--accent-text);
+}
+
+#status {
+  color: var(--accent-text);
+}
+
+#subtitle-controls .subsection > label[hidden] {
+  display: none;
+}
+
+.key-button {
+  font-family: ui-monospace, Menlo, monospace;
+  min-width: 11.25rem;
+}
+
+.control-help {
+  color: var(--muted);
+}
+
+/* Previews. The kitchen scene is original artwork, blurred so it reads as
+   "some video" and keeps attention on the subtitles and badge. It sits on a
+   pseudo-element so the blur does not reach the content on top. */
+.preview-scene {
+  background: var(--preview-frame);
   border-radius: 8px;
-  height: 180px;
   overflow: hidden;
   position: relative;
 }
 
+.preview-scene::before {
+  background: url("preview-scene.svg") center / cover no-repeat;
+  content: "";
+  filter: blur(3px);
+  inset: -8px;
+  position: absolute;
+}
+
+.preview-scene::after {
+  background: var(--scene-shade);
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.preview-scene > * {
+  z-index: 1;
+}
+
+.preview-thumbnail {
+  aspect-ratio: 16 / 9;
+  max-width: 24rem;
+}
+
+/* Centered on a dark pill so it stays readable over the light scene. */
 #preview-disabled {
-  align-items: center;
-  color: #ffffff;
-  display: flex;
-  height: 100%;
-  justify-content: center;
+  background: var(--overlay-pill);
+  border-radius: 999px;
+  color: var(--overlay-text);
+  font-size: 0.875rem;
+  height: fit-content;
+  inset: 0;
+  margin: auto;
+  padding: 0.35rem 0.9rem;
+  position: absolute;
+  width: fit-content;
 }
 
 /* The badge classes from difficulty.css set display, which would otherwise
@@ -154,66 +283,68 @@ select {
   display: none;
 }
 
-.actions {
-  align-items: center;
-  display: flex;
-  gap: 14px;
+/* One subtitle preview per player, side by side where there is room. */
+.preview-pair {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
 
-button {
-  background: #00a864;
-  border: 1px solid #00a864;
-  border-radius: 7px;
-  color: #ffffff;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-  padding: 10px 16px;
+.preview-figure {
+  margin: 0;
 }
 
-.secondary-button {
-  background: #ffffff;
-  color: #176a46;
-}
-
-#status {
-  color: #176a46;
-}
-
-#subtitle-controls .subsection > label[hidden] {
-  display: none;
-}
-
-.key-button {
-  font-family: ui-monospace, Menlo, monospace;
-  min-width: 180px;
-}
-
-.control-help {
-  color: #626864;
+.preview-label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin-top: 0.35rem;
 }
 
 .preview-player {
-  background: linear-gradient(145deg, #3b4440, #1c2320);
-  border-radius: 8px;
+  aspect-ratio: 16 / 9;
   cursor: pointer;
-  height: 140px;
-  position: relative;
   user-select: none;
 }
 
+/* Dreaming's Shaka player: a solid black box behind the line, fixed size. */
 .preview-player .shaka-text-container {
-  bottom: 14px;
+  bottom: 8%;
   display: flex;
   justify-content: center;
-  left: 0;
+  left: 0.5rem;
   position: absolute;
-  right: 0;
+  right: 0.5rem;
 }
 
 .preview-player .shaka-text-container span {
-  background: rgba(0, 0, 0, 0.8);
-  color: #ffffff;
-  font-size: 18px;
-  padding: 2px 6px;
+  background: var(--shaka-caption-background);
+  color: var(--overlay-text);
+  font-size: 0.9375rem;
+  padding: 0.1rem 0.35rem;
+  text-align: center;
+}
+
+/* YouTube's default captions: a translucent box per line, set a little
+   lower and in YouTube's caption font. */
+.preview-player .ytp-caption-window-container {
+  inset: 0;
+  position: absolute;
+}
+
+.preview-player .caption-window {
+  bottom: 5%;
+  left: 0.5rem;
+  position: absolute;
+  right: 0.5rem;
+  text-align: center;
+}
+
+.preview-player .ytp-caption-segment {
+  background: var(--youtube-caption-background);
+  box-decoration-break: clone;
+  color: var(--overlay-text);
+  font-family: "YouTube Noto", Roboto, Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 0.1rem 0.3rem;
 }

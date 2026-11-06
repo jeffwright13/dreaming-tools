@@ -306,7 +306,8 @@ describe("options page layout", () => {
       '[name="revealMode"]',
       '[name="revealAutoHide"]',
       "#reveal-key-button",
-      "#subtitle-preview",
+      "#subtitle-preview .shaka-text-container",
+      "#youtube-subtitle-preview .ytp-caption-window-container > .caption-window",
     ],
     "difficulty-feature": [
       '[name="difficultyEnabled"]',
@@ -329,6 +330,27 @@ describe("options page layout", () => {
 
     expect(features.map((section) => section.id)).toEqual(["subtitles-feature", "difficulty-feature"]);
     expect(features.map((section) => section.querySelector("h2")?.textContent)).toEqual(["Subtitles", "Difficulty badges"]);
+  });
+
+  it("says what the extension is, and that it is independent, under the heading", () => {
+    const tagline = document.querySelector("h1 + .tagline");
+
+    expect(tagline?.textContent).toContain("not affiliated with Dreaming");
+    expect(tagline?.nextElementSibling?.matches(".intro")).toBe(true);
+  });
+
+  it("puts the reload note at the bottom, after both feature cards", () => {
+    const note = document.querySelector(".reload-note");
+    const lastFeature = document.querySelector("#difficulty-feature");
+
+    expect(note?.textContent).toContain("reload");
+    expect(lastFeature.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("labels each subtitle preview with the player it imitates", () => {
+    const labels = [...document.querySelectorAll("#subtitles-feature .preview-label")].map((label) => label.textContent);
+
+    expect(labels).toEqual(["Dreaming player", "YouTube-served videos"]);
   });
 
   it("has no Save button, because changes save automatically", () => {
@@ -363,5 +385,19 @@ describe("options page layout", () => {
     expect(document.querySelector("#appearance-controls")?.disabled).toBe(false);
     expect(document.querySelector("#preview-badge")?.className).toContain("--size-large");
     expect(document.documentElement.classList.contains("dt-subtitles--style-blur")).toBe(true);
+  });
+
+  it("reveals both subtitle previews while either is pressed", async () => {
+    document.documentElement.className = "";
+    await loadOptions({ subtitlesEnabled: true }, realOptionsMarkup);
+    const root = document.documentElement;
+
+    for (const id of ["#subtitle-preview", "#youtube-subtitle-preview"]) {
+      const preview = document.querySelector(id);
+      preview.dispatchEvent(new Event("pointerdown"));
+      expect(root.classList.contains("dt-subtitles--revealed"), id).toBe(true);
+      preview.dispatchEvent(new Event("pointerup"));
+      expect(root.classList.contains("dt-subtitles--revealed"), id).toBe(false);
+    }
   });
 });

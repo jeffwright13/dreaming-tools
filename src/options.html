@@ -11,13 +11,13 @@
   <body>
     <main>
       <h1>Dreaming Tools</h1>
-      <p class="intro">Choose which tools run on Dreaming and how they look. Each tool is off until you turn it on. Changes save automatically.</p>
-      <p class="intro-note" role="note">
-        <svg class="intro-note-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 2.5 1.5 21h21L12 2.5Z" fill="currentColor"/>
-          <path d="M11 9h2v6h-2zM11 16.5h2v2h-2z" fill="#fff8e6"/>
+      <p class="tagline">A collection of tools that enhance the video experience on Dreaming. An independent extension, not affiliated with Dreaming.</p>
+      <p class="intro">
+        <svg class="note-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="currentColor"/>
+          <path d="M11 10h2v7h-2zM11 6.5h2v2h-2z" class="note-icon-mark"/>
         </svg>
-        <span>Changes reach open Dreaming tabs right away, including tabs that were open when the extension was installed or updated. If a tab doesn't respond to changes, <strong>reload that tab</strong>.</span>
+        <span>Each tool is off until you turn it on. Changes save automatically.</span>
       </p>
 
       <form id="settings-form">
@@ -67,10 +67,21 @@
           </fieldset>
           <div class="subsection">
             <h3>Preview</h3>
-            <div id="subtitle-preview" class="preview-player" title="Press and hold to preview the reveal">
-              <div class="shaka-text-container"><span>Vamos a poner el litro de agua en la olla.</span></div>
+            <div class="preview-pair">
+              <figure class="preview-figure">
+                <div id="subtitle-preview" class="preview-player preview-scene" title="Press and hold to preview the reveal">
+                  <div class="shaka-text-container"><span>Vamos a poner el litro de agua en la olla.</span></div>
+                </div>
+                <figcaption class="preview-label">Dreaming player</figcaption>
+              </figure>
+              <figure class="preview-figure">
+                <div id="youtube-subtitle-preview" class="preview-player preview-scene" title="Press and hold to preview the reveal">
+                  <div class="ytp-caption-window-container"><div class="caption-window"><span class="ytp-caption-segment">Vamos a poner el litro de agua en la olla.</span></div></div>
+                </div>
+                <figcaption class="preview-label">YouTube-served videos</figcaption>
+              </figure>
             </div>
-            <small class="control-help">Press and hold the preview to see the subtitles revealed.</small>
+            <small class="control-help">Press and hold either preview to see the subtitles revealed.</small>
           </div>
         </section>
 
@@ -123,7 +134,7 @@
           </div>
           <div class="subsection preview-section">
             <h3>Preview</h3>
-            <div class="preview-thumbnail ds-video-thumbnail">
+            <div class="preview-thumbnail preview-scene ds-video-thumbnail">
               <span id="preview-badge">42</span>
               <span id="preview-disabled">Difficulty badges are off</span>
             </div>
@@ -135,6 +146,14 @@
           <output id="status" aria-live="polite"></output>
         </div>
       </form>
+
+      <p class="reload-note" role="note">
+        <svg class="note-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="currentColor"/>
+          <path d="M11 10h2v7h-2zM11 6.5h2v2h-2z" class="note-icon-mark"/>
+        </svg>
+        <span>Open Dreaming tabs pick up changes right away, including tabs that were open when the extension was installed or updated. If a tab doesn't respond to changes, reload it.</span>
+      </p>
     </main>
     <script src="settings.js"></script>
     <script src="subtitles-core.js"></script>
