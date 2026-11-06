@@ -13,6 +13,31 @@ function selectorsMatching(fragment) {
     .filter((selector) => selector.includes(fragment));
 }
 
+describe("subtitles.css on Dreaming's player", () => {
+  function declarationsFor(fragment) {
+    return css
+      .split("}")
+      .filter((rule) => rule.split("{")[0].includes(fragment))
+      .map((rule) => rule.split("{")[1] ?? "")
+      .join(";");
+  }
+
+  // Dreaming animates the container's position with its own transition
+  // (transition: bottom 0.1s, verified live), which any transition here would
+  // replace.
+  it("never sets a transition on the container Dreaming animates", () => {
+    expect(declarationsFor("shaka-text-container")).not.toMatch(/transition/);
+  });
+
+  // Shaka sets an inline opacity on each subtitle line, which would defeat
+  // the opacity styles, so they stay on the container.
+  it("styles the container, not the subtitle lines Shaka styles inline", () => {
+    for (const selector of selectorsMatching("shaka-text-container")) {
+      expect(selector).toMatch(/\.shaka-text-container$/);
+    }
+  });
+});
+
 describe("subtitles.css on YouTube captions", () => {
   // YouTube positions each caption window absolutely relative to the player.
   // A filter or transform on the container would make the container their

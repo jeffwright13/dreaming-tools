@@ -8,12 +8,18 @@
  * or transform on the container would become their containing block and push
  * the captions out of view in windowed mode.
  *
+ * Dreaming's player gets no transition here: Dreaming animates the Shaka
+ * container's position with its own transition (verified live: transition:
+ * bottom 0.1s), and any transition on the container would replace it. The
+ * effects cannot move to the subtitle lines instead, because Shaka sets an
+ * inline opacity on each line, which would defeat the opacity styles. So on
+ * Dreaming's player the effects switch instantly, while YouTube's captions fade.
+ *
  * Every style applies only while not revealed, so revealing hands control
  * back to the player's own styles instead of resetting them. Shrinking uses
  * the standalone `scale` property, which composes with any transform the
  * player sets instead of replacing it. The options page reuses this file.
  */
-:root.dt-subtitles .shaka-text-container,
 :root.dt-subtitles .ytp-caption-window-container > * {
   transition: filter 120ms ease, opacity 120ms ease, scale 120ms ease;
 }
