@@ -1,6 +1,6 @@
 # Privacy Policy for Dreaming Tools
 
-Effective date: 2026-10-13
+Effective date: 2026-11-06
 
 Dreaming Tools is an independent browser extension that adds companion tools to Dreaming pages, currently difficulty badges and series difficulty ranges, and subtitle de-emphasis for listen-only practice. It is not affiliated with or endorsed by Dreaming.
 

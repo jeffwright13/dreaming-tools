@@ -91,14 +91,22 @@
   // Every change saves at once; there is no Save button. Each write carries the
   // whole form, and chrome.storage applies writes in order, so the last change
   // wins even if several are in flight.
-  async function saveForm() {
+  // Every storage write goes through here, so the status line is the one
+  // place a failed write is reported. Returns whether the write succeeded.
+  async function writeSettings(settings, successMessage) {
     try {
-      await chrome.storage.sync.set(readForm());
-      status.textContent = "Saved.";
+      await chrome.storage.sync.set(settings);
+      status.textContent = successMessage;
+      return true;
     } catch (error) {
       console.error("Dreaming Tools options couldn't be saved.", error);
       status.textContent = `Options couldn't be saved: ${error.message}`;
+      return false;
     }
+  }
+
+  function saveForm() {
+    return writeSettings(readForm(), "Saved.");
   }
 
   function onCaptureKey(event) {
@@ -140,10 +148,12 @@
     saveForm();
   });
 
+  // Show the defaults only once they are stored, so the form never displays
+  // settings that were not saved.
   resetButton.addEventListener("click", async () => {
-    await chrome.storage.sync.set(DEFAULT_SETTINGS);
-    populateForm(DEFAULT_SETTINGS);
-    status.textContent = "Defaults restored.";
+    if (await writeSettings(DEFAULT_SETTINGS, "Defaults restored.")) {
+      populateForm(DEFAULT_SETTINGS);
+    }
   });
 
   chrome.storage.sync.get(SETTING_KEYS).then((stored) => {

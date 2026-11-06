@@ -167,12 +167,23 @@ describe("options page", () => {
     });
     document.querySelector("#reset-options").click();
 
-    await vi.waitFor(() => expect(storage.set).toHaveBeenCalled());
+    await vi.waitFor(() => expect(document.querySelector("#status")?.textContent).toBe("Defaults restored."));
     expect(storage.set).toHaveBeenLastCalledWith(globalThis.DreamingToolsSettings.DEFAULT_SETTINGS);
     expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(false);
     expect(document.querySelector('[name="size"]')?.value).toBe("small");
     expect(document.querySelector('[name="position"]')?.value).toBe("upper-right");
-    expect(document.querySelector("#status")?.textContent).toBe("Defaults restored.");
+  });
+
+  it("keeps the current form and reports it when restoring defaults fails", async () => {
+    const storage = await loadOptions({ difficultyEnabled: true, size: "large" });
+    storage.set.mockRejectedValueOnce(new Error("sync unavailable"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    document.querySelector("#reset-options").click();
+
+    await vi.waitFor(() => expect(document.querySelector("#status")?.textContent).toContain("couldn't be saved"));
+    expect(document.querySelector("#status")?.textContent).toContain("sync unavailable");
+    expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(true);
+    expect(document.querySelector('[name="size"]')?.value).toBe("large");
   });
 });
 
