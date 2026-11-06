@@ -71,6 +71,7 @@ src/
   options.css
   options.html
   options.js
+  preview-scene.svg
   settings.js
   subtitles-core.js
   subtitles.css

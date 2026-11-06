@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+  <!-- Original artwork for the options-page previews: a kitchen with a pot of
+       water on the stove, matching the sample subtitle line. Shown blurred. -->
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8d3ad"/>
+      <stop offset="1" stop-color="#d9bf93"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9d3ea"/>
+      <stop offset="1" stop-color="#e3f1f7"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7d8a93"/>
+      <stop offset="0.45" stop-color="#c9d1d6"/>
+      <stop offset="1" stop-color="#6f7b84"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="320" height="180" fill="url(#wall)"/>
+
+  <!-- Window with a hill and the sun -->
+  <rect x="22" y="14" width="78" height="58" rx="3" fill="#f7f2e8"/>
+  <rect x="27" y="19" width="68" height="48" fill="url(#sky)"/>
+  <circle cx="78" cy="32" r="7" fill="#f6d47a"/>
+  <path d="M27 67 Q50 46 72 58 T95 52 V67 Z" fill="#8fbf7a"/>
+  <rect x="59" y="19" width="4" height="48" fill="#f7f2e8"/>
+  <rect x="27" y="41" width="68" height="4" fill="#f7f2e8"/>
+
+  <!-- Shelf with jars -->
+  <rect x="200" y="40" width="96" height="5" rx="1" fill="#8b5e3c"/>
+  <rect x="208" y="22" width="14" height="18" rx="3" fill="#c4553f"/>
+  <rect x="207" y="20" width="16" height="4" rx="1" fill="#7a3426"/>
+  <rect x="230" y="26" width="12" height="14" rx="3" fill="#e2b04a"/>
+  <rect x="229" y="24" width="14" height="4" rx="1" fill="#9c7424"/>
+  <rect x="250" y="18" width="16" height="22" rx="3" fill="#6f9e8a"/>
+  <rect x="249" y="16" width="18" height="4" rx="1" fill="#3f6b58"/>
+  <path d="M276 40 V30 Q283 22 290 30 V40 Z" fill="#d9e4e8"/>
+
+  <!-- Tiled backsplash -->
+  <rect x="0" y="82" width="320" height="46" fill="#f1ece2"/>
+  <g stroke="#d8cfbf" stroke-width="1.5">
+    <path d="M0 97 H320 M0 112 H320"/>
+    <path d="M20 82 V128 M44 82 V128 M68 82 V128 M92 82 V128 M116 82 V128 M140 82 V128 M164 82 V128 M188 82 V128 M212 82 V128 M236 82 V128 M260 82 V128 M284 82 V128 M308 82 V128"/>
+  </g>
+
+  <!-- Hanging utensils -->
+  <rect x="34" y="84" width="54" height="3" rx="1.5" fill="#6b4a32"/>
+  <path d="M44 87 V112" stroke="#5d666c" stroke-width="2.5"/>
+  <ellipse cx="44" cy="115" rx="5" ry="6" fill="#5d666c"/>
+  <path d="M61 87 V118" stroke="#a0703f" stroke-width="3"/>
+  <rect x="57" y="116" width="8" height="8" rx="2" fill="#a0703f"/>
+  <path d="M78 87 V110" stroke="#5d666c" stroke-width="2.5"/>
+  <path d="M73 110 H83 L80 120 H76 Z" fill="#5d666c"/>
+
+  <!-- Counter -->
+  <rect x="0" y="128" width="320" height="8" fill="#b98556"/>
+  <rect x="0" y="136" width="320" height="44" fill="#8a5a38"/>
+  <g fill="#7a4f31">
+    <rect x="12" y="144" width="70" height="28" rx="3"/>
+    <rect x="238" y="144" width="70" height="28" rx="3"/>
+  </g>
+
+  <!-- Stove -->
+  <rect x="104" y="122" width="124" height="14" rx="3" fill="#2e3336"/>
+  <ellipse cx="136" cy="126" rx="18" ry="3" fill="#1d2123"/>
+  <ellipse cx="196" cy="126" rx="18" ry="3" fill="#1d2123"/>
+  <rect x="104" y="136" width="124" height="44" fill="#3a4044"/>
+  <rect x="114" y="146" width="104" height="26" rx="3" fill="#24292c"/>
+  <g fill="#c9d1d6">
+    <circle cx="124" cy="141" r="2.5"/>
+    <circle cx="140" cy="141" r="2.5"/>
+    <circle cx="192" cy="141" r="2.5"/>
+    <circle cx="208" cy="141" r="2.5"/>
+  </g>
+
+  <!-- Pot of water -->
+  <rect x="160" y="118" width="72" height="6" rx="2" fill="#f08a3c" opacity="0.65"/>
+  <path d="M168 88 H224 V118 Q224 124 218 124 H174 Q168 124 168 118 Z" fill="url(#steel)"/>
+  <rect x="164" y="85" width="64" height="6" rx="3" fill="#aab4bb"/>
+  <ellipse cx="196" cy="88" rx="28" ry="3" fill="#6fb2d6"/>
+  <rect x="152" y="94" width="16" height="5" rx="2.5" fill="#2e3336"/>
+  <rect x="224" y="94" width="16" height="5" rx="2.5" fill="#2e3336"/>
+
+  <!-- Steam -->
+  <g fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.75">
+    <path d="M184 78 Q178 68 184 60 T184 44"/>
+    <path d="M198 76 Q192 64 198 56 T198 38"/>
+    <path d="M212 78 Q206 68 212 60 T212 46"/>
+  </g>
+
+  <!-- Plant -->
+  <path d="M262 128 L266 108 H286 L290 128 Z" fill="#c06a46"/>
+  <g fill="#5f9a5c">
+    <path d="M276 108 Q262 92 268 80 Q276 94 276 108 Z"/>
+    <path d="M276 108 Q290 94 288 82 Q278 96 276 108 Z"/>
+    <path d="M276 108 Q274 88 280 76 Q284 92 276 108 Z"/>
+  </g>
+</svg>
