@@ -23,10 +23,26 @@ h1 {
   margin-top: 0;
 }
 
+/* A warning, not just information: amber callout with an icon. No font-size,
+   so it matches the intro and follows the browser's default text size. */
 .intro-note {
-  color: #626864;
-  font-size: 14px;
-  margin: -8px 0 16px;
+  align-items: start;
+  background: #fff8e6;
+  border: 1px solid #f0d58c;
+  border-left: 4px solid #d99a00;
+  border-radius: 8px;
+  color: #5c4300;
+  display: flex;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 10px 14px;
+}
+
+.intro-note-icon {
+  color: #d99a00;
+  flex: none;
+  height: 1.25em;
+  width: 1.25em;
 }
 
 form {
