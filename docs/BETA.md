@@ -17,7 +17,7 @@ Only use an archive downloaded from https://github.com/jeffwright13/dreaming-too
 5. Enable **Developer mode**.
 6. Select **Load unpacked**.
 7. Choose the extracted directory containing `manifest.json`, `icons/`, and `src/`.
-8. Open the extension's options (**Details** > **Extension options** in `chrome://extensions`) and switch on the tools you want to test. Both are off after a fresh install.
+8. The extension's options page opens by itself after a first install (otherwise use **Details** > **Extension options** in `chrome://extensions`). Switch on the tools you want to test; both are off after a fresh install.
 9. Open or reload a supported Dreaming page.
 
 Chrome loads an unpacked directory, not the ZIP itself. A Developer mode warning is expected for an unpacked beta; do not bypass any other browser or operating-system security warning.

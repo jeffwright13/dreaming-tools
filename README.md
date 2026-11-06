@@ -1,6 +1,6 @@
 # Dreaming Tools
 
-Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool is off until you switch it on in the extension options, and each can be switched on or off independently. It supports Dreaming's Spanish and French sections.
+Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool is off until you switch it on in the extension options, which open by themselves the first time the extension is installed. Each tool can be switched on or off independently. It supports Dreaming's Spanish and French sections.
 
 ## Difficulty badges
 
@@ -40,7 +40,7 @@ npm install
 npm test
 ```
 
-Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
+Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, `src/background.js` opens the options page on first install, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
 
 Generate the V8 coverage report and build the extension package with:
 
@@ -68,7 +68,7 @@ After changing extension code, return to `chrome://extensions`, click the extens
 
 ## Options
 
-Open the extension's **Details** page in `chrome://extensions` and select **Extension options**. Settings synchronize through Chrome when browser sync is enabled.
+The options page opens automatically after a first install. To open it later, go to the extension's **Details** page in `chrome://extensions` and select **Extension options**. Settings synchronize through Chrome when browser sync is enabled.
 
 The page has one section per tool, Subtitles first and Difficulty badges second. Both tools are off by default.
 

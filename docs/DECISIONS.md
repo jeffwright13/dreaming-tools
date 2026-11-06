@@ -100,3 +100,7 @@ The options page now has one card per feature, Subtitles first and Difficulty ba
 
 Leaving the options page with unsaved changes silently discarded them. A leave-page warning (`beforeunload`) was considered, but Chrome shows only a fixed generic message and it treats the symptom. Saving every change immediately removes the unsaved state altogether, matches Chrome's own settings pages and most extension options pages, and fits the existing behavior of open Dreaming tabs updating live through storage change events. The cost is that a set of trial changes cannot be abandoned as a group; Restore defaults remains. Each write is one `chrome.storage.sync.set` per user action, far below sync's write-rate limits, and a failed write is reported on the page.
 
+## 2026-11-06: Open the options page on first install
+
+With every tool off by default, a fresh install looked like it did nothing. A background service worker now opens the options page on `onInstalled` with reason `install` only; opening it on updates or reloads would interrupt existing users for no reason. This adds the extension's first service worker but no permission. The same worker is the planned home for injecting the current content script into Dreaming tabs that were open during an install or update, which is kept as a separate change because it needs the `scripting` permission and a handover between old and new script copies.
+

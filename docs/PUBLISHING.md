@@ -62,6 +62,7 @@ The packaged ZIP should contain only runtime assets, for example:
 manifest.json
 icons/
 src/
+  background.js
   content.js
   difficulty-core.js
   difficulty.css

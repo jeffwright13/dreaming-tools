@@ -48,6 +48,7 @@ jobs:
           node --check src/subtitles-core.js
           node --check src/subtitles.js
           node --check src/content.js
+          node --check src/background.js
           node --check src/options.js
           node --check scripts/package-extension.js
           node --check vitest.config.js
