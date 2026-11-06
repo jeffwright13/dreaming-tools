@@ -252,10 +252,7 @@ describe("YouTube-served videos on the Dreaming page", () => {
 
 describe("inside the YouTube frame", () => {
   const DREAMING_ORIGIN = "https://app.dreaming.com";
-  const captions = (pressed) => `
-    <div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>
-    <button class="ytp-subtitles-button" aria-pressed="${pressed}"></button>
-  `;
+  const CAPTIONS_ON = '<div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>';
   let frameFeature;
 
   function receive(data, origin = DREAMING_ORIGIN) {
@@ -263,9 +260,9 @@ describe("inside the YouTube frame", () => {
   }
 
   beforeEach(() => {
-    document.body.innerHTML = captions(true);
+    document.body.innerHTML = CAPTIONS_ON;
     frameFeature = createSubtitlesFeature({
-      shownSelector: '.ytp-subtitles-button[aria-pressed="true"]',
+      shownSelector: ".ytp-caption-window-container",
       acceptOrigin: DREAMING_ORIGIN,
     });
   });
@@ -301,8 +298,8 @@ describe("inside the YouTube frame", () => {
     expect(revealed()).toBe(false);
   });
 
-  it("ignores the key and forwarded presses while YouTube's CC is off", async () => {
-    document.body.innerHTML = captions(false);
+  it("ignores the key and forwarded presses while YouTube shows no captions", async () => {
+    document.body.innerHTML = '<div class="html5-video-player"></div>';
     await frameFeature.update(ENABLED);
 
     expect(press("keydown").defaultPrevented).toBe(false);

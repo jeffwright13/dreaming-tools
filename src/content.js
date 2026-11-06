@@ -28,9 +28,10 @@
     if (place.hostname === YOUTUBE_HOSTNAME && parentOrigin === DREAMING_ORIGIN && place.ancestorOrigins.length === 1) {
       return [
         globalThis.DreamingSubtitlesFeature.createSubtitlesFeature({
-          // YouTube may keep its caption container mounted with CC off, so
-          // the CC button's pressed state decides whether captions are on.
-          shownSelector: '.ytp-subtitles-button[aria-pressed="true"]',
+          // Verified live: works with YouTube's current embed layout. The CC
+          // button is not used because that layout differs from the classic
+          // player's .ytp-subtitles-button.
+          shownSelector: ".ytp-caption-window-container",
           acceptOrigin: DREAMING_ORIGIN,
         }),
       ];
