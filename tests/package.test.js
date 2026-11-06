@@ -93,6 +93,20 @@ describe("beta packaging", () => {
     await expect(validatePackageInputs(malformed)).rejects.toThrow("Unsupported extension version");
   });
 
+  // Permissions are part of the documented security posture (SECURITY.md,
+  // PRIVACY.md). Changing them must be a deliberate edit here as well.
+  it("requests only the documented permissions and hosts", async () => {
+    const manifest = JSON.parse(await readFile(path.join(process.cwd(), "manifest.json"), "utf8"));
+
+    expect(manifest.permissions).toEqual(["storage", "scripting"]);
+    expect(manifest.host_permissions).toEqual(["https://app.dreaming.com/*"]);
+    expect(manifest.content_scripts.flatMap((script) => script.matches)).toEqual([
+      "https://app.dreaming.com/spanish/*",
+      "https://app.dreaming.com/french/*",
+      "https://www.youtube.com/embed/*",
+    ]);
+  });
+
   it("rejects manifest references outside the runtime allowlist", async () => {
     const directory = await fixtureDirectory();
     await updateJson(directory, "manifest.json", (value) => { value.options_ui.page = "unexpected.html"; });

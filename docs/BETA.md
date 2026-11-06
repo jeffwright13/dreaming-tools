@@ -30,7 +30,7 @@ For a new beta version:
 2. Open `chrome://extensions`.
 3. Remove the old beta or select its reload control after replacing its files.
 4. Load the new unpacked directory if needed.
-5. Reload existing Dreaming tabs once.
+5. Open Dreaming tabs refresh automatically from 0.9.0 on. When updating from a version before 0.9.0, reload existing Dreaming tabs once.
 
 To uninstall, select **Remove** on the extension card in `chrome://extensions`, then delete the extracted directory.
 
@@ -85,7 +85,7 @@ Do not attach HAR files or include credentials, cookies, authorization headers, 
 ## Known beta limitations
 
 - The extension depends on Dreaming's current page structure and public catalog schema.
-- Existing Dreaming tabs must be reloaded once after installing or updating the extension.
+- A YouTube-served video open while the extension is updated keeps the previous settings until the next video or a tab reload.
 - Firefox, mobile browsers, and ChromeOS are not currently supported.
 - Microsoft Edge is a compatibility target but must be tested separately on Windows.
 - This project is independent and is not currently endorsed by Dreaming.

@@ -134,6 +134,79 @@ describe("initialize", () => {
   });
 });
 
+describe("replacing an older copy in the same page", () => {
+  const REPLACED_EVENT = "dreaming-tools:replaced";
+  const STORED = { subtitlesEnabled: true, difficultyEnabled: true, size: "large" };
+  const RUNNING = { ...DEFAULT_SETTINGS, ...STORED };
+  const STOPPED = { ...RUNNING, subtitlesEnabled: false, difficultyEnabled: false };
+
+  it("announces itself before reading settings, so an older copy stops first", async () => {
+    const order = [];
+    const { get } = stubChromeStorage(STORED);
+    get.mockImplementation(async () => { order.push("read settings"); return STORED; });
+    const announce = () => order.push("announced");
+    document.addEventListener(REPLACED_EVENT, announce);
+
+    await initialize([fakeFeature()]);
+    document.removeEventListener(REPLACED_EVENT, announce);
+
+    expect(order).toEqual(["announced", "read settings"]);
+  });
+
+  it("does not stop itself when it announces", async () => {
+    stubChromeStorage(STORED);
+    const feature = fakeFeature();
+
+    await initialize([feature]);
+
+    expect(feature.update).toHaveBeenCalledTimes(1);
+    expect(feature.update).toHaveBeenLastCalledWith(RUNNING);
+  });
+
+  it("switches every feature off when a newer copy announces itself, keeping other settings", async () => {
+    const { listeners } = stubChromeStorage(STORED);
+    const features = [fakeFeature(), fakeFeature()];
+    await initialize(features);
+
+    document.dispatchEvent(new Event(REPLACED_EVENT));
+
+    for (const feature of features) {
+      expect(feature.update).toHaveBeenLastCalledWith(STOPPED);
+    }
+
+    listeners[0]({ size: { newValue: "small" } }, "sync");
+    for (const feature of features) {
+      expect(feature.update).toHaveBeenCalledTimes(2);
+    }
+  });
+
+  it("never starts if replaced while still reading settings", async () => {
+    let finishReading;
+    const { get } = stubChromeStorage();
+    get.mockReturnValue(new Promise((resolve) => { finishReading = resolve; }));
+    const feature = fakeFeature();
+
+    const starting = initialize([feature]);
+    document.dispatchEvent(new Event(REPLACED_EVENT));
+    finishReading(STORED);
+    await starting;
+
+    expect(feature.update).not.toHaveBeenCalledWith(RUNNING);
+  });
+
+  it("stops real features synchronously, before the newer copy starts", async () => {
+    window.history.replaceState({}, "", "/spanish/library");
+    document.body.innerHTML = "";
+    stubChromeStorage({ subtitlesEnabled: true });
+    await initialize(selectFeatures(place("https://app.dreaming.com/spanish/library")));
+    expect(document.documentElement.classList.contains("dt-subtitles")).toBe(true);
+
+    document.dispatchEvent(new Event(REPLACED_EVENT));
+
+    expect(document.documentElement.classList.contains("dt-subtitles")).toBe(false);
+  });
+});
+
 describe("selectFeatures", () => {
   const names = (features) => features.map((feature) => feature.name);
 

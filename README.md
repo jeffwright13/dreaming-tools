@@ -40,7 +40,7 @@ npm install
 npm test
 ```
 
-Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, `src/background.js` opens the options page on first install, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
+Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, `src/background.js` opens the options page on first install and refreshes open Dreaming tabs after an install or update, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
 
 Generate the V8 coverage report and build the extension package with:
 
@@ -85,7 +85,7 @@ Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. 
 
 Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings, which also switches both tools off.
 
-Changes save as soon as you make them; there is no Save button. Open Dreaming tabs update without reloading where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
+Changes save as soon as you make them; there is no Save button. Open Dreaming tabs update without reloading where the current extension content script is active. Dreaming tabs that were already open when the extension was installed, updated, or reloaded are refreshed automatically. A YouTube-served video open at that moment keeps the previous settings until the next video; reload the tab if anything doesn't respond to changes.
 
 ## Manual test checklist
 

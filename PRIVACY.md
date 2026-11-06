@@ -43,6 +43,8 @@ Preferences are stored with `chrome.storage.sync`. Chrome may synchronize them t
 
 The `storage` permission saves and synchronizes the preferences listed above.
 
+The `scripting` permission lets the extension, right after it is installed or updated, re-run its own packaged script and stylesheet in Dreaming tabs that were already open, so those tabs keep working without a reload. It is used only on Dreaming pages, only with files included in the extension, and does not read page content or browsing activity.
+
 Access to `https://app.dreaming.com/*` lets the extension add badges to supported Dreaming pages and retrieve public language catalogs. The extension also runs a small script and stylesheet in YouTube embedded players (`https://www.youtube.com/embed/*`), because Dreaming serves many videos through YouTube and their captions are drawn inside YouTube's player. The script first checks that the player is embedded directly in a Dreaming page and does nothing otherwise. Inside Dreaming it only blurs, fades, or hides YouTube's captions and shows them when the reveal key is pressed; it does not read caption text, YouTube account data, or viewing activity. Chrome describes this access as reading and changing data on www.youtube.com.
 
 The extension does not use cookie, history, tabs, web-request, or credential permissions.
