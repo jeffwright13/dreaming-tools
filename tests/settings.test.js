@@ -11,6 +11,11 @@ describe("settings", () => {
       style: "dreaming",
       size: "small",
       position: "upper-right",
+      subtitlesEnabled: false,
+      subtitleStyle: "blur",
+      revealMode: "hold",
+      revealKey: "KeyS",
+      revealAutoHide: 5,
     });
   });
 
@@ -25,12 +30,22 @@ describe("settings", () => {
       style: "invalid",
       size: "large",
       position: "lower-right",
+      subtitlesEnabled: "on",
+      subtitleStyle: "invisible",
+      revealMode: "press",
+      revealKey: "Space",
+      revealAutoHide: 7,
     })).toEqual({
       difficultyEnabled: true,
       behavior: "fill-missing",
       style: "dreaming",
       size: "large",
       position: "upper-right",
+      subtitlesEnabled: false,
+      subtitleStyle: "blur",
+      revealMode: "hold",
+      revealKey: "KeyS",
+      revealAutoHide: 5,
     });
   });
 
@@ -41,18 +56,41 @@ describe("settings", () => {
       style: "enhanced",
       size: "medium",
       position: "upper-left",
+      subtitlesEnabled: true,
+      subtitleStyle: "small-faint",
+      revealMode: "toggle",
+      revealKey: "KeyJ",
+      revealAutoHide: 0,
     })).toEqual({
       difficultyEnabled: false,
       behavior: "enhanced-everywhere",
       style: "enhanced",
       size: "medium",
       position: "upper-left",
+      subtitlesEnabled: true,
+      subtitleStyle: "small-faint",
+      revealMode: "toggle",
+      revealKey: "KeyJ",
+      revealAutoHide: 0,
     });
   });
 
   it("lists every stored key so reads return only what the user saved", () => {
     expect(SETTING_KEYS).toEqual(Object.keys(DEFAULT_SETTINGS));
   });
+});
+
+describe("reveal key validation", () => {
+  it.each(["KeyS", "KeyA", "Digit7", "Backquote", "Slash", "BracketRight"])("accepts %s", (revealKey) => {
+    expect(normalizeSettings({ revealKey }).revealKey).toBe(revealKey);
+  });
+
+  it.each(["Space", "ArrowLeft", "Enter", "Escape", "Tab", "F1", "ShiftLeft", "Keys", 5, null])(
+    "rejects %s, which the player or browser needs",
+    (revealKey) => {
+      expect(normalizeSettings({ revealKey }).revealKey).toBe("KeyS");
+    },
+  );
 });
 
 describe("legacy Original Dreaming behavior", () => {

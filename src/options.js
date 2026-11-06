@@ -1,25 +1,43 @@
 (() => {
-  const { DEFAULT_SETTINGS, SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
+  const {
+    DEFAULT_SETTINGS,
+    SETTING_KEYS,
+    isRevealKeyCode,
+    normalizeSettings,
+  } = globalThis.DreamingToolsSettings;
+  const { formatKeyCode } = globalThis.DreamingSubtitlesCore;
   const form = document.querySelector("#settings-form");
-  const difficultyToggle = form.elements.namedItem("difficultyEnabled");
   const behaviorControls = document.querySelector("#behavior-controls");
   const appearanceControls = document.querySelector("#appearance-controls");
   const previewBadge = document.querySelector("#preview-badge");
   const previewDisabled = document.querySelector("#preview-disabled");
+  const subtitleControls = document.querySelector("#subtitle-controls");
+  const autoHideControl = document.querySelector("#auto-hide-control");
+  const revealKeyButton = document.querySelector("#reveal-key-button");
+  const revealKeyInput = form.elements.namedItem("revealKey");
+  const subtitlePreview = document.querySelector("#subtitle-preview");
   const resetButton = document.querySelector("#reset-options");
   const status = document.querySelector("#status");
+  const root = document.documentElement;
+  const CAPTURE_PROMPT = "Press a key…";
+  const NUMERIC_SETTINGS = new Set(["revealAutoHide"]);
 
-  // FormData omits unchecked checkboxes and reports checked ones as "on", so
-  // the enable switch is read from the element itself.
+  // Read each control directly rather than through FormData: FormData skips
+  // controls inside a disabled fieldset, which would reset a switched-off
+  // feature's settings to defaults on save. It also reports checkboxes as
+  // "on" and numbers as strings.
   function readForm() {
-    return normalizeSettings({
-      ...Object.fromEntries(new FormData(form)),
-      difficultyEnabled: difficultyToggle.checked,
-    });
+    return normalizeSettings(Object.fromEntries(SETTING_KEYS.map((key) => {
+      const control = form.elements.namedItem(key);
+      if (control?.type === "checkbox") {
+        return [key, control.checked];
+      }
+      const value = control?.value;
+      return [key, NUMERIC_SETTINGS.has(key) ? Number(value) : value];
+    })));
   }
 
-  function renderPreview() {
-    const settings = readForm();
+  function renderDifficultyPreview(settings) {
     const disabled = !settings.difficultyEnabled;
     behaviorControls.disabled = disabled;
     appearanceControls.disabled = disabled;
@@ -34,16 +52,71 @@
     ].join(" ");
   }
 
+  // The preview reuses subtitles.css, which keys off classes on <html>, so the
+  // options page sets the same classes the content script would.
+  function renderSubtitlePreview(settings) {
+    subtitleControls.disabled = !settings.subtitlesEnabled;
+    autoHideControl.hidden = settings.revealMode !== "toggle";
+    if (revealKeyButton.textContent !== CAPTURE_PROMPT) {
+      revealKeyButton.textContent = formatKeyCode(settings.revealKey);
+    }
+    for (const name of [...root.classList]) {
+      if (name.startsWith("dt-subtitles")) {
+        root.classList.remove(name);
+      }
+    }
+    if (settings.subtitlesEnabled) {
+      root.classList.add("dt-subtitles", `dt-subtitles--style-${settings.subtitleStyle}`);
+    }
+  }
+
+  function renderPreview() {
+    const settings = readForm();
+    renderDifficultyPreview(settings);
+    renderSubtitlePreview(settings);
+  }
+
   function populateForm(settings) {
     for (const [key, value] of Object.entries(settings)) {
       const control = form.elements.namedItem(key);
       if (control?.type === "checkbox") {
         control.checked = value;
       } else if (control) {
-        control.value = value;
+        control.value = String(value);
       }
     }
     renderPreview();
+  }
+
+  function onCaptureKey(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    document.removeEventListener("keydown", onCaptureKey, true);
+    revealKeyButton.textContent = "";
+    if (event.code === "Escape") {
+      renderPreview();
+      return;
+    }
+
+    if (!isRevealKeyCode(event.code)) {
+      status.textContent = `${event.code} can't be used as the reveal key. Choose a letter, digit, or punctuation key.`;
+      renderPreview();
+      return;
+    }
+
+    revealKeyInput.value = event.code;
+    status.textContent = "";
+    renderPreview();
+  }
+
+  revealKeyButton.addEventListener("click", () => {
+    revealKeyButton.textContent = CAPTURE_PROMPT;
+    document.addEventListener("keydown", onCaptureKey, true);
+  });
+
+  subtitlePreview.addEventListener("pointerdown", () => root.classList.add("dt-subtitles--revealed"));
+  for (const type of ["pointerup", "pointerleave"]) {
+    subtitlePreview.addEventListener(type, () => root.classList.remove("dt-subtitles--revealed"));
   }
 
   form.addEventListener("change", () => {

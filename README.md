@@ -15,6 +15,12 @@ Adds Dreaming difficulty ratings to video cards and watch pages, and difficulty 
 
 The difficulty tool downloads the public catalog for the language in the current page URL. It does not read or store login credentials, cookies, browsing history, or account data. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete policies.
 
+## Subtitles
+
+For listen-only practice: keeps the player's subtitles unreadable until you deliberately reveal them, for example to check an unfamiliar word. It is off by default.
+
+The player's own subtitle control stays in charge: **Settings > Subtitles** on Dreaming's player, or the **CC** button on videos Dreaming serves through YouTube. With subtitles off, nothing changes. With them on, the extension blurs, shrinks and fades, or hides the subtitle line, and a reveal key (`S` by default) shows it, either while held or as a toggle with optional auto-hide. The key is ignored while you type in a text field and when Ctrl, Alt, or Cmd is held. In the floating picture-in-picture window, Chrome shows only the video, without Dreaming's or YouTube's subtitles, so the tool has nothing to act on there; use the normal player when you want subtitles. For YouTube-served videos the extension also runs inside YouTube's embedded player, only when it is embedded in Dreaming; see [PRIVACY.md](PRIVACY.md).
+
 ## Browser support
 
 The initial target is desktop Chrome on macOS, Windows, and Linux, plus current Microsoft Edge on Windows. Firefox and mobile browsers are not currently supported. See [docs/TESTING.md](docs/TESTING.md) for the compatibility policy and release matrix.
@@ -74,6 +80,8 @@ Behavior choices:
 Dreaming shows its own difficulty badges only on Browse sorted by Easy or Hard. With no sort or any other sort (Random, Short, Long, Old, New) it shows only durations, so both behaviors add badges there; the two behaviors differ only where native badges are present.
 
 Configured badges can use Enhanced or Dreaming style, three sizes, and the upper-right, upper-left, or lower-left corner of the thumbnail. By default, the extension preserves native badges and fills missing difficulties with small, upper-right badges using Dreaming style. Lower-right placement is excluded because Dreaming uses that corner for video duration. Select **Restore defaults** to reset all settings.
+
+**De-emphasize subtitles** switches the subtitles tool on or off. Choose **Blur** (default), **Small and faint**, or **Hidden**; reveal **While holding the key** (default) or **Toggle on each press** with auto-hide after 3, 5 (default), or 10 seconds, or never. To change the reveal key, click the key button and press a letter, digit, or punctuation key. Press and hold the preview to see a reveal.
 
 Saving options updates Dreaming tabs where the current extension content script is active. After installing, updating, or manually reloading the extension itself, reload any Dreaming tabs that were already open so Chrome can inject the new content script.
 
