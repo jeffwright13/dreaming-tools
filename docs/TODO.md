@@ -2,6 +2,7 @@
 
 Open work items not yet designed or scheduled. When an item is decided, record the rationale in `DECISIONS.md`, describe the behavior in `SPEC.md`, and remove it here.
 
+- **Live-site browser automation (likely Playwright).** Goal: automate the live-site smoke tests, including logged-in and logged-out runs and driving the options page. A first pass with headless Edge over CDP worked; findings, results for 0.10.1, and open questions are in [TESTING.md](TESTING.md#live-site-browser-automation--exploration-in-progress). Also pending there: the manual-testing line for the v0.10.1-beta.1 release notes.
 - **Fixture-based browser tests.** Goal: an automated layer that renders the extension's pages and styles in a real headless browser, starting with subtitle caption layout at windowed and fullscreen sizes. Scope, constraints, and tooling direction are in [TESTING.md](TESTING.md#fixture-based-browser-tests--planned). Until then, layout is verified manually with the live-site checklist.
 
 ## Options page and subtitle presentation
