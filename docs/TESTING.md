@@ -91,7 +91,7 @@ Three ways of driving a browser were used during the 0.10.1 beta pass:
 2. **Headless Edge over the Chrome DevTools Protocol (CDP)**, launched with `--headless=new --user-data-dir=<throwaway profile> --load-extension=<extracted release ZIP> --remote-debugging-port=<port>`. A small Node script (built-in `WebSocket`, no dependencies) attached to targets with `Target.attachToTarget` (flatten mode). It drove pages with trusted input from `Input.dispatchKeyEvent` and `Input.dispatchMouseEvent`. It changed settings by evaluating `chrome.storage.sync` in the extension's service worker. It emulated dark mode with `Emulation.setEmulatedMedia`. This worked well, including on the options page. Branded Google Chrome ignores `--load-extension` in recent versions, which is why Edge was used.
 3. **Headless Edge, logged out, against two free-tier videos**: a Dreaming-player video (`watch?id=5e4d121caac87f3820954cb5`) and a YouTube-served video (`watch?id=6ae0934444135614096a680f`).
 
-The scripts lived in a session scratch directory and were not committed. Their approach is described here; the code is about 250 lines and easy to recreate.
+The headless Edge scripts are kept as a reference in [`scripts/live-check/`](../scripts/live-check/README.md), with run instructions. They are not part of `npm test`, CI, or the package.
 
 #### Results for 0.10.1 (published ZIP, SHA-256 verified)
 
