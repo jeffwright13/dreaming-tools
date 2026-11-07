@@ -423,7 +423,9 @@ describe("options page layout", () => {
       '[name="revealMode"]',
       '[name="revealAutoHide"]',
       "#reveal-key-button",
-      "#subtitle-preview .shaka-text-container",
+      // Same structure as the real player: a block line inside the container,
+      // so the line-level styles (including scale) apply as they do there.
+      "#subtitle-preview .shaka-text-container > div > span",
       "#youtube-subtitle-preview .ytp-caption-window-container > .caption-window",
     ],
     "difficulty-feature": [
