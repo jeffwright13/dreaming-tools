@@ -85,6 +85,8 @@ A Playwright suite in `tests/live/` automates part of the live-site smoke tests 
 
 #### Run
 
+Requires Node.js 22 or later, as declared in `engines` in `package.json`. The suite extracts the ZIP with the packaging script's own `extractZip`, so it needs no system `unzip` and runs the same way on Windows.
+
 One-time setup:
 
 ```bash

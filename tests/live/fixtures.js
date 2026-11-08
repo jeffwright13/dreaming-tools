@@ -1,12 +1,11 @@
 // Playwright fixtures for the live-site suite: load the packaged extension
 // into a browser profile and give tests its service worker, ID, and settings.
-import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test as base, chromium, expect } from "@playwright/test";
-import { listZipEntries, RUNTIME_FILES } from "../../scripts/package-extension.js";
+import { extractZip, listZipEntries, RUNTIME_FILES } from "../../scripts/package-extension.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -27,18 +26,19 @@ export const LOGGED_IN_PROFILE = process.env.DREAMING_TEST_PROFILE
 
 // Extract the packaged ZIP (what testers install), not the working tree, after
 // checking that it holds exactly the runtime files.
-export function extractPackage() {
+export async function extractPackage() {
   const { version } = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
   const zip = path.join(ROOT, "dist", `dreaming-tools-${version}.zip`);
   if (!existsSync(zip)) {
     throw new Error(`${path.relative(ROOT, zip)} is missing; run \`npm run package\` (npm run test:live does this)`);
   }
-  const entries = listZipEntries(readFileSync(zip)).sort();
+  const archive = readFileSync(zip);
+  const entries = listZipEntries(archive).sort();
   if (JSON.stringify(entries) !== JSON.stringify([...RUNTIME_FILES].sort())) {
     throw new Error(`${path.relative(ROOT, zip)} does not match the runtime file list`);
   }
   const directory = mkdtempSync(path.join(os.tmpdir(), "dreaming-tools-ext-"));
-  execFileSync("unzip", ["-q", zip, "-d", directory]);
+  await extractZip(archive, directory);
   return { directory, version };
 }
 
@@ -61,7 +61,7 @@ export const test = base.extend({
   profileMode: ["fresh", { option: true }],
 
   extension: [async ({}, use) => {
-    const extension = extractPackage();
+    const extension = await extractPackage();
     await use(extension);
     rmSync(extension.directory, { recursive: true, force: true });
   }, { scope: "worker" }],

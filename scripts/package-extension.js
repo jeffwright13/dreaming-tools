@@ -109,7 +109,9 @@ function createZip(entries) {
   return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
-export function listZipEntries(archive) {
+const STORED_METHOD = 0;
+
+function readCentralDirectory(archive) {
   const endOffset = archive.length - 22;
   if (endOffset < 0 || archive.readUInt32LE(endOffset) !== 0x06054b50) {
     throw new Error("Archive has no valid end-of-central-directory record");
@@ -117,7 +119,7 @@ export function listZipEntries(archive) {
 
   const count = archive.readUInt16LE(endOffset + 10);
   let offset = archive.readUInt32LE(endOffset + 16);
-  const names = [];
+  const entries = [];
   for (let index = 0; index < count; index += 1) {
     if (archive.readUInt32LE(offset) !== 0x02014b50) {
       throw new Error("Archive has an invalid central-directory entry");
@@ -125,10 +127,49 @@ export function listZipEntries(archive) {
     const nameLength = archive.readUInt16LE(offset + 28);
     const extraLength = archive.readUInt16LE(offset + 30);
     const commentLength = archive.readUInt16LE(offset + 32);
-    names.push(archive.toString("utf8", offset + 46, offset + 46 + nameLength));
+    entries.push({
+      name: archive.toString("utf8", offset + 46, offset + 46 + nameLength),
+      method: archive.readUInt16LE(offset + 10),
+      checksum: archive.readUInt32LE(offset + 16),
+      size: archive.readUInt32LE(offset + 20),
+      localOffset: archive.readUInt32LE(offset + 42),
+    });
     offset += 46 + nameLength + extraLength + commentLength;
   }
-  return names;
+  return entries;
+}
+
+export function listZipEntries(archive) {
+  return readCentralDirectory(archive).map((entry) => entry.name);
+}
+
+// Extracts an archive written by createZip (stored entries only), so the
+// live browser tests need no system unzip tool. Returns the entry names.
+export async function extractZip(archive, outputDirectory) {
+  const root = path.resolve(outputDirectory);
+  const entries = readCentralDirectory(archive);
+  for (const entry of entries) {
+    const target = path.resolve(root, entry.name);
+    if (!target.startsWith(root + path.sep)) {
+      throw new Error(`Archive entry ${entry.name} would extract outside the output directory`);
+    }
+    if (entry.method !== STORED_METHOD) {
+      throw new Error(`Archive entry ${entry.name} is not stored uncompressed`);
+    }
+    if (archive.readUInt32LE(entry.localOffset) !== 0x04034b50) {
+      throw new Error(`Archive entry ${entry.name} has an invalid local header`);
+    }
+    const dataOffset = entry.localOffset + 30
+      + archive.readUInt16LE(entry.localOffset + 26)
+      + archive.readUInt16LE(entry.localOffset + 28);
+    const data = archive.subarray(dataOffset, dataOffset + entry.size);
+    if (crc32(data) !== entry.checksum) {
+      throw new Error(`Archive entry ${entry.name} failed its checksum`);
+    }
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, data);
+  }
+  return entries.map((entry) => entry.name);
 }
 
 export async function validatePackageInputs(rootDirectory) {

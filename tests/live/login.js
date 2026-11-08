@@ -10,7 +10,7 @@
 import { rmSync } from "node:fs";
 import { extractPackage, launchWithExtension, LOGGED_IN_PROFILE } from "./fixtures.js";
 
-const extension = extractPackage();
+const extension = await extractPackage();
 console.log(`Opening the test profile at ${LOGGED_IN_PROFILE}`);
 console.log("Log into Dreaming in the window that opens, then close the window.");
 
