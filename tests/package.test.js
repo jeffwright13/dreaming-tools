@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createPackage,
+  extractZip,
   listZipEntries,
   RUNTIME_FILES,
   validatePackageInputs,
@@ -80,6 +81,39 @@ describe("beta packaging", () => {
     const centralOffset = corrupted.readUInt32LE(endOffset + 16);
     corrupted.writeUInt32LE(0, centralOffset);
     expect(() => listZipEntries(corrupted)).toThrow("central-directory entry");
+  });
+
+  it("extracts the archive to the same bytes as the runtime files", async () => {
+    const directory = await temporaryDirectory();
+    const archive = await createPackage(process.cwd(), path.join(directory, "extension.zip"));
+    const output = path.join(directory, "extracted");
+
+    const written = await extractZip(archive, output);
+
+    expect(written).toEqual(RUNTIME_FILES);
+    for (const file of RUNTIME_FILES) {
+      expect(await readFile(path.join(output, file))).toEqual(await readFile(file));
+    }
+  });
+
+  it("refuses to extract a corrupted, compressed, or path-escaping entry", async () => {
+    const directory = await temporaryDirectory();
+    const archive = await createPackage(process.cwd(), path.join(directory, "extension.zip"));
+    const firstEntryData = 30 + Buffer.byteLength(RUNTIME_FILES[0]);
+
+    const corrupted = Buffer.from(archive);
+    corrupted[firstEntryData] ^= 0xff;
+    await expect(extractZip(corrupted, path.join(directory, "a"))).rejects.toThrow("checksum");
+
+    const compressed = Buffer.from(archive);
+    const centralOffset = compressed.readUInt32LE(compressed.length - 22 + 16);
+    compressed.writeUInt16LE(8, centralOffset + 10);
+    await expect(extractZip(compressed, path.join(directory, "b"))).rejects.toThrow("stored");
+
+    const escaping = Buffer.from(archive);
+    const nameOffset = centralOffset + 46;
+    escaping.write("../", nameOffset, "utf8");
+    await expect(extractZip(escaping, path.join(directory, "c"))).rejects.toThrow("outside");
   });
 
   it("rejects mismatched and malformed versions", async () => {
