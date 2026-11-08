@@ -42,11 +42,11 @@ Add browser tests that load the real unpacked extension against local HTML fixtu
 - Subtitle layout: with fixtures that mirror Dreaming's Shaka subtitle container and YouTube's caption structure, each subtitle style keeps the caption on screen and above the progress bar at both a windowed and a fullscreen-sized viewport, and revealing restores the player's own position. jsdom has no layout engine, so the unit tests cannot cover this; a CSS bug that hid YouTube captions in windowed mode passed all unit tests before being found live.
 - The options page renders and its subtitle preview applies each style
 
-Use a lightweight runner that drives an already installed browser, evaluating `puppeteer-core` first; Playwright was considered too heavy for this project. Run it as a separate command (for example `npm run test:browser`) so `npm test` stays fast. Branded Chrome ignores `--load-extension` in recent versions, so extension-loading tests need Edge, Chrome for Testing, or Chromium; layout tests that only need `subtitles.css` and a fixture page do not load the extension at all. Use local fixtures so CI needs no Dreaming account. Fixtures encode our understanding of Dreaming's and YouTube's markup, so they guard against regressions in our code but do not replace the live-site smoke tests below.
+Use the Playwright runner already set up for the live-site tests below (see `DECISIONS.md`), as a separate command (for example `npm run test:browser`) so `npm test` stays fast. Branded Chrome ignores `--load-extension` in recent versions, so extension-loading tests need Edge, Chrome for Testing, or Chromium; layout tests that only need `subtitles.css` and a fixture page do not load the extension at all. Use local fixtures so CI needs no Dreaming account. Fixtures encode our understanding of Dreaming's and YouTube's markup, so they guard against regressions in our code but do not replace the live-site smoke tests below.
 
 ### Live-site smoke tests
 
-Live-site tests remain manual because Dreaming pages require account state and can change independently. Never place Dreaming credentials, session cookies, or browser profiles in source control or CI.
+Live-site tests depend on account state and on pages that can change independently. Part of this list is automated by the Playwright suite in the next section; the rest remains manual. Never place Dreaming credentials, session cookies, or browser profiles in source control or CI.
 
 Test these views where available:
 
@@ -79,87 +79,131 @@ Test these views where available:
 
 Confirm that the extension never exposes premium video content or modifies playback access.
 
-### Live-site browser automation — exploration in progress
+### Live-site browser tests (Playwright)
 
-Status as of 2026-11-07. This records a first attempt to automate the live-site smoke tests above, done while verifying the 0.10.1 beta, so the work can be picked up later. The likely next step is a Playwright suite, which needs an approved plan first.
+A Playwright suite in `tests/live/` automates part of the live-site smoke tests above. It loads the packaged extension (`dist/dreaming-tools-VERSION.zip`, checked against the runtime file list) into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright are in `DECISIONS.md`.
 
-#### What was tried
+#### Run
 
-Three ways of driving a browser were used during the 0.10.1 beta pass:
+One-time setup:
 
-1. **Claude in Chrome** (the Claude browser extension acting in the maintainer's real, logged-in Chrome). It works on `app.dreaming.com` pages: it read computed styles, clicked and inspected the player. It **cannot open `chrome-extension://` pages**, so it cannot drive the options page, and therefore cannot change the extension's settings. Every settings change would have to be made by hand. It also cannot load or reload an unpacked extension, because `chrome://extensions` is off-limits to it.
-2. **Headless Edge over the Chrome DevTools Protocol (CDP)**, launched with `--headless=new --user-data-dir=<throwaway profile> --load-extension=<extracted release ZIP> --remote-debugging-port=<port>`. A small Node script (built-in `WebSocket`, no dependencies) attached to targets with `Target.attachToTarget` (flatten mode). It drove pages with trusted input from `Input.dispatchKeyEvent` and `Input.dispatchMouseEvent`. It changed settings by evaluating `chrome.storage.sync` in the extension's service worker. It emulated dark mode with `Emulation.setEmulatedMedia`. This worked well, including on the options page. Branded Google Chrome ignores `--load-extension` in recent versions, which is why Edge was used.
-3. **Headless Edge, logged out, against two free-tier videos**: a Dreaming-player video (`watch?id=5e4d121caac87f3820954cb5`) and a YouTube-served video (`watch?id=6ae0934444135614096a680f`).
+```bash
+npx playwright install chromium   # Playwright's own Chromium, about 100 MB
+npm run test:live:login           # opens the test profile; log into Dreaming by hand, then close the window
+```
 
-The headless Edge scripts are kept as a reference in [`scripts/live-check/`](../scripts/live-check/README.md), with run instructions. They are not part of `npm test`, CI, or the package.
+Then:
 
-#### Results for 0.10.1 (published ZIP, SHA-256 verified)
+```bash
+npm run test:live                 # packages the extension, then runs every live test
+npm run test:live:spike           # the playback spike only (logged in)
+```
 
-**Options page, headless Edge, fresh profile: 32 of 32 checks passed.**
-- **Install:** the options page opened by itself on first install, version 0.10.1, both tools off with their controls disabled, no Save button.
-- **Saving:** auto-save worked for checkboxes and selects and survived a page reload. Restore defaults rewrote storage and the form.
-- **Theme:** light and dark change the page, card and text colors. Screenshots of both were reviewed and are readable.
-- **Previews, Hold:** the `S` key anywhere on the page reveals both previews, key release hides them, and key repeat is ignored. Pressing and releasing on a preview reveals and hides.
-- **Previews, Toggle:** a press reveals, a second press hides, and auto-hide at 3 seconds works. A click on a preview toggles, and leaving the preview does not hide. Changing the reveal mode while revealed hides.
-- **Choosing a key:** pressing `S` while choosing a key records it without revealing, and after re-binding only `J` works. Space is rejected with a message and Escape cancels capture. The key is ignored with Ctrl held and while a select is focused.
-- **Badge preview:** it follows style, size and position, and switching badges off shows the "disabled" pill.
+Options:
+- `LIVE_BROWSER=edge` runs the installed Microsoft Edge instead of Playwright's Chromium.
+- `HEADED=1` shows the browser window.
+- `DREAMING_TEST_PROFILE=<dir>` chooses the logged-in profile. The default is `~/.dreaming-tools-test-profile`.
 
-**Dreaming, logged out (headless Edge), Enhanced everywhere:**
-- Browse: 92 of 92 video cards badged.
-- Series: 40 badges.
-- The gated watch page's sidebar: 53 of 54 cards badged. The one unbadged card was not investigated. It may be the current video's own entry; see the open questions below.
+The HTML report is written to `playwright-report/` and failure traces to `test-results/`. Both are git-ignored.
 
-**Dreaming, logged in (maintainer's Chrome, via Claude in Chrome):**
-- The first look found the old pre-0.10.1 copy still loaded: the Shaka container still had the extension's removed `filter/opacity/scale` transition. Lesson: confirm the loaded version before a pass. A content-script page cannot read the extension's version, so checking the computed styles was the tell.
-- After the published ZIP was installed in place of the old copy, an already-open watch tab picked up the new install without a reload. The old classes were cleared, because both tools start off, and the container's transition was Dreaming's own `bottom 0.1s cubic-bezier(0.4, 0, 0.6, 1)`. Together these confirm the tab refresh on install and the 0.10.1 transition fix.
+#### Profiles and accounts
 
-**Not yet verified on 0.10.1:** the subtitle checks on both players:
-- each style
-- Hold and Toggle
-- the glide while the controls show
-- the stranded Toggle reveal
-- window blur
-- the reveal key inside the YouTube frame
-- fullscreen
+There are two Playwright projects:
+- **`logged-out`:** a new, empty profile for every test, deleted afterwards. Every test is therefore a first install.
+- **`logged-in`:** the persistent test profile. If the profile is missing, or no longer logged in, these tests skip with a message saying to run `npm run test:live:login`.
 
-Also not yet verified: Library and My list, Fill missing only, and the rest of the badge matrix while logged in.
+The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared.
 
-#### Findings that shape the automated suite
+Driving the Dreaming player changes the account's subtitle language, because Dreaming stores that choice with the account, not in the browser. The spike sets it to Spanish. Prefer a dedicated test account, or expect your own account's setting to change.
 
-- **Logged out, no video plays, even free-tier ones.** Both free videos show "Create a free account to watch" with no `<video>`, Shaka container or YouTube iframe. So subtitle tests always need a logged-in (free) account. Badge tests on Browse, Series and watch-page sidebars work logged out.
-- **Free and premium accounts are a separate question** from logged in and logged out. Whether a free account can play the two videos above has not been checked.
-- **A dedicated test profile is the safe way to log in.** The maintainer logs in by hand, once, in a browser profile used only for testing; automation reuses that profile's session. This keeps to the rule in `PUBLISHING.md` that automation never logs in or stores Dreaming credentials. The profile directory must stay outside the repository and out of CI.
-- **Use the extension's own pages and service worker for setup.** Writing settings through `chrome.storage.sync` in the service worker is fast and reliable for arranging a test. The options-page checks should still drive the real controls with trusted input, as above.
-- **Trusted input matters.** The reveal key must come from real browser input events (CDP `Input.*`, or Playwright's keyboard, which uses them), not synthetic `dispatchEvent` calls, to match how Dreaming and YouTube receive keys. Inside the cross-origin YouTube frame the test has to target that frame.
-- **The extension ID changes per unpacked folder** (for example `okdlgbpcoccnaiabnkfibamoknhlmbnc` in the headless run, `bmefdflimlhbkanigomkpcnedcodelif` in the maintainer's Chrome). A suite should read it from the service worker target's URL, not hard-code it.
-- **Install and update checks need control of the extension.** Use the service worker's `chrome.runtime.reload()` to simulate an update, and a fresh profile for a first install.
+#### What the suite covers
 
-#### Open questions
+All of the following passed on 0.10.1 in Playwright's Chromium and in Edge, logged out (15 tests, about 45 s).
 
-1. **Playwright or a small CDP harness?** The fixture-based plan above prefers `puppeteer-core` because Playwright was considered too heavy, and the global guidance discourages Playwright for simple browser apps. Against that, the live suite has to:
-   - log in through a persistent profile (`launchPersistentContext`)
-   - reach cross-origin frames
-   - send trusted keys
-   - load extensions in Playwright's bundled Chromium, which still supports `--load-extension`
+**`options.spec.js`** has 9 tests, covering the same ground as the earlier 32-check script:
+- the page opens by itself on first install, with both tools off and no Save button
+- auto-save, and settings surviving a reload
+- light and dark theme, with screenshots attached to the report
+- Hold and Toggle previews by key and by mouse, with auto-hide timed by `page.clock`
+- choosing a reveal key, including Space being rejected and Escape cancelling
+- the key ignored with Ctrl held or while a control has focus
+- the badge preview
+- Restore defaults
 
-   Decide and record the choice in `DECISIONS.md`.
-2. **Which browser binary?**
-   - Playwright's bundled Chromium: reproducible, but not what testers run.
-   - Installed Edge: close to a real browser.
-   - Chrome for Testing: branded Chrome behavior with extension loading.
+A deliberate break (auto-save disabled) failed 5 of these tests.
 
-   Can one suite run against more than one?
-3. **Headless or headed?** Headless Edge played no video in this pass only because of the login gate. Unknown: whether Shaka and the YouTube embed play, and show captions, in headless mode (codecs, autoplay policy). Fullscreen and picture-in-picture probably need a headed run.
-4. **How to make captions appear on demand?** Dreaming's player needs Settings > Subtitles set to a language and YouTube needs CC on. Is that a persistent per-account setting, a per-video one, or a player-local one, and can a test set it without clicking through menus?
-5. **How to measure "the line glides"?** For example, sample the container's `bottom` across the controls' show and hide, or check that `transitionstart` fires.
-6. **Which free videos to pin?** Choose stable free videos with Spanish captions for both players, and French equivalents. Record them in this file. Watch for removal.
-7. **Logged-out runs?** Are they worth keeping as a separate, credential-free job, possibly in CI? It would only cover badges. A scheduled catalog check is already proposed in `PUBLISHING.md`.
-8. **The 53 of 54 sidebar card:** is the unbadged card expected (the current video, an item with no catalog difficulty), or a bug?
-9. **Where does the suite live?** For example, `tests/live/` with `npm run test:live`, excluded from `npm test` and from CI. Where does the test profile live: a path in an environment variable, outside the repo?
+**`badges.spec.js`** has 6 tests. Each video card is checked against Dreaming's public catalog: a card whose video has a difficulty gets exactly one badge, and one without gets none.
+
+| Page | Result |
+|---|---|
+| Browse | 84 of 84 cards badged |
+| Browse sorted by Easy | 80 of 80, with Dreaming's own badges hidden |
+| Series | 361 of 361, after scrolling the carousels |
+| The login-gated watch page's sidebar | 54 of 54 |
+
+Two more tests check that Fill missing only keeps Dreaming's badges without duplicates, and that switching badges off leaves no extension badges.
+
+**`playback-spike.logged-in.spec.js`** has 2 tests, tagged `@spike` and excluded from `test:live`. They passed headless, logged in, on 2026-11-07:
+- **Dreaming player:** plays, Video settings → Spanish turns captions on, Blur applies, and holding `S` reveals. The caption container's `bottom` passes through intermediate positions (24 → 31.7 → 48.4 → 56 px) while the controls appear, which confirms the 0.10.1 transition fix by measurement.
+- **YouTube-served video:** plays, YouTube's `c` shortcut turns captions on, Blur applies, and holding `S` with focus in the frame reveals.
+
+#### Findings
+
+These come from the first exploration on 2026-11-07, during the 0.10.1 beta pass, and from building the suite.
+
+**Login and playback.**
+- Logged out, no video plays, not even free-tier ones. The page shows "Create a free account to watch", with no `<video>`, Shaka container or YouTube iframe. Badge tests work logged out; subtitle tests need a login.
+- Logged in, both pinned videos play in headless Chromium, so codecs and autoplay are not a problem.
+
+**Driving the Dreaming player.**
+- Shaka's control overlay intercepts clicks on the `<video>`, so use its buttons: "Play" and "Video settings" (use `force: true`, since the controls fade out).
+- Subtitle options are `.ds-video-settings-menu__option` ("Off", "Spanish").
+- The choice persists on the account. After a reload only a `token` is in localStorage, and the container is still present.
+
+**Driving the YouTube embed.**
+- Dreaming autoplays the embed. A click in the frame plays or pauses it and gives the frame keyboard focus, and `c` toggles captions.
+- The CC button's `aria-label` reads "Subtitles/CC turned on" or "turned off".
+- YouTube's "(auto-generated)" notice is a second caption window, and the extension blurs it too. That is expected, since the styles apply to every caption window.
+
+**Badges.**
+- Series carousel cards have no image, and so no series ID, until scrolled into view. The earlier "40 badges" on Series was this lazy loading, not a bug.
+- The earlier "53 of 54" on the watch sidebar came from comparing every `watch?id=` link on the page with the badges. The suite counts thumbnails instead, and finds 54 of 54.
+
+**Browsers and test setup.**
+- Claude in Chrome cannot open `chrome-extension://` or `chrome://extensions` pages. It can inspect live Dreaming pages, but cannot change the extension's settings or load or reload it.
+- Branded Google Chrome ignores `--load-extension`. Playwright's Chromium (Chrome for Testing) and installed Edge both accept it, headless included.
+- The extension ID differs per unpacked folder, so the suite reads it from the service worker's URL.
+- Tests arrange settings through `chrome.storage.sync` in the service worker, but the options tests drive the real controls with trusted input.
+- Playwright does not treat a disabled `<fieldset>` itself as disabled; check a control inside it.
+
+**Verifying a build.** In the maintainer's Chrome, the first look found a pre-0.10.1 copy still loaded. Confirm the loaded version before a manual pass.
+
+#### Remaining work and open questions
+
+- **PR 2, logged-in subtitle tests**, built on the spike's steps:
+  - each style (Blur, Small and faint, Hidden) on both players
+  - Hold and Toggle with auto-hide
+  - the stranded Toggle reveal (player subtitles turned off while revealed)
+  - window blur
+  - the key ignored while typing in a comment box
+  - the reveal key with focus on the Dreaming page while a YouTube video plays
+  - tab refresh after an update (`chrome.runtime.reload()` from the service worker)
+- **Logged-in badge pages:** Library History, My list, series modals, and watch-page chips.
+- **French routes:** pin French free videos and run the badge tests on French pages.
+- **Headed-only checks:** fullscreen and picture-in-picture probably need `HEADED=1`. This hasn't been tried yet.
+- **Free and premium accounts:** whether a free account plays both pinned videos depends on the account used in the profile. Record which kind the profile uses.
+- **CI:** a logged-out CI job (options and badges) is deferred until the tests prove stable against the live site. A scheduled catalog check is already proposed in `PUBLISHING.md`.
+- **Fixture-based layer:** it can share this runner. See above.
 
 #### Pending from the 0.10.1 beta
 
-The v0.10.1-beta.1 release notes still lack a manual-testing line under Verification. Add one (`gh release edit v0.10.1-beta.1 --notes-file …`) after the logged-in subtitle checks above are run, listing only what was actually verified.
+The v0.10.1-beta.1 release notes still lack a manual-testing line under Verification. What is verified so far:
+- the options page: the 9 tests above
+- logged-out badges
+- logged in, the tab refresh on install
+- logged in, both players: Blur, the Hold reveal and the glide fix
+
+Add the line with `gh release edit v0.10.1-beta.1 --notes-file …`, listing only what was verified, after PR 2's checks run or as it stands.
 
 ## Release browser matrix
 

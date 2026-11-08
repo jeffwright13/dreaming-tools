@@ -42,6 +42,14 @@ npm test
 
 Each tool is a self-contained feature module. `src/settings.js` defines every setting and its default, `src/content.js` reads settings and passes them to each feature, `src/background.js` opens the options page on first install and refreshes open Dreaming tabs after an install or update, and a feature such as `src/difficulty.js` starts, updates, or stops itself from those settings. See [docs/SPEC.md](docs/SPEC.md) for the feature contract.
 
+Live-site browser tests (Playwright, local only) load the packaged extension into a real browser and visit Dreaming. They need a one-time browser download and, for the logged-in tests, a hand login into a dedicated test profile. See [docs/TESTING.md](docs/TESTING.md#live-site-browser-tests-playwright).
+
+```bash
+npx playwright install chromium
+npm run test:live:login
+npm run test:live
+```
+
 Generate the V8 coverage report and build the extension package with:
 
 ```bash
