@@ -69,7 +69,7 @@ Test these views where available:
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
 - Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
-- Subtitles in picture-in-picture: expected to show no subtitles on either player (known browser limitation)
+- Subtitles in picture-in-picture: on a Dreaming-player video with subtitles on, switching tabs opens picture-in-picture, and its subtitles appear at normal size and readable (known limitation; the tool does not reach that window). YouTube-served videos do not open picture-in-picture on a tab switch
 - Difficulty badges and subtitles switched on together, separately, and both off on a watch page, for both a Dreaming-player video and a YouTube-served video
 - Enhanced everywhere and Fill missing only
 - Enhanced and Dreaming styles
@@ -199,13 +199,14 @@ These come from the first exploration on 2026-11-07, during the 0.10.1 beta pass
 
 #### Pending from the 0.10.1 beta
 
-The v0.10.1-beta.1 release notes still lack a manual-testing line under Verification. What is verified so far:
-- the options page: the 9 tests above
-- logged-out badges
-- logged in, the tab refresh on install
-- logged in, both players: Blur, the Hold reveal and the glide fix
+Done on 2026-11-08. The v0.10.1-beta.1 release notes now list:
+- this suite's results for the ZIP
+- the maintainer's manual pass in Chrome, logged in. It covered:
+  - badges with default settings on video thumbnails, Series and My list
+  - subtitle de-emphasis on both players, windowed and fullscreen
+  - picture-in-picture
 
-Add the line with `gh release edit v0.10.1-beta.1 --notes-file …`, listing only what was verified, after PR 2's checks run or as it stands.
+The manual pass found that picture-in-picture on Dreaming's player shows normal, readable subtitles, which corrected the docs.
 
 ## Release browser matrix
 
