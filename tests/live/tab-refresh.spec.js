@@ -18,7 +18,11 @@ const isOurWorker = (worker) => worker.url().endsWith("/src/background.js");
 test("an open Dreaming tab follows settings after the extension reloads, without a tab reload", async ({ extension }) => {
   const profile = mkdtempSync(path.join(os.tmpdir(), "dreaming-tools-profile-"));
   const context = await launchWithExtension(profile, extension.directory, { channel: "msedge" }).catch(() => null);
-  test.skip(!context, "Microsoft Edge is not installed; this test needs it (see the comment at the top)");
+  if (!context) {
+    // test.skip throws, so clean up here; the finally below is not reached.
+    rmSync(profile, { recursive: true, force: true });
+  }
+  test.skip(!context,"Microsoft Edge is not installed; this test needs it (see the comment at the top)");
   try {
     const worker = context.serviceWorkers().find(isOurWorker) ?? await context.waitForEvent("serviceworker", { predicate: isOurWorker });
     await worker.evaluate(() => chrome.storage.sync.set({
