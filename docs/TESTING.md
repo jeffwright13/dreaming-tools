@@ -178,7 +178,7 @@ Results on 0.10.2, Chromium, 2026-11-09: 43 passed and 2 skipped. On 0.10.1 the 
   - fullscreen
 - **`badges.logged-in.spec.js` (4, plus 1 skipped):**
   - Library History
-  - the series modal's episode cards and cover range
+  - the series modal's episode cards, and its cover range and that badge's placement
   - watch-page chips (`Difficulty N` and the series range) matching the catalog, and following client-side navigation to another free video
 
   My list skips because it is empty.

@@ -17,6 +17,9 @@ import { DREAMING_PLAYER_VIDEO, routes } from "./routes.js";
 const LIBRARY_SERIES_CARD = '[data-testid="library-series-card"]';
 const SERIES_CATALOG_CARD = '[data-testid="series-catalog-card"]';
 const SERIES_MODAL = ".ds-series-modal";
+const SERIES_MODAL_HERO = ".ds-series-modal__hero";
+const BADGE_INSET_PX = 8; // from the position rules in src/difficulty.css
+const BADGE_INSET_TOLERANCE_PX = 2;
 const PAGE_SETTLE_MS = 5_000;
 
 let catalog;
@@ -77,12 +80,30 @@ test("series modal: episode cards are badged per the catalog", async ({ context 
   expectEnhancedCards(await readVideoCards(page, SERIES_MODAL), catalog, testInfo);
 });
 
-test("series modal: the cover shows the series range", async ({ context }) => {
+test("series modal: the cover shows the series range, anchored to its corner", async ({ context, setSettings }) => {
+  await setSettings({ position: "upper-right" });
   const { page, seriesId } = await openSeriesModal(context);
   const range = catalog.seriesRanges.get(seriesId);
   expect(range, `series ${seriesId} should have a catalog range`).toBeDefined();
-  await expect(page.locator(".ds-series-modal__hero .ds-difficulty-extension-badge"))
-    .toHaveText(formatDifficultyRange(range));
+  const badge = page.locator(`${SERIES_MODAL_HERO} .ds-difficulty-extension-badge`);
+  await expect(badge).toHaveText(formatDifficultyRange(range));
+
+  // Retried because the modal may still be animating open.
+  await expect(async () => {
+    const placement = await badge.evaluate((element, heroSelector) => {
+      const hero = element.closest(heroSelector);
+      const heroBox = hero.getBoundingClientRect();
+      const badgeBox = element.getBoundingClientRect();
+      return {
+        anchoredToHero: element.offsetParent === hero,
+        insetTop: badgeBox.top - heroBox.top,
+        insetRight: heroBox.right - badgeBox.right,
+      };
+    }, SERIES_MODAL_HERO);
+    expect(placement.anchoredToHero, "the hero should be the badge's positioned ancestor").toBe(true);
+    expect(Math.abs(placement.insetTop - BADGE_INSET_PX)).toBeLessThanOrEqual(BADGE_INSET_TOLERANCE_PX);
+    expect(Math.abs(placement.insetRight - BADGE_INSET_PX)).toBeLessThanOrEqual(BADGE_INSET_TOLERANCE_PX);
+  }).toPass({ timeout: 5_000 });
 });
 
 test("watch page: chips show the video's difficulty and its series range, and follow navigation", async ({ context }) => {
