@@ -11,8 +11,6 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: 0,
-  // Spike tests explore rather than check; they run only via test:live:spike.
-  grepInvert: process.env.SPIKE ? undefined : /@spike/,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   reporter: [["list"], ["html", { open: "never" }]],
@@ -26,9 +24,24 @@ export default defineConfig({
       testIgnore: "**/*.logged-in.spec.js",
       use: { profileMode: "fresh" },
     },
+    // The logged-in tests change the account's Dreaming subtitle choice; the
+    // setup project records it and the teardown project restores it, even
+    // when tests fail.
+    {
+      name: "logged-in-setup",
+      testMatch: "**/account.setup.js",
+      teardown: "logged-in-teardown",
+      use: { profileMode: "persistent" },
+    },
+    {
+      name: "logged-in-teardown",
+      testMatch: "**/account.teardown.js",
+      use: { profileMode: "persistent" },
+    },
     {
       name: "logged-in",
       testMatch: "**/*.logged-in.spec.js",
+      dependencies: ["logged-in-setup"],
       use: { profileMode: "persistent" },
     },
   ],

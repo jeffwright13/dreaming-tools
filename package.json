@@ -8,7 +8,6 @@
     "package": "node scripts/package-extension.js",
     "package:verify": "node scripts/package-extension.js --verify",
     "test:live": "npm run package && playwright test",
-    "test:live:spike": "npm run package && SPIKE=1 playwright test --project=logged-in --grep @spike",
     "test:live:login": "npm run package && node tests/live/login.js"
   },
   "keywords": [

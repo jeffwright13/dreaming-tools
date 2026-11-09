@@ -81,11 +81,11 @@ Confirm that the extension never exposes premium video content or modifies playb
 
 ### Live-site browser tests (Playwright)
 
-A Playwright suite in `tests/live/` automates part of the live-site smoke tests above. It loads the packaged extension (`dist/dreaming-tools-VERSION.zip`, checked against the runtime file list) into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright are in `DECISIONS.md`.
+A Playwright suite in `tests/live/` automates most of the live-site smoke tests above. It loads the packaged extension (`dist/dreaming-tools-VERSION.zip`, checked against the runtime file list) into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright, and the rules below for account state, extension reloads, and window blur, are in `DECISIONS.md`.
 
 #### Run
 
-Requires Node.js 22 or later, as declared in `engines` in `package.json`. The suite extracts the ZIP with the packaging script's own `extractZip`, so it needs no system `unzip` and runs the same way on Windows.
+Requires Node.js 22 or later, as declared in `engines` in `package.json`. The suite extracts the ZIP with the packaging script's own `extractZip`, so it needs no system `unzip`.
 
 One-time setup:
 
@@ -98,115 +98,145 @@ Then:
 
 ```bash
 npm run test:live                 # packages the extension, then runs every live test
-npm run test:live:spike           # the playback spike only (logged in)
 ```
 
+A full run takes about 4 minutes.
+
 Options:
-- `LIVE_BROWSER=edge` runs the installed Microsoft Edge instead of Playwright's Chromium.
+- `LIVE_BROWSER=edge` runs the installed Microsoft Edge instead of Playwright's Chromium. The tab-refresh test always uses Edge (see below).
 - `HEADED=1` shows the browser window.
 - `DREAMING_TEST_PROFILE=<dir>` chooses the logged-in profile. The default is `~/.dreaming-tools-test-profile`.
+- `--project=logged-out` or `--project=logged-in` runs one half.
 
 The HTML report is written to `playwright-report/` and failure traces to `test-results/`. Both are git-ignored.
 
 #### Profiles and accounts
 
-There are two Playwright projects:
+Playwright projects:
 - **`logged-out`:** a new, empty profile for every test, deleted afterwards. Every test is therefore a first install.
 - **`logged-in`:** the persistent test profile. If the profile is missing, or no longer logged in, these tests skip with a message saying to run `npm run test:live:login`.
+- **`logged-in-setup` and `logged-in-teardown`:** these run before and after `logged-in`. Driving Dreaming's player changes the account's subtitle language, which Dreaming stores server-side.
+  - Setup records the current choice in `<profile>.subtitle-choice.json`.
+  - Teardown sets it back and deletes the file, even when tests fail. A forced failure after a test switched the account to Off was restored to Spanish.
+  - Setup never overwrites an existing record, so a run that crashed before restoring still holds the true original.
 
-The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared.
+The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared. The current test profile uses a free account.
 
-Driving the Dreaming player changes the account's subtitle language, because Dreaming stores that choice with the account, not in the browser. The spike sets it to Spanish. Prefer a dedicated test account, or expect your own account's setting to change.
+The tests are read-only toward the account in every other way:
+- they never add to the Library or My list
+- they never submit a comment: the comment check types one letter and clears it
+- they skip a page with nothing to check
+
+Each run loads the extension from a new temporary folder, so Chrome treats it as a first install and opens the options page. In the logged-in profile the fixture closes that tab before the test starts.
 
 #### What the suite covers
 
-All of the following passed on 0.10.1 in Playwright's Chromium and in Edge, logged out (15 tests, about 45 s).
+Results on 0.10.1, Chromium, 2026-11-09: 42 passed and 3 skipped, on two consecutive full runs. The logged-out project also passed in Edge, 19 of 19.
 
-**`options.spec.js`** has 9 tests, covering the same ground as the earlier 32-check script:
-- the page opens by itself on first install, with both tools off and no Save button
-- auto-save, and settings surviving a reload
-- light and dark theme, with screenshots attached to the report
-- Hold and Toggle previews by key and by mouse, with auto-hide timed by `page.clock`
-- choosing a reveal key, including Space being rejected and Escape cancelling
-- the key ignored with Ctrl held or while a control has focus
-- the badge preview
-- Restore defaults
+**Logged out**
+- **`options.spec.js` (9):**
+  - the page opens by itself on first install
+  - auto-save and reload
+  - light and dark theme
+  - Hold and Toggle previews by key and mouse
+  - choosing a reveal key
+  - ignored keys
+  - the badge preview
+  - Restore defaults
+- **`badges.spec.js` (9), in Spanish and French.** Every card is checked against the language's public catalog: one badge showing the catalog's number when the video has a difficulty, none when it doesn't. Pages:
+  - Browse
+  - Browse sorted by Easy (Dreaming's own badges replaced)
+  - Series, with the carousels scrolled so every card loads
 
-A deliberate break (auto-save disabled) failed 5 of these tests.
+  Also, in Spanish:
+  - the login-gated watch page's sidebar
+  - Fill missing only (Dreaming's badges kept, no duplicates)
+  - badges switched off
+- **`tab-refresh.spec.js` (1), in Edge:**
+  1. Reload the extension with a Browse tab open.
+  2. Change settings through the new service worker.
+  3. Without a tab reload, the page's subtitle class and badge size follow the change, each card still has exactly one badge, and the tab never navigated.
 
-**`badges.spec.js`** has 6 tests. Each video card is checked against Dreaming's public catalog: a card whose video has a difficulty gets exactly one badge, and one without gets none.
+**Logged in**
+- **`subtitles-dreaming.logged-in.spec.js` (11, plus 1 skipped):**
+  - each style (Blur, Small and faint, Hidden) applies, and holding `S` shows the player's own style
+  - Hold with key repeat
+  - Toggle with a 3 s auto-hide
+  - the stranded Toggle reveal when the player's subtitles are turned off
+  - nothing revealed with the player's subtitles off
+  - window blur hides a reveal
+  - the glide while the controls appear
+  - fullscreen, which works headless: the subtitle line settles above the controls bar and keeps its style
 
-| Page | Result |
-|---|---|
-| Browse | 84 of 84 cards badged |
-| Browse sorted by Easy | 80 of 80, with Dreaming's own badges hidden |
-| Series | 361 of 361, after scrolling the carousels |
-| The login-gated watch page's sidebar | 54 of 54 |
+  The comment-box check skips, because free accounts have no comment box.
+- **`subtitles-youtube.logged-in.spec.js` (9):**
+  - each style, with `S` held in the player
+  - `S` held with focus on the Dreaming page (forwarded to the frame)
+  - Toggle with auto-hide
+  - nothing visible with CC off
+  - window blur on the page hides a reveal in the frame
+  - fullscreen
+- **`badges.logged-in.spec.js` (4, plus 2 skipped):**
+  - Library History
+  - the series modal's episode cards
+  - watch-page chips (`Difficulty N` and the series range) matching the catalog, and following client-side navigation to another free video
 
-Two more tests check that Fill missing only keeps Dreaming's badges without duplicates, and that switching badges off leaves no extension badges.
+  My list skips because it is empty. The modal-cover check is `test.fixme` because of a regression it found (see Findings).
 
-**`playback-spike.logged-in.spec.js`** has 2 tests, tagged `@spike` and excluded from `test:live`. They passed headless, logged in, on 2026-11-07:
-- **Dreaming player:** plays, Video settings → Spanish turns captions on, Blur applies, and holding `S` reveals. The caption container's `bottom` passes through intermediate positions (24 → 31.7 → 48.4 → 56 px) while the controls appear, which confirms the 0.10.1 transition fix by measurement.
-- **YouTube-served video:** plays, YouTube's `c` shortcut turns captions on, Blur applies, and holding `S` with focus in the frame reveals.
+Two deliberate breaks were caught:
+- With auto-save disabled, 5 options tests failed.
+- With the reveal removed from `subtitles.css`, the 7 tests that check what is visible on both players failed.
+
+**Still manual:**
+- picture-in-picture
+- switching to a real second window
+- a comment box, which needs an account that can comment
+- My list, which needs saved items
+- platforms other than macOS
+- browser zoom and display scaling
 
 #### Findings
 
-These come from the first exploration on 2026-11-07, during the 0.10.1 beta pass, and from building the suite.
+These come from the exploration on 2026-11-07 and from building the suite.
 
 **Login and playback.**
-- Logged out, no video plays, not even free-tier ones. The page shows "Create a free account to watch", with no `<video>`, Shaka container or YouTube iframe. Badge tests work logged out; subtitle tests need a login.
-- Logged in, both pinned videos play in headless Chromium, so codecs and autoplay are not a problem.
+- Logged out, no video plays, not even free-tier ones. Badge tests work logged out; subtitle tests need a login.
+- Logged in, both pinned videos play in headless Chromium, including fullscreen.
 
-**Driving the Dreaming player.**
-- Shaka's control overlay intercepts clicks on the `<video>`, so use its buttons: "Play" and "Video settings" (use `force: true`, since the controls fade out).
-- Subtitle options are `.ds-video-settings-menu__option` ("Off", "Spanish").
-- The choice persists on the account. After a reload only a `token` is in localStorage, and the container is still present.
+**Driving the Dreaming player** (see `tests/live/players.js`).
+- Shaka's control overlay intercepts clicks on the `<video>`, so use its "Play", "Video settings" and "Full screen" buttons with `force: true`.
+- The settings menu (`[data-testid="video-settings-menu"]`) stays open after a choice, and its button toggles it. The active subtitle option has the class `ds-video-settings-menu__option--active`.
+- Right after the page loads, the menu can briefly show "Off" before the player applies the account's choice. Read it only once it agrees with whether `.shaka-text-container` exists.
+- The video resumes where the account last stopped, which may be a stretch with no speech. Seek to a spoken stretch (40 s in the pinned video) before measuring a subtitle line.
+- Shaka's caption container covers the whole player, so layout checks measure the line itself.
+- When the controls appear, Dreaming moves the line up after a 0.5 s delay and a 0.1 s transition. A check made immediately finds the line overlapping the controls bar.
 
 **Driving the YouTube embed.**
-- Dreaming autoplays the embed. A click in the frame plays or pauses it and gives the frame keyboard focus, and `c` toggles captions.
+- Dreaming autoplays the embed. A click in the frame plays or pauses it, and `c` (captions) and `f` (fullscreen) work once the frame has focus.
 - The CC button's `aria-label` reads "Subtitles/CC turned on" or "turned off".
-- YouTube's "(auto-generated)" notice is a second caption window, and the extension blurs it too. That is expected, since the styles apply to every caption window.
+- With CC off, the frame may still consume `S` and set its revealed class, because YouTube keeps the caption container mounted. SPEC.md accepts this because nothing becomes visible, and the test checks just that.
+- YouTube's "(auto-generated)" notice is a second caption window, and the extension blurs it too.
 
 **Badges.**
-- Series carousel cards have no image, and so no series ID, until scrolled into view. The earlier "40 badges" on Series was this lazy loading, not a bug.
-- The earlier "53 of 54" on the watch sidebar came from comparing every `watch?id=` link on the page with the badges. The suite counts thumbnails instead, and finds 54 of 54.
+- Series carousel cards have no image, and so no series ID, until scrolled into view.
+- **Regression found:** Dreaming's series modal now uses `.ds-series-modal__hero` instead of `.ds-series-modal__header`, so the modal cover shows no range badge. Episode cards in the modal are unaffected. The fix is in TODO.md.
+- Some sidebar videos are premium-only; a free account cannot open them, so navigation tests pick a free one.
 
 **Browsers and test setup.**
-- Claude in Chrome cannot open `chrome-extension://` or `chrome://extensions` pages. It can inspect live Dreaming pages, but cannot change the extension's settings or load or reload it.
-- Branded Google Chrome ignores `--load-extension`. Playwright's Chromium (Chrome for Testing) and installed Edge both accept it, headless included.
+- Claude in Chrome cannot open `chrome-extension://` or `chrome://extensions` pages.
+- Branded Google Chrome ignores `--load-extension`. Playwright's Chromium (Chrome for Testing) and installed Edge accept it, headless included.
+- `chrome.runtime.reload()` unloads the extension for good in Chrome for Testing: its pages then fail with `ERR_BLOCKED_BY_CLIENT`. In Edge it reloads and a new service worker starts. Hence the tab-refresh test runs in Edge.
 - The extension ID differs per unpacked folder, so the suite reads it from the service worker's URL.
-- Tests arrange settings through `chrome.storage.sync` in the service worker, but the options tests drive the real controls with trusted input.
 - Playwright does not treat a disabled `<fieldset>` itself as disabled; check a control inside it.
 
-**Verifying a build.** In the maintainer's Chrome, the first look found a pre-0.10.1 copy still loaded. Confirm the loaded version before a manual pass.
+**Verifying a build.** In the maintainer's Chrome, the first look during the 0.10.1 pass found a pre-0.10.1 copy still loaded. Confirm the loaded version before a manual pass.
 
-#### Remaining work and open questions
+#### Remaining work
 
-- **PR 2, logged-in subtitle tests**, built on the spike's steps:
-  - each style (Blur, Small and faint, Hidden) on both players
-  - Hold and Toggle with auto-hide
-  - the stranded Toggle reveal (player subtitles turned off while revealed)
-  - window blur
-  - the key ignored while typing in a comment box
-  - the reveal key with focus on the Dreaming page while a YouTube video plays
-  - tab refresh after an update (`chrome.runtime.reload()` from the service worker)
-- **Logged-in badge pages:** Library History, My list, series modals, and watch-page chips.
-- **French routes:** pin French free videos and run the badge tests on French pages.
-- **Headed-only checks:** fullscreen and picture-in-picture probably need `HEADED=1`. This hasn't been tried yet.
-- **Free and premium accounts:** whether a free account plays both pinned videos depends on the account used in the profile. Record which kind the profile uses.
+- **The series modal cover fix**, then enable its test (TODO.md).
+- **Gaps that need a different account state:** My list and the comment box.
 - **CI:** a logged-out CI job (options and badges) is deferred until the tests prove stable against the live site. A scheduled catalog check is already proposed in `PUBLISHING.md`.
 - **Fixture-based layer:** it can share this runner. See above.
-
-#### Pending from the 0.10.1 beta
-
-Done on 2026-11-08. The v0.10.1-beta.1 release notes now list:
-- this suite's results for the ZIP
-- the maintainer's manual pass in Chrome, logged in. It covered:
-  - badges with default settings on video thumbnails, Series and My list
-  - subtitle de-emphasis on both players, windowed and fullscreen
-  - picture-in-picture
-
-The manual pass found that picture-in-picture on Dreaming's player shows normal, readable subtitles, which corrected the docs.
 
 ## Release browser matrix
 

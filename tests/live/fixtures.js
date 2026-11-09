@@ -24,6 +24,11 @@ const headless = !process.env.HEADED;
 export const LOGGED_IN_PROFILE = process.env.DREAMING_TEST_PROFILE
   ?? path.join(os.homedir(), ".dreaming-tools-test-profile");
 
+// The logged-in tests change the account's Dreaming subtitle choice, which
+// Dreaming stores server-side. account.setup.js records the original here and
+// account.teardown.js restores it and deletes the file.
+export const SUBTITLE_CHOICE_RECORD = `${LOGGED_IN_PROFILE}.subtitle-choice.json`;
+
 // Extract the packaged ZIP (what testers install), not the working tree, after
 // checking that it holds exactly the runtime files.
 export async function extractPackage() {
@@ -55,6 +60,20 @@ export function launchWithExtension(profileDirectory, extensionDirectory, option
   });
 }
 
+// Each run loads the extension from a new temporary folder, so Chrome treats
+// it as a first install and opens the options page in a new tab. In the
+// logged-in profile that tab would race the test's own navigation; close it.
+const FIRST_INSTALL_TAB_TIMEOUT_MS = 5_000;
+async function closeFirstInstallOptionsPage(context) {
+  const isOptionsPage = (page) => /^chrome-extension:\/\/[^/]+\/src\/options\.html$/.test(page.url());
+  const optionsPage = context.pages().find(isOptionsPage)
+    ?? await context.waitForEvent("page", { predicate: async (page) => {
+      await page.waitForURL(/^chrome-extension:/, { timeout: FIRST_INSTALL_TAB_TIMEOUT_MS }).catch(() => {});
+      return isOptionsPage(page);
+    }, timeout: FIRST_INSTALL_TAB_TIMEOUT_MS }).catch(() => null);
+  await optionsPage?.close();
+}
+
 export const test = base.extend({
   // "fresh": a new empty profile per test, so every test is a first install.
   // "persistent": the hand-logged-in profile at LOGGED_IN_PROFILE.
@@ -74,6 +93,9 @@ export const test = base.extend({
       test.skip(true, `No logged-in test profile at ${profileDirectory}; run \`npm run test:live:login\` first`);
     }
     const context = await launchWithExtension(profileDirectory, extension.directory);
+    if (profileMode === "persistent") {
+      await closeFirstInstallOptionsPage(context);
+    }
     await use(context);
     await context.close();
     if (profileMode === "fresh") {
