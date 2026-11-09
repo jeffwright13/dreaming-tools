@@ -77,10 +77,7 @@ test("series modal: episode cards are badged per the catalog", async ({ context 
   expectEnhancedCards(await readVideoCards(page, SERIES_MODAL), catalog, testInfo);
 });
 
-// Dreaming replaced the modal's .ds-series-modal__header with
-// .ds-series-modal__hero, which src/difficulty.js does not target yet, so the
-// cover shows no range badge. Found by this suite on 2026-11-09; see TODO.md.
-test.fixme("series modal: the cover shows the series range", async ({ context }) => {
+test("series modal: the cover shows the series range", async ({ context }) => {
   const { page, seriesId } = await openSeriesModal(context);
   const range = catalog.seriesRanges.get(seriesId);
   expect(range, `series ${seriesId} should have a catalog range`).toBeDefined();

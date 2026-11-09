@@ -210,6 +210,18 @@ describe("enhancePage", () => {
     expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
   });
 
+  it("adds a range to the cover in the series modal's hero layout", () => {
+    document.body.innerHTML = `
+      <div class="ds-series-modal__hero">
+        <img class="ds-series-modal__cover" src="https://example.com/series-${SERIES_ID}-cover.jpg">
+      </div>
+    `;
+
+    enhancePage(document, indexes, ENABLED);
+
+    expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
+  });
+
   it("extracts a series ID from a modal link and updates an existing badge", () => {
     document.body.innerHTML = `
       <div class="ds-series-modal__header">

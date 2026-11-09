@@ -7,6 +7,7 @@
     '[data-testid="series-catalog-card"]',
     '[data-testid="library-series-card"]',
     ".ds-series-modal__header",
+    ".ds-series-modal__hero",
   ].join(",");
 
   const { DEFAULT_SETTINGS, normalizeSettings } = globalThis.DreamingToolsSettings;

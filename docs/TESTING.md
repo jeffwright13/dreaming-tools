@@ -131,7 +131,7 @@ Each run loads the extension from a new temporary folder, so Chrome treats it as
 
 #### What the suite covers
 
-Results on 0.10.1, Chromium, 2026-11-09: 42 passed and 3 skipped, on two consecutive full runs. The logged-out project also passed in Edge, 19 of 19.
+Results on 0.10.2, Chromium, 2026-11-09: 43 passed and 2 skipped. On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
 
 **Logged out**
 - **`options.spec.js` (9):**
@@ -176,12 +176,12 @@ Results on 0.10.1, Chromium, 2026-11-09: 42 passed and 3 skipped, on two consecu
   - nothing visible with CC off
   - window blur on the page hides a reveal in the frame
   - fullscreen
-- **`badges.logged-in.spec.js` (4, plus 2 skipped):**
+- **`badges.logged-in.spec.js` (4, plus 1 skipped):**
   - Library History
-  - the series modal's episode cards
+  - the series modal's episode cards and cover range
   - watch-page chips (`Difficulty N` and the series range) matching the catalog, and following client-side navigation to another free video
 
-  My list skips because it is empty. The modal-cover check is `test.fixme` because of a regression it found (see Findings).
+  My list skips because it is empty.
 
 Two deliberate breaks were caught:
 - With auto-save disabled, 5 options tests failed.
@@ -219,7 +219,7 @@ These come from the exploration on 2026-11-07 and from building the suite.
 
 **Badges.**
 - Series carousel cards have no image, and so no series ID, until scrolled into view.
-- **Regression found:** Dreaming's series modal now uses `.ds-series-modal__hero` instead of `.ds-series-modal__header`, so the modal cover shows no range badge. Episode cards in the modal are unaffected. The fix is in TODO.md.
+- Dreaming's series modal now uses `.ds-series-modal__hero` instead of `.ds-series-modal__header`. The live suite caught this on 2026-11-09, when the modal cover lost its range badge; the extension now targets both classes.
 - Some sidebar videos are premium-only; a free account cannot open them, so navigation tests pick a free one.
 
 **Browsers and test setup.**
@@ -233,7 +233,6 @@ These come from the exploration on 2026-11-07 and from building the suite.
 
 #### Remaining work
 
-- **The series modal cover fix**, then enable its test (TODO.md).
 - **Gaps that need a different account state:** My list and the comment box.
 - **CI:** a logged-out CI job (options and badges) is deferred until the tests prove stable against the live site. A scheduled catalog check is already proposed in `PUBLISHING.md`.
 - **Fixture-based layer:** it can share this runner. See above.
