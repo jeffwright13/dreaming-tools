@@ -1,34 +1,34 @@
-# Community Beta Guide
+# Installing and Testing a Release
 
-Dreaming Tools is not yet published in the Chrome Web Store. Beta testers install an unpacked build from an official GitHub prerelease distributed by this repository.
+Dreaming Tools is not yet published in the Chrome Web Store. Until it is, install an unpacked build from an official GitHub release of this repository.
 
-## Before testing
+## Before installing
 
-Use a separate Chrome profile if you prefer to isolate beta extensions. The extension does not request Dreaming credentials, cookies, browsing history, or premium account data. Review the [privacy policy](../PRIVACY.md) and [security policy](../SECURITY.md) before installing.
+Use a separate Chrome profile if you prefer to isolate unpacked extensions. The extension does not request Dreaming credentials, cookies, browsing history, or premium account data. Review the [privacy policy](../PRIVACY.md) and [security policy](../SECURITY.md) before installing.
 
 Only use an archive downloaded from https://github.com/jeffwright13/dreaming-tools/releases. Do not install copies from file-sharing sites or unofficial mirrors.
 
-## Install the beta
+## Install
 
-1. Download `dreaming-tools-VERSION.zip` from the GitHub prerelease.
+1. Download `dreaming-tools-VERSION.zip` from the GitHub release.
 2. Optionally compare its SHA-256 checksum with the checksum in the release notes.
 3. Extract the ZIP into a permanent local directory. Do not delete that directory while testing.
 4. Open `chrome://extensions`.
 5. Enable **Developer mode**.
 6. Select **Load unpacked**.
 7. Choose the extracted directory containing `manifest.json`, `icons/`, and `src/`.
-8. The extension's options page opens by itself after a first install (otherwise use **Details** > **Extension options** in `chrome://extensions`). Switch on the tools you want to test; both are off after a fresh install.
+8. The extension's options page opens by itself after a first install (otherwise use **Details** > **Extension options** in `chrome://extensions`). Switch on the tools you want to use; both are off after a fresh install.
 9. Open or reload a supported Dreaming page.
 
-Chrome loads an unpacked directory, not the ZIP itself. A Developer mode warning is expected for an unpacked beta; do not bypass any other browser or operating-system security warning.
+Chrome loads an unpacked directory, not the ZIP itself. A Developer mode warning is expected for an unpacked extension; do not bypass any other browser or operating-system security warning.
 
-## Update or remove the beta
+## Update or remove
 
-For a new beta version:
+For a new version:
 
 1. Download and extract the new official archive into a new directory.
 2. Open `chrome://extensions`.
-3. Remove the old beta or select its reload control after replacing its files.
+3. Remove the old version or select its reload control after replacing its files.
 4. Load the new unpacked directory if needed.
 5. Open Dreaming tabs refresh automatically from 0.9.0 on. When updating from a version before 0.9.0, reload existing Dreaming tabs once.
 
@@ -36,7 +36,7 @@ To uninstall, select **Remove** on the extension card in `chrome://extensions`, 
 
 ## Test checklist
 
-Record the extension version, browser version, operating system, Dreaming language, account type, route, and extension settings. Exercise:
+To help test, record the extension version, browser version, operating system, Dreaming language, account type, route, and extension settings. Exercise:
 
 - Spanish and French routes where available
 - Browse with no sort and with each non-difficulty sort (Random, Short, Long, Old, New): Dreaming shows only durations, so extension badges appear in both behaviors
@@ -82,7 +82,7 @@ Console error, if any:
 
 Do not attach HAR files or include credentials, cookies, authorization headers, session tokens, downloaded premium content, or private account information. Follow the [security policy](../SECURITY.md) for vulnerabilities rather than posting exploit details publicly.
 
-## Known beta limitations
+## Known limitations
 
 - The extension depends on Dreaming's current page structure and public catalog schema.
 - A YouTube-served video open while the extension is updated keeps the previous settings until the next video or a tab reload.

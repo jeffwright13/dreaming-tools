@@ -246,7 +246,7 @@ These come from the exploration on 2026-11-07 and from building the suite.
 | Chrome Beta | Pre-release smoke on the primary platform | Optional | Optional |
 | Edge current stable | Optional | Required | Optional |
 
-`Required` coverage may come from physical machines, virtual machines, trusted beta testers, or a reputable browser-testing service. For each required cell, record:
+`Required` coverage may come from physical machines, virtual machines, trusted testers, or a reputable browser-testing service. For each required cell, record:
 
 - Browser name and exact version
 - Operating system and exact version/distribution

@@ -2,6 +2,7 @@
 
 Open work items not yet designed or scheduled. When an item is decided, record the rationale in `DECISIONS.md`, describe the behavior in `SPEC.md`, and remove it here.
 
+- **Intermittent live failure: Hold reveal test.** `subtitles-dreaming.logged-in.spec.js` "Hold: revealed only while the key is down" failed once in a full 0.10.2 run on 2026-11-09, then passed four times in a row on its own. The failure output was overwritten by later runs before it was read. Next time it fails, keep `test-results/` and the HTML report, then decide whether the test needs a better wait or the extension has a real race.
 - **Live-suite gaps.** A few checks still need something the test account lacks: My list needs saved items, and the comment-box check needs an account that can comment (free accounts cannot). Picture-in-picture, platform, zoom, and display-scaling checks stay manual. A logged-out CI job is deferred until the suite proves stable against the live site. Details are in [TESTING.md](TESTING.md#live-site-browser-tests-playwright).
 - **Fixture-based browser tests.** Goal: an automated layer that renders the extension's pages and styles in a real headless browser, starting with subtitle caption layout at windowed and fullscreen sizes. Scope, constraints, and tooling direction are in [TESTING.md](TESTING.md#fixture-based-browser-tests--planned). Until then, layout is verified manually with the live-site checklist.
 

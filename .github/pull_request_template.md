@@ -59,7 +59,7 @@ Write `None` or describe the change and rationale.
 
 - [ ] `README.md` and living specifications are updated where needed
 - [ ] Non-obvious decisions are appended to `docs/DECISIONS.md`
-- [ ] Beta, publishing, testing, privacy, and security documentation remain accurate
+- [ ] Install, publishing, testing, privacy, and security documentation remain accurate
 - [ ] Version bump is included if behavior or packaging changed
 - [ ] Screenshots are included for visible UI changes
 

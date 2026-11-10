@@ -67,7 +67,7 @@ The package is written to `dist/dreaming-tools-VERSION.zip` and contains only al
 3. Click **Load unpacked**.
 4. Select the directory that matches how you are running the extension:
    - **Development:** this repository directory—not `src/`. Reloading the extension then picks up your working-tree edits.
-   - **Released build:** the directory you extracted from a `dreaming-tools-VERSION.zip` archive (see [docs/BETA.md](docs/BETA.md)).
+   - **Released build:** the directory you extracted from a `dreaming-tools-VERSION.zip` archive (see [docs/INSTALL.md](docs/INSTALL.md)).
 5. Open or reload a Dreaming page.
 
 Chrome reloads an unpacked extension from the directory it was originally loaded from. If code changes do not appear after reloading, open the extension's **Details** page and check **Source**; an extracted release archive will not reflect repository edits. Remove it and load the repository directory instead.
@@ -108,9 +108,9 @@ The complete browser/platform matrix and security checks are in [docs/TESTING.md
 
 Switch the difficulty tool off and on and change each behavior mode in Extension options, then verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Tools`.
 
-## Community beta
+## Installing a release
 
-Beta installation, update, test, and reporting instructions are in [docs/BETA.md](docs/BETA.md). Install only archives attached to this repository's official GitHub prereleases.
+Installation, update, test, and reporting instructions for released builds are in [docs/INSTALL.md](docs/INSTALL.md). Install only archives attached to this repository's official GitHub releases.
 
 ## Support and security reports
 
@@ -118,4 +118,4 @@ Use the [GitHub issue chooser](https://github.com/jeffwright13/dreaming-tools/is
 
 ## Publishing and maintenance
 
-The staged beta, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness; the repository is not yet claiming Chrome Web Store availability.
+Dreaming outreach, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness; the repository is not yet claiming Chrome Web Store availability.

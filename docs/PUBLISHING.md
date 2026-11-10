@@ -2,21 +2,18 @@
 
 This document is the launch and release checklist for Dreaming Tools. Complete each phase in order; unchecked items are planned work, not claims about the current release.
 
-## 1. Community beta
+## 1. Release builds
 
 - [x] Add final extension icons at 16, 32, 48, and 128 pixels.
 - [x] Add a repeatable packaging command that creates `dist/dreaming-tools-VERSION.zip`.
 - [x] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
-- [ ] Recruit a small group of technically comfortable Dreaming users.
-- [ ] Include Spanish and French users, free and premium accounts, and multiple desktop platforms where possible.
-- [ ] Have testers follow `docs/TESTING.md` and report browser version, operating system, Dreaming route, and extension settings.
-- [ ] Resolve release-blocking layout, catalog, and settings issues.
+- [x] Publish GitHub releases with the exact ZIP, its SHA-256, and test results.
 
-Unpacked beta distribution is appropriate only for trusted testers. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
+A community beta (recruited Spanish and French testers on free and premium accounts across several platforms) was planned here and dropped, because no testers signed up. See `docs/DECISIONS.md`. The coverage it was meant to provide is listed as known limitations in each release's notes instead. Unpacked distribution is still for technically comfortable users. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
 
 ## 2. Dreaming Languages outreach
 
-- [ ] Contact Dreaming Languages before broad promotion.
+- [x] Contact Dreaming Languages before broad promotion. Dreaming approved the extension in its reply.
 - [ ] Explain that the extension displays public difficulty data and does not unlock premium content.
 - [ ] Ask about branding, catalog use, and a preferred support/contact channel.
 - [ ] Record any constraints in `docs/DECISIONS.md` and update the store listing accordingly.
@@ -49,6 +46,7 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 - [ ] Justify the `storage` permission as synchronized user preferences.
 - [ ] Justify the `scripting` permission as re-injecting the extension's own packaged content script into Dreaming tabs that were open during an install or update, so they keep responding to settings changes. It injects only files from the package, never remote or generated code.
 - [ ] Justify host access to `https://app.dreaming.com/*` as page enhancement and public catalog retrieval.
+- [ ] Justify the content script on `https://www.youtube.com/embed/*` as applying the subtitle style to captions in the YouTube player that Dreaming embeds for some videos. There it only styles the caption display and listens for the reveal key, pressed in the player or relayed from the Dreaming page; it makes no network requests and collects no data.
 - [ ] Confirm that no remote code, analytics, advertising, credential access, or premium-access bypass exists.
 - [ ] Run the release checks in `docs/TESTING.md`.
 - [ ] Inspect the final ZIP manually before upload.

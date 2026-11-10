@@ -42,7 +42,7 @@ afterEach(async () => {
   })));
 });
 
-describe("beta packaging", () => {
+describe("release packaging", () => {
   it("validates manifest references and matching versions", async () => {
     const result = await validatePackageInputs(process.cwd());
 
