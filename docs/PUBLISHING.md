@@ -40,7 +40,7 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 ## 4. Chrome Web Store preparation
 
 - [ ] Register and verify a Chrome Web Store developer account.
-- [ ] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information.
+- [ ] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information. The listing text and privacy-tab answers are drafted in `docs/STORE_LISTING.md`.
 - [ ] Link to the repository `PRIVACY.md` using a stable public URL.
 - [ ] Complete the privacy questionnaire consistently with `PRIVACY.md` and `SECURITY.md`.
 - [ ] Justify the `storage` permission as synchronized user preferences.
