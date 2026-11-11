@@ -9,7 +9,7 @@ This document is the launch and release checklist for Dreaming Tools. Complete e
 - [x] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
 - [x] Publish GitHub releases with the exact ZIP, its SHA-256, and test results.
 
-A community beta (recruited Spanish and French testers on free and premium accounts across several platforms) was planned here and dropped: it was never announced, so no outside testers took part, and recruiting them was not worth delaying the store launch. See `docs/DECISIONS.md`. The coverage it was meant to provide is listed as known limitations in each release's notes instead. Unpacked distribution is still for technically comfortable users. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
+A community beta (recruited Spanish and French testers on free and premium accounts across several platforms) was planned here and dropped: it was never announced, so no outside testers took part. See `docs/DECISIONS.md`. The coverage it was meant to provide is listed as known limitations in each release's notes instead. Unpacked distribution is still for technically comfortable users. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
 
 ## 2. Dreaming Languages outreach
 
