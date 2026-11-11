@@ -7,6 +7,8 @@ Open work items not yet designed or scheduled. When an item is decided, record t
 - **Live-suite gaps.** A few checks still need something the test account lacks: My list needs saved items, and the comment-box check needs an account that can comment (free accounts cannot). Picture-in-picture, platform, zoom, and display-scaling checks stay manual. A logged-out CI job is deferred until the suite proves stable against the live site. Details are in [TESTING.md](TESTING.md#live-site-browser-tests-playwright).
 - **Fixture-based browser tests.** Goal: an automated layer that renders the extension's pages and styles in a real headless browser, starting with subtitle caption layout at windowed and fullscreen sizes. Scope, constraints, and tooling direction are in [TESTING.md](TESTING.md#fixture-based-browser-tests--planned). Until then, layout is verified manually with the live-site checklist.
 
+- **Subtitle de-emphasis for videos on any site, as its own extension.** Idea from 2026-11-11. The current subtitle code targets Dreaming's Shaka player (`.shaka-text-container`) and YouTube's caption markup, so other sites would need their own player support, or a generic approach that works with whatever a page uses to show captions. Access to all sites brings a much stronger install warning and a stricter store review, so consider site-by-site permissions the user grants (optional host permissions). Would be a separate store listing from Dreaming Tools.
+
 ## Options page and subtitle presentation
 
 Ideas captured 2026-11-06 during PR #10 review. Choices are deferred until each item is planned.

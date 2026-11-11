@@ -9,13 +9,13 @@ This document is the launch and release checklist for Dreaming Tools. Complete e
 - [x] Verify the ZIP contains only `manifest.json`, required icons, and `src/` runtime files.
 - [x] Publish GitHub releases with the exact ZIP, its SHA-256, and test results.
 
-A community beta (recruited Spanish and French testers on free and premium accounts across several platforms) was planned here and dropped, because no testers signed up. See `docs/DECISIONS.md`. The coverage it was meant to provide is listed as known limitations in each release's notes instead. Unpacked distribution is still for technically comfortable users. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
+A community beta (recruited Spanish and French testers on free and premium accounts across several platforms) was planned here and dropped: it was never announced, so no outside testers took part. See `docs/DECISIONS.md`. The coverage it was meant to provide is listed as known limitations in each release's notes instead. Unpacked distribution is still for technically comfortable users. Do not ask users to bypass browser security warnings or download builds from unofficial mirrors.
 
 ## 2. Dreaming Languages outreach
 
-- [x] Contact Dreaming Languages before broad promotion. Dreaming approved the extension in its reply.
+- [x] Contact Dreaming Languages before broad promotion. Dreaming approved an earlier version that had only the difficulty badges. A follow-up describing the subtitle tool got no specific answer.
 - [ ] Explain that the extension displays public difficulty data and does not unlock premium content.
-- [ ] Ask about branding, catalog use, and a preferred support/contact channel.
+- [x] Ask about branding, catalog use, and a preferred support/contact channel. The follow-up asked about the name and a support channel; neither question got a specific answer.
 - [ ] Record any constraints in `docs/DECISIONS.md` and update the store listing accordingly.
 
 The extension must not imply affiliation or endorsement without explicit permission.
@@ -40,7 +40,7 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 ## 4. Chrome Web Store preparation
 
 - [ ] Register and verify a Chrome Web Store developer account.
-- [ ] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information.
+- [ ] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information. The listing text and privacy-tab answers are drafted in `docs/STORE_LISTING.md`.
 - [ ] Link to the repository `PRIVACY.md` using a stable public URL.
 - [ ] Complete the privacy questionnaire consistently with `PRIVACY.md` and `SECURITY.md`.
 - [ ] Justify the `storage` permission as synchronized user preferences.
