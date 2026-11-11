@@ -13,9 +13,9 @@ A community beta (recruited Spanish and French testers on free and premium accou
 
 ## 2. Dreaming Languages outreach
 
-- [x] Contact Dreaming Languages before broad promotion. Dreaming approved the extension in its reply.
+- [x] Contact Dreaming Languages before broad promotion. Dreaming approved an earlier version that had only the difficulty badges. A follow-up describing the subtitle tool got no specific answer.
 - [ ] Explain that the extension displays public difficulty data and does not unlock premium content.
-- [ ] Ask about branding, catalog use, and a preferred support/contact channel.
+- [x] Ask about branding, catalog use, and a preferred support/contact channel. The follow-up asked about the name and a support channel; neither question got a specific answer.
 - [ ] Record any constraints in `docs/DECISIONS.md` and update the store listing accordingly.
 
 The extension must not imply affiliation or endorsement without explicit permission.
