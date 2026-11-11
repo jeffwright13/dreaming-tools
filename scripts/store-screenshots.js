@@ -8,6 +8,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium } from "@playwright/test";
 import { extractPackage, launchWithExtension } from "../tests/live/fixtures.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -72,12 +73,10 @@ async function captureOptionsScreenshots() {
 async function capturePromoTile() {
   const icon = readFileSync(path.join(extension.directory, "icons", "icon-128.png")).toString("base64");
   const { name } = JSON.parse(readFileSync(path.join(extension.directory, "manifest.json"), "utf8"));
-  const profileDirectory = mkdtempSync(path.join(os.tmpdir(), "dreaming-tools-tile-"));
-  const context = await launchWithExtension(profileDirectory, extension.directory, {
-    viewport: PROMO_TILE_SIZE,
-    deviceScaleFactor: 1,
-  });
-  const page = await context.newPage();
+  // A plain browser: the tile needs no extension, and loading one would open
+  // its first-install options tab, which can leave this page unable to capture.
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: PROMO_TILE_SIZE, deviceScaleFactor: 1 });
   await page.setContent(`<!doctype html>
     <style>
       body { margin: 0; width: ${PROMO_TILE_SIZE.width}px; height: ${PROMO_TILE_SIZE.height}px;
@@ -90,8 +89,7 @@ async function capturePromoTile() {
     <img src="data:image/png;base64,${icon}" alt="">
     <div><h1>${name}</h1><p>Subtitle practice and difficulty ratings for Dreaming</p></div>`);
   await page.screenshot({ path: path.join(OUTPUT_DIRECTORY, "promo-tile-440x280.png") });
-  await context.close();
-  rmSync(profileDirectory, { recursive: true, force: true });
+  await browser.close();
 }
 
 rmSync(OUTPUT_DIRECTORY, { recursive: true, force: true });
