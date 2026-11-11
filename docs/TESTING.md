@@ -131,7 +131,7 @@ Each run loads the extension from a new temporary folder, so Chrome treats it as
 
 #### What the suite covers
 
-Results on 0.10.2, Chromium, 2026-11-09: 43 passed and 2 skipped. On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
+Results on 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
 
 **Logged out**
 - **`options.spec.js` (9):**
