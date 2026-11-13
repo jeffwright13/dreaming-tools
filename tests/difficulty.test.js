@@ -214,6 +214,25 @@ describe("enhancePage", () => {
     expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
   });
 
+  // Not seen in Dreaming's markup; guards against a generic card type such as
+  // series-card being reused inside another one.
+  it("badges only the outer card when series cards are nested, also on re-enhance", () => {
+    document.body.innerHTML = `
+      <div class="ds-series-modal__hero">
+        <div data-testid="series-card">
+          <img src="https://example.com/series-${SERIES_ID}-horizontal.jpg">
+        </div>
+      </div>
+    `;
+
+    enhancePage(document, indexes, ENABLED);
+    enhancePage(document, indexes, ENABLED);
+
+    const badges = document.querySelectorAll(".ds-difficulty-extension-badge");
+    expect(badges).toHaveLength(1);
+    expect(badges[0].parentElement.matches(".ds-series-modal__hero")).toBe(true);
+  });
+
   it("adds a range to the cover in a dynamically rendered series modal", () => {
     document.body.innerHTML = `
       <div class="ds-series-modal__header">

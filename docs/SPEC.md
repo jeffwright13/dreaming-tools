@@ -116,7 +116,7 @@ Subtitle settings and defaults: `subtitlesEnabled` off; `subtitleStyle` Blur; `r
 
 ## Dynamic content
 
-When the difficulty feature is enabled, process the initial document after downloading the catalog. Observe descendant additions and reprocess the document on the next animation frame. Badge insertion must be idempotent.
+When the difficulty feature is enabled, process the initial document after downloading the catalog. Observe descendant additions and reprocess the document on the next animation frame. Badge insertion must be idempotent. A series card nested inside another series card gets no badge of its own; only the outer card is badged.
 
 ## Supported views
 

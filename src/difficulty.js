@@ -108,6 +108,12 @@
 
   function enhanceSeriesCards(root, seriesRanges, settings) {
     for (const card of findAll(root, SERIES_CARD_SELECTOR)) {
+      // A card nested in another card would get a second badge, and the outer
+      // card would later find the inner badge as its own. Badge the outer only.
+      if (card.parentElement?.closest(SERIES_CARD_SELECTOR)) {
+        continue;
+      }
+
       const range = seriesRanges.get(getSeriesId(card));
       const text = formatDifficultyRange(range);
       if (!text) {
