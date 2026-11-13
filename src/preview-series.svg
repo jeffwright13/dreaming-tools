@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice">
+  <!-- Original artwork for the options-page series preview: a portrait
+       "series cover" of a coastline with a lighthouse at dusk. Shown blurred. -->
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3c5a8c"/>
+      <stop offset="0.55" stop-color="#e59a6b"/>
+      <stop offset="1" stop-color="#f6d08a"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f6f8f"/>
+      <stop offset="1" stop-color="#1d4660"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky and sun -->
+  <rect width="200" height="190" fill="url(#dusk)"/>
+  <circle cx="70" cy="165" r="26" fill="#fbe3a1"/>
+
+  <!-- Sea, with light on the water -->
+  <rect y="182" width="200" height="118" fill="url(#sea)"/>
+  <rect x="48" y="192" width="44" height="3" rx="1.5" fill="#f3c98a" opacity="0.7"/>
+  <rect x="56" y="204" width="28" height="3" rx="1.5" fill="#f3c98a" opacity="0.5"/>
+
+  <!-- Cliff and lighthouse -->
+  <path d="M120 300 L128 196 Q150 176 172 186 L200 180 V300 Z" fill="#3b3a36"/>
+  <path d="M150 300 L156 210 Q176 196 200 204 V300 Z" fill="#2b2a27"/>
+  <path d="M147 182 L151 120 H163 L167 182 Z" fill="#f4efe6"/>
+  <rect x="149.5" y="138" width="15" height="9" fill="#c4553f"/>
+  <rect x="148.5" y="160" width="17" height="9" fill="#c4553f"/>
+  <rect x="149" y="108" width="16" height="12" rx="2" fill="#fde7a6"/>
+  <path d="M146 108 L157 98 L168 108 Z" fill="#2b2a27"/>
+
+  <!-- Sailboat -->
+  <path d="M40 236 H76 L70 246 H46 Z" fill="#f4efe6"/>
+  <path d="M58 234 V198 L76 232 Z" fill="#f8f4ec"/>
+  <path d="M56 234 V206 L42 232 Z" fill="#e8dcc6"/>
+
+  <!-- Gulls -->
+  <path d="M30 70 q6 -6 12 0 q6 -6 12 0" fill="none" stroke="#2b2a27" stroke-width="2"/>
+  <path d="M118 46 q4 -4 8 0 q4 -4 8 0" fill="none" stroke="#2b2a27" stroke-width="1.6"/>
+</svg>

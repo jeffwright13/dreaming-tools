@@ -195,21 +195,32 @@ test("ignores the reveal key with Ctrl held", async ({ context, optionsUrl }) =>
 
 test("the badge preview follows style, size, position, and the on switch", async ({ context, optionsUrl }) => {
   const page = await openOptions(context, optionsUrl);
-  const badge = page.locator("#preview-badge");
-  const disabledPill = page.locator("#preview-disabled");
+  const badges = [page.locator("#preview-badge"), page.locator("#preview-series-badge")];
+  const disabledPills = page.locator(".preview-disabled");
 
-  await expect(badge).toBeHidden();
-  await expect(disabledPill).toBeVisible();
+  for (const badge of badges) {
+    await expect(badge).toBeHidden();
+  }
+  await expect(disabledPills).toHaveCount(2);
+  for (const pill of await disabledPills.all()) {
+    await expect(pill).toBeVisible();
+  }
 
   await page.locator("[name=difficultyEnabled]").check();
-  await expect(badge).toBeVisible();
-  await expect(disabledPill).toBeHidden();
+  for (const pill of await disabledPills.all()) {
+    await expect(pill).toBeHidden();
+  }
   await page.locator("[name=style]").selectOption("enhanced");
   await page.locator("[name=size]").selectOption("large");
   await page.locator("[name=position]").selectOption("lower-left");
-  await expect(badge).toHaveClass(/--style-enhanced/);
-  await expect(badge).toHaveClass(/--size-large/);
-  await expect(badge).toHaveClass(/--position-lower-left/);
+  for (const badge of badges) {
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveClass(/--style-enhanced/);
+    await expect(badge).toHaveClass(/--size-large/);
+    await expect(badge).toHaveClass(/--position-lower-left/);
+  }
+  await expect(badges[1]).toHaveText("41–44");
+  await expect(badges[1]).toHaveClass(/--series/);
 });
 
 test("Restore defaults resets storage and the form", async ({ context, optionsUrl, getSettings }) => {

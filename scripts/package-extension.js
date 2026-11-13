@@ -17,6 +17,7 @@ export const RUNTIME_FILES = Object.freeze([
   "src/options.html",
   "src/options.js",
   "src/preview-scene.svg",
+  "src/preview-series.svg",
   "src/settings.js",
   "src/subtitles-core.js",
   "src/subtitles.css",

@@ -20,7 +20,9 @@ const optionsMarkup = `
       <select name="position"><option value="lower-left">Lower left</option><option value="upper-right">Upper right</option></select>
     </fieldset>
     <span id="preview-badge">42</span>
-    <span id="preview-disabled"></span>
+    <span id="preview-disabled" class="preview-disabled"></span>
+    <span id="preview-series-badge">41–44</span>
+    <span id="preview-series-disabled" class="preview-disabled"></span>
     <input type="checkbox" name="subtitlesEnabled">
     <fieldset id="subtitle-controls">
       <select name="subtitleStyle"><option value="blur">Blur</option><option value="small-faint">Small and faint</option><option value="hidden">Hidden</option></select>
@@ -109,6 +111,31 @@ describe("options page", () => {
     expect(document.querySelector("#preview-badge")?.className).toContain("--size-large");
     expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(true);
     expect(document.querySelector("#appearance-controls")?.disabled).toBe(false);
+  });
+
+  it("previews a series badge with the same style, size, and position as the video badge", async () => {
+    await loadOptions({ difficultyEnabled: true, style: "dreaming", size: "medium", position: "lower-left" });
+    const series = document.querySelector("#preview-series-badge");
+
+    expect(series?.hidden).toBe(false);
+    expect(series?.classList.contains("ds-difficulty-extension-badge--series")).toBe(true);
+    for (const modifier of ["--style-dreaming", "--size-medium", "--position-lower-left"]) {
+      expect(series?.className).toContain(modifier);
+    }
+    expect(document.querySelector("#preview-badge")?.classList.contains("ds-difficulty-extension-badge--video")).toBe(true);
+
+    change('[name="size"]', (control) => { control.value = "large"; });
+    expect(series?.className).toContain("--size-large");
+  });
+
+  it("hides both preview badges and shows an off notice on each while the feature is off", async () => {
+    await loadOptions();
+
+    expect(document.querySelector("#preview-badge")?.hidden).toBe(true);
+    expect(document.querySelector("#preview-series-badge")?.hidden).toBe(true);
+    for (const pill of document.querySelectorAll(".preview-disabled")) {
+      expect(pill.hidden, pill.id).toBe(false);
+    }
   });
 
   it("reads only stored keys so legacy settings can migrate", async () => {
@@ -459,6 +486,8 @@ describe("options page layout", () => {
       '[name="position"]',
       "#preview-badge",
       "#preview-disabled",
+      "#preview-series-badge",
+      "#preview-series-disabled",
     ],
   };
 

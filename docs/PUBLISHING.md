@@ -70,6 +70,7 @@ src/
   options.html
   options.js
   preview-scene.svg
+  preview-series.svg
   settings.js
   subtitles-core.js
   subtitles.css
