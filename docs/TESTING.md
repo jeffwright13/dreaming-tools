@@ -79,6 +79,29 @@ Test these views where available:
 
 Confirm that the extension never exposes premium video content or modifies playback access.
 
+#### Which player a page uses
+
+Dreaming picks the player by account, not by video, so the same watch page can look different to two people (rule and evidence in [SPEC.md](SPEC.md#which-player-a-video-uses)):
+
+- **Premium accounts** always get Dreaming's player.
+- **Free accounts** get a YouTube embed for any video that is also on Dreaming's YouTube channel, and Dreaming's player otherwise.
+- **Logged out**, no video plays; the page shows a sign-up prompt.
+
+How to tell which player a page is using:
+
+- **By eye.** Dreaming's player has a thin orange progress bar, a gear (settings) button at the bottom right, and a round back button at the top left; subtitles are switched in the gear menu. The YouTube embed has a red progress bar, CC and settings icons at the top right, and YouTube's branding; captions are switched with CC or the `c` key.
+- **In DevTools.** `document.querySelector(".ds-youtube-player iframe")?.src` returns a `youtube.com/embed/...` address for the YouTube embed, and `null` for Dreaming's player, which has a `.shaka-text-container` when subtitles are on.
+
+Who can test what:
+
+- **The maintainer's account is premium** (as of 2026-11-13), so hand testing covers Dreaming's player only. The checklist items for YouTube-served videos need a free account.
+- **The live suite's test profile is a free account**, which is why it can test both players: its pinned YouTube-served video is YouTube only for a free account. If the test profile is ever switched to a premium account, the YouTube tests would find Dreaming's player instead and fail or skip, without anything being wrong with the extension.
+
+Traps:
+
+- Signing out and refreshing may still play a video, in the YouTube embed: some site data can outlive the sign-out. A fresh profile or private window shows the true logged-out page.
+- A report that "the extension doesn't work on YouTube videos" from a premium user, or "there is no gear menu" from a free user, is probably about the other player. Ask which player the page showed.
+
 ### Live-site browser tests (Playwright)
 
 A Playwright suite in `tests/live/` automates most of the live-site smoke tests above. It loads the packaged extension (`dist/dreaming-tools-VERSION.zip`, checked against the runtime file list) into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright, and the rules below for account state, extension reloads, and window blur, are in `DECISIONS.md`.
@@ -120,7 +143,7 @@ Playwright projects:
   - Teardown sets it back and deletes the file, even when tests fail. A forced failure after a test switched the account to Off was restored to Spanish.
   - Setup never overwrites an existing record, so a run that crashed before restoring still holds the true original.
 
-The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared. The current test profile uses a free account.
+The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared. The current test profile uses a free account, which the YouTube-served tests depend on (see [Which player a page uses](#which-player-a-page-uses)).
 
 The tests are read-only toward the account in every other way:
 - they never add to the Library or My list

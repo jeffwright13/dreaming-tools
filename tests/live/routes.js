@@ -11,6 +11,9 @@ export const DREAMING_PLAYER_VIDEO = Object.freeze({
   player: "dreaming",
 });
 
+// YouTube-served only for a free account: Dreaming gives premium accounts its
+// own player for every video (docs/TESTING.md, "Which player a page uses").
+// The test profile must therefore stay a free account.
 export const YOUTUBE_SERVED_VIDEO = Object.freeze({
   id: "6ae0934444135614096a680f",
   url: watchUrl("6ae0934444135614096a680f"),
