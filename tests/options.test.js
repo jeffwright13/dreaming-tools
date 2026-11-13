@@ -303,15 +303,37 @@ describe("subtitle options", () => {
       expect((await lastSaved(storage)).revealKey).toBe("KeyS");
     });
 
-    it("does nothing while subtitles are off, in a select, or with Ctrl held", async () => {
+    it("does nothing while subtitles are off or with Ctrl held", async () => {
       await loadOptions();
       expect(pressKey("KeyS").defaultPrevented).toBe(false);
       expect(revealed()).toBe(false);
 
       await loadOptions({ subtitlesEnabled: true });
-      pressKey("KeyS", {}, document.querySelector('[name="subtitleStyle"]'));
-      expect(revealed()).toBe(false);
       pressKey("KeyS", { ctrlKey: true });
+      expect(revealed()).toBe(false);
+    });
+
+    // A select keeps focus after it changes. Standing aside there let the key
+    // reach the select's type-to-select, which changed the setting (S picks
+    // "Small and faint") instead of previewing it (issue #26).
+    it("previews from a focused select without the key reaching the select", async () => {
+      await loadOptions({ subtitlesEnabled: true });
+
+      for (const name of ["subtitleStyle", "revealMode", "size"]) {
+        const select = document.querySelector(`[name="${name}"]`);
+        expect(pressKey("KeyS", {}, select).defaultPrevented, name).toBe(true);
+        expect(revealed(), name).toBe(true);
+        releaseKey("KeyS", select);
+        expect(revealed(), name).toBe(false);
+      }
+    });
+
+    it("still stands aside in a text field", async () => {
+      await loadOptions({ subtitlesEnabled: true });
+      const field = document.createElement("input");
+      document.querySelector("#settings-form").append(field);
+
+      expect(pressKey("KeyS", {}, field).defaultPrevented).toBe(false);
       expect(revealed()).toBe(false);
     });
 
