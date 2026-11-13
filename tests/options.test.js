@@ -520,7 +520,17 @@ describe("options page layout", () => {
   it("labels each subtitle preview with the player it imitates", () => {
     const labels = [...document.querySelectorAll("#subtitles-feature .preview-label")].map((label) => label.textContent);
 
-    expect(labels).toEqual(["Dreaming player", "YouTube-served videos"]);
+    expect(labels).toEqual(["Dreaming player", "YouTube player (free accounts)"]);
+  });
+
+  // Issue #28: static controls in each player's style tell the previews apart.
+  it("draws each player's controls as decoration behind the subtitles", () => {
+    for (const [previewId, player] of [["subtitle-preview", "dreaming"], ["youtube-subtitle-preview", "youtube"]]) {
+      const chrome = document.querySelector(`#${previewId} > .player-chrome--${player}`);
+      expect(chrome, previewId).not.toBeNull();
+      expect(chrome.getAttribute("aria-hidden"), previewId).toBe("true");
+      expect(chrome.querySelector("button, a, input, [tabindex]"), previewId).toBeNull();
+    }
   });
 
   it("has no Save button, because changes save automatically", () => {
