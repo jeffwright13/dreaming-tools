@@ -198,6 +198,22 @@ describe("enhancePage", () => {
     expect(badge?.getAttribute("aria-label")).toBe("Difficulty range 41 to 44 out of 100");
   });
 
+  // Markup from the Series page's Continue watching row (2026-11-13), trimmed.
+  it("adds a range to a Continue watching series card", () => {
+    document.body.innerHTML = `
+      <div class="_card_175sm_1 _fill_175sm_20" data-testid="series-card">
+        <div class="ds-image"><img class="ds-image__image" src="https://example.com/series-${SERIES_ID}-horizontal.jpg" alt=""></div>
+        <div class="_overlay_175sm_13"></div>
+        <span class="ds-series-continue-watching__play-button" aria-hidden="true"></span>
+        <a class="_action_175sm_84" href="/spanish/watch?series=${SERIES_ID}"><span class="sr-only">Play</span></a>
+      </div>
+    `;
+
+    enhancePage(document, indexes, ENABLED);
+
+    expect(document.querySelector(".ds-difficulty-extension-badge--series")?.textContent).toBe("41–44");
+  });
+
   it("adds a range to the cover in a dynamically rendered series modal", () => {
     document.body.innerHTML = `
       <div class="ds-series-modal__header">

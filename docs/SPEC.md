@@ -123,6 +123,7 @@ When the difficulty feature is enabled, process the initial document after downl
 - Library video cards, including History and My list
 - Library series cards
 - Series catalog cards
+- Continue watching series cards on the Series page (`[data-testid="series-card"]`)
 - Series modal cover and episode cards
 - Browse cards, with or without native difficulty badges depending on sort order
 - Watch page metadata for Dreaming's player and embedded YouTube videos

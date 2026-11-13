@@ -6,6 +6,7 @@
   const SERIES_CARD_SELECTOR = [
     '[data-testid="series-catalog-card"]',
     '[data-testid="library-series-card"]',
+    '[data-testid="series-card"]',
     ".ds-series-modal__header",
     ".ds-series-modal__hero",
   ].join(",");
