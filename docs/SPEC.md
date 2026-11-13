@@ -104,9 +104,23 @@ Key listeners run in the capture phase on `window`, before the player's handlers
 
 ### YouTube-served videos
 
-Many Dreaming videos are served through YouTube: the watch page shows `div.ds-youtube-player` containing a cross-origin `https://www.youtube.com/embed/...` iframe, there is no Dreaming settings menu, and captions are switched with YouTube's own CC control. Page scripts and stylesheets cannot reach into that frame, so a second content script runs in YouTube embed frames (`all_frames`) with `settings.js`, `subtitles-core.js`, `subtitles.js`, `content.js`, and `subtitles.css`.
+Many Dreaming videos are served through YouTube for accounts without premium (see [Which player a video uses](#which-player-a-video-uses)): the watch page shows `div.ds-youtube-player` containing a cross-origin `https://www.youtube.com/embed/...` iframe, there is no Dreaming settings menu, and captions are switched with YouTube's own CC control. Page scripts and stylesheets cannot reach into that frame, so a second content script runs in YouTube embed frames (`all_frames`) with `settings.js`, `subtitles-core.js`, `subtitles.js`, `content.js`, and `subtitles.css`.
 
 `content.js` chooses features from its location: on `app.dreaming.com` it runs difficulty and subtitles; in `www.youtube.com` it runs subtitles only when `location.ancestorOrigins` is exactly `["https://app.dreaming.com"]`, so YouTube embeds on other sites, nested embeds, and directly opened embeds run nothing and read no settings. The stylesheet is inert elsewhere because its rules require the `<html>` classes. Inside the frame, the same styles apply to the children of `.ytp-caption-window-container` (YouTube's caption windows), never to the container itself: YouTube positions each caption window absolutely against the player, and a `filter` or `transform` on the container would become their containing block and move the captions out of view in windowed mode. This was observed live before the fix: captions vanished in windowed mode and appeared below the progress bar in fullscreen. The frame treats captions as on while that container is present; when it is absent the reveal key reaches YouTube unchanged and a local or forwarded press only hides a reveal, while releases and blurs always apply. YouTube's embed now uses a newer control layout (CC and settings in the top-right corner), so the classic `.ytp-subtitles-button` state is not relied on. If YouTube keeps the container mounted with CC off, the reveal key is consumed inside the frame with no visible effect; `S` has no known YouTube shortcut, so this is accepted. YouTube's class names are not a public interface and may change.
+
+#### Which player a video uses
+
+The same video can play in either player, depending on the account. This is observed behavior, not documented by Dreaming, and may change.
+
+| Account | Video also published on Dreaming's YouTube channel | Video not on YouTube |
+|---|---|---|
+| Premium | Dreaming's player | Dreaming's player |
+| Free | YouTube embed | Dreaming's player |
+| Logged out | Sign-up prompt, no player | Sign-up prompt, no player |
+
+Evidence, 2026-11-13: watch page `6aec7f74a1ddb669a07fb7e5` played in Dreaming's player for the maintainer's premium account, and as an embed of YouTube video `ZxeljjcqOUE` (the same video on Dreaming's public channel) for the free test account. The maintainer also saw it switch from Dreaming's player to the YouTube embed after signing out and refreshing; a browser that had never signed in showed the sign-up prompt for it and for both pinned live-suite videos. `6ae0934444135614096a680f`, the live suite's YouTube-served video, is YouTube only for free accounts; `5e4d121caac87f3820954cb5`, its Dreaming-player video, uses Dreaming's player for both.
+
+Consequences: a video ID alone does not say which player a page will use, and "YouTube-served" means "YouTube-served for this account". Both players need support, because free accounts see YouTube embeds wherever a YouTube copy exists. See [TESTING.md](TESTING.md#which-player-a-page-uses) for how this affects testing.
 
 Keys go to whichever frame has focus. Inside the YouTube frame, the feature handles the reveal key itself. On the Dreaming page, when Dreaming's own subtitle container is absent but a YouTube player is present, the feature consumes the reveal key (it cannot see whether YouTube captions are on) and forwards `press` (not repeats), `release`, and window `blur` with `postMessage({ source: "dreaming-tools", type: "subtitles-reveal", event }, "https://www.youtube.com")`. The frame applies only messages whose origin is `https://app.dreaming.com` and whose fields match exactly. It deliberately does not check `event.source`: any Dreaming-origin sender may send these messages, which can only show or hide captions. Focus moving between the page and the frame blurs one of them, which re-hides the captions.
 

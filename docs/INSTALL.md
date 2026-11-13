@@ -49,7 +49,7 @@ To help test, record the extension version, browser version, operating system, D
 - Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
-- Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
+- Subtitles on a YouTube-served video (free accounts only; see [Which video player you'll see](#which-video-player-youll-see)), in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
 - Subtitles in picture-in-picture: on a Dreaming-player video with subtitles on, switching tabs opens picture-in-picture, and its subtitles appear at normal size and readable (known limitation; the tool does not reach that window). YouTube-served videos do not open picture-in-picture on a tab switch
 - Difficulty badges and subtitles switched on together, separately, and both off on a watch page, for both a Dreaming-player video and a YouTube-served video
 - Enhanced everywhere and Fill missing difficulties only
@@ -81,6 +81,15 @@ Console error, if any:
 ```
 
 Do not attach HAR files or include credentials, cookies, authorization headers, session tokens, downloaded premium content, or private account information. Follow the [security policy](../SECURITY.md) for vulnerabilities rather than posting exploit details publicly.
+
+## Which video player you'll see
+
+Dreaming plays videos in one of two players, and which one you get depends on your account, not on the video:
+
+- **Premium accounts** always get Dreaming's own player: an orange progress bar, with a gear button for subtitles.
+- **Free accounts** get YouTube's player (red progress bar, CC button) for videos that Dreaming also publishes on its YouTube channel, and Dreaming's player for the rest.
+
+The extension works with both. In Dreaming's player, turn subtitles on with the gear menu; in YouTube's player, with the CC button or the `c` key. If you compare notes with someone else, the same video may look different for each of you. When reporting a problem, say which player the page showed.
 
 ## Known limitations
 
