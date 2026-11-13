@@ -47,6 +47,11 @@
   --youtube-caption-background: rgba(8, 8, 8, 0.75);
   --scene-shade: rgba(0, 0, 0, 0.18);
   --overlay-pill: rgba(0, 0, 0, 0.7);
+  --dreaming-progress: #f7931e;
+  --youtube-progress: #ff0033;
+  --chrome-track: rgba(255, 255, 255, 0.35);
+  --chrome-shade: rgba(0, 0, 0, 0.55);
+  --chrome-button: rgba(0, 0, 0, 0.6);
 }
 
 body {
@@ -330,7 +335,7 @@ button {
 
 /* Dreaming's Shaka player: a solid black box behind the line, fixed size. */
 .preview-player .shaka-text-container {
-  bottom: 8%;
+  bottom: 2.25rem;
   display: flex;
   justify-content: center;
   left: 0.5rem;
@@ -354,7 +359,7 @@ button {
 }
 
 .preview-player .caption-window {
-  bottom: 5%;
+  bottom: 2.4rem;
   left: 0.5rem;
   position: absolute;
   right: 0.5rem;
@@ -369,4 +374,120 @@ button {
   font-size: 1rem;
   line-height: 1.5;
   padding: 0.1rem 0.3rem;
+}
+
+/* Static player controls, drawn in each player's style so the two previews
+   are told apart at a glance (issue #28). Original simplified icons, no logos.
+   The controls are showing, so each caption sits just above them, as on the
+   sites. Decoration only: hidden from screen readers and from the pointer. */
+.player-chrome {
+  color: var(--overlay-text);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.chrome-icon {
+  flex: none;
+  height: 0.95rem;
+  width: 0.95rem;
+}
+
+.chrome-group {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.chrome-time {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chrome-bottom {
+  background: linear-gradient(to top, var(--chrome-shade), transparent);
+  bottom: 0;
+  left: 0;
+  padding: 1rem 0.5rem 0.35rem;
+  position: absolute;
+  right: 0;
+}
+
+.chrome-row {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chrome-progress {
+  background: var(--chrome-track);
+  height: 2px;
+  margin-bottom: 0.3rem;
+  position: relative;
+}
+
+.chrome-progress-fill {
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+
+/* Dreaming: thin orange progress bar above the controls, and a round back
+   button in the top-left corner. */
+.player-chrome--dreaming .chrome-progress-fill {
+  background: var(--dreaming-progress);
+  width: 5%;
+}
+
+.chrome-back {
+  align-items: center;
+  background: var(--chrome-button);
+  border-radius: 50%;
+  color: var(--dreaming-progress);
+  display: flex;
+  height: 1.5rem;
+  justify-content: center;
+  left: 0.45rem;
+  position: absolute;
+  top: 0.45rem;
+  width: 1.5rem;
+}
+
+.chrome-back .chrome-icon {
+  height: 0.85rem;
+  width: 0.85rem;
+}
+
+/* YouTube's embed: volume, captions, and settings at the top right; time and
+   fullscreen above a red progress bar with a round playhead. */
+.chrome-top {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.45rem;
+}
+
+.player-chrome--youtube .chrome-bottom {
+  padding-bottom: 0.55rem;
+}
+
+.player-chrome--youtube .chrome-progress {
+  height: 3px;
+  margin: 0.3rem 0 0;
+}
+
+.player-chrome--youtube .chrome-progress-fill {
+  background: var(--youtube-progress);
+  width: 33%;
+}
+
+.chrome-scrubber {
+  background: var(--youtube-progress);
+  border-radius: 50%;
+  height: 0.6rem;
+  left: 33%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.6rem;
 }
