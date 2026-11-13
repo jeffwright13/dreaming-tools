@@ -40,7 +40,7 @@ Dreaming Tools is an independent, unofficial project. It is not affiliated with,
 
 **Icon:** `icons/icon-128.png` (from the package).
 
-**Screenshots and promo tile:** generated from the packaged extension with `npm run package && npm run store:screenshots`, into `dist/store-assets/`: three 1280x800 options-page screenshots (subtitles blurred, subtitles revealed while the key is held, difficulty badges in dark mode) and a 440x280 small promo tile. They show only the extension's own pages and preview art, not Dreaming's site, whose thumbnails and branding are Dreaming's.
+**Screenshots and promo tile:** generated from the packaged extension with `npm run store:screenshots` (which builds the test package in `dist/dev/` first), into `dist/store-assets/`: three 1280x800 options-page screenshots (subtitles blurred, subtitles revealed while the key is held, difficulty badges in dark mode) and a 440x280 small promo tile. They show only the extension's own pages and preview art, not Dreaming's site, whose thumbnails and branding are Dreaming's.
 
 **Homepage URL:** https://github.com/jeffwright13/dreaming-tools
 

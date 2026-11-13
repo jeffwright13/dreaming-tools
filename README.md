@@ -58,7 +58,7 @@ npm run package
 npm run package:verify
 ```
 
-The package is written to `dist/dreaming-tools-VERSION.zip` and contains only allowlisted runtime files.
+The package is written to `dist/dreaming-tools-VERSION.zip` and contains only allowlisted runtime files. The build is reproducible, and `npm run package` refuses to replace an existing ZIP of the same version with different contents, because that file may be a released package: bump the version for a new release, or pass `--force` (`npm run package -- --force`). Test builds go to `dist/dev/` instead (`npm run package:dev`); the live suite and `npm run store:screenshots` build and use that copy.
 
 ## Load the extension locally
 

@@ -121,7 +121,7 @@ For every release:
 4. Complete the required manual matrix in `docs/TESTING.md`.
 5. Verify `package.json` and `manifest.json` versions match.
 6. Bump the version according to Semantic Versioning.
-7. Build and inspect the store ZIP.
+7. Build and inspect the store ZIP (`npm run package`, then `npm run package:verify`). Run the live suite and confirm that its test build in `dist/dev/` has the same SHA-256 as the release ZIP.
 8. Merge through `main`, create the version tag, and push tags.
 9. Create a GitHub Release with changes, known limitations, test results, and the exact ZIP.
 10. Upload the same ZIP to the Chrome Web Store.

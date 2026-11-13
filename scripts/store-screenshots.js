@@ -2,7 +2,7 @@
 // screenshots at the store's 1280x800 and a 440x280 small promo tile. Only the
 // extension's own pages and art appear, never Dreaming's site.
 //
-// Usage: npm run package && npm run store:screenshots
+// Usage: npm run store:screenshots (builds the test package in dist/dev/ first)
 // Output: dist/store-assets/ (regenerated each run, not committed).
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";

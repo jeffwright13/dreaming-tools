@@ -104,7 +104,7 @@ Traps:
 
 ### Live-site browser tests (Playwright)
 
-A Playwright suite in `tests/live/` automates most of the live-site smoke tests above. It loads the packaged extension (`dist/dreaming-tools-VERSION.zip`, checked against the runtime file list) into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright, and the rules below for account state, extension reloads, and window blur, are in `DECISIONS.md`.
+A Playwright suite in `tests/live/` automates most of the live-site smoke tests above. It loads the packaged extension from a test build in `dist/dev/` (`dist/dev/dreaming-tools-VERSION.zip`, checked against the runtime file list; `npm run test:live` builds it), never from the release ZIP, so testing a branch cannot overwrite a released package. The build is reproducible, so on a release commit the test build is byte-identical to the release ZIP; compare their SHA-256 checksums to confirm the suite tested the exact release into a real browser and visits `app.dreaming.com`. It runs locally only: it is excluded from `npm test` and from CI, because it depends on the live site and, for the logged-in tests, on a Dreaming login. The reasons for choosing Playwright, and the rules below for account state, extension reloads, and window blur, are in `DECISIONS.md`.
 
 #### Run
 
@@ -154,7 +154,7 @@ Each run loads the extension from a new temporary folder, so Chrome treats it as
 
 #### What the suite covers
 
-Results on 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
+Results on 1.1.0, 2026-11-13: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. On 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
 
 **Logged out**
 - **`options.spec.js` (9):**

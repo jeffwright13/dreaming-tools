@@ -70,6 +70,38 @@ describe("release packaging", () => {
     expect(await readFile(second)).toEqual(await readFile(first));
   });
 
+  // A release ZIP is what was tested and published; rebuilding it from
+  // changed sources must not silently replace it.
+  describe("protecting an existing release archive", () => {
+    it("accepts a rebuild with identical contents", async () => {
+      const directory = await temporaryDirectory();
+      const output = path.join(directory, "extension.zip");
+      const first = await createPackage(process.cwd(), output);
+
+      await expect(createPackage(process.cwd(), output, { replaceDifferent: false })).resolves.toEqual(first);
+    });
+
+    it("refuses to replace an archive whose contents differ, and leaves it untouched", async () => {
+      const directory = await temporaryDirectory();
+      const output = path.join(directory, "extension.zip");
+      await writeFile(output, "a previously released archive");
+
+      await expect(createPackage(process.cwd(), output, { replaceDifferent: false }))
+        .rejects.toThrow("already exists with different contents");
+      expect(await readFile(output, "utf8")).toBe("a previously released archive");
+    });
+
+    it("replaces a differing archive by default", async () => {
+      const directory = await temporaryDirectory();
+      const output = path.join(directory, "extension.zip");
+      await writeFile(output, "stale");
+
+      const archive = await createPackage(process.cwd(), output);
+
+      expect(await readFile(output)).toEqual(archive);
+    });
+  });
+
   it("rejects malformed ZIP structures", async () => {
     expect(() => listZipEntries(Buffer.alloc(10))).toThrow("end-of-central-directory");
 
