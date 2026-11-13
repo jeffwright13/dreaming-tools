@@ -14,8 +14,12 @@
   const form = document.querySelector("#settings-form");
   const behaviorControls = document.querySelector("#behavior-controls");
   const appearanceControls = document.querySelector("#appearance-controls");
-  const previewBadge = document.querySelector("#preview-badge");
-  const previewDisabled = document.querySelector("#preview-disabled");
+  // Each preview badge with its card type, as difficulty.js labels them.
+  const previewBadges = [
+    [document.querySelector("#preview-badge"), "video"],
+    [document.querySelector("#preview-series-badge"), "series"],
+  ];
+  const previewDisabledNotices = document.querySelectorAll(".preview-disabled");
   const subtitleControls = document.querySelector("#subtitle-controls");
   const autoHideControl = document.querySelector("#auto-hide-control");
   const revealKeyButton = document.querySelector("#reveal-key-button");
@@ -59,15 +63,19 @@
     const disabled = !settings.difficultyEnabled;
     behaviorControls.disabled = disabled;
     appearanceControls.disabled = disabled;
-    previewBadge.hidden = disabled;
-    previewDisabled.hidden = !disabled;
-    previewBadge.className = [
-      "ds-difficulty-extension-badge",
-      "ds-difficulty-extension-badge--video",
-      `ds-difficulty-extension-badge--style-${settings.style}`,
-      `ds-difficulty-extension-badge--size-${settings.size}`,
-      `ds-difficulty-extension-badge--position-${settings.position}`,
-    ].join(" ");
+    for (const notice of previewDisabledNotices) {
+      notice.hidden = !disabled;
+    }
+    for (const [badge, cardType] of previewBadges) {
+      badge.hidden = disabled;
+      badge.className = [
+        "ds-difficulty-extension-badge",
+        `ds-difficulty-extension-badge--${cardType}`,
+        `ds-difficulty-extension-badge--style-${settings.style}`,
+        `ds-difficulty-extension-badge--size-${settings.size}`,
+        `ds-difficulty-extension-badge--position-${settings.position}`,
+      ].join(" ");
+    }
   }
 
   // The preview reuses subtitles.css, which keys off classes on <html>, so the

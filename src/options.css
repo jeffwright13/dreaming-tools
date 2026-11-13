@@ -257,13 +257,34 @@ button {
   z-index: 1;
 }
 
+/* A video card and a series card side by side at the same height: 16:9 like
+   Dreaming's thumbnails, and 2:3 like its series catalog covers. */
+.badge-preview-pair {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.preview-thumbnail,
+.preview-series-card {
+  height: 10rem;
+}
+
 .preview-thumbnail {
   aspect-ratio: 16 / 9;
-  max-width: 24rem;
+}
+
+.preview-series-card {
+  aspect-ratio: 2 / 3;
+}
+
+.preview-series-card::before {
+  background-image: url("preview-series.svg");
 }
 
 /* Centered on a dark pill so it stays readable over the light scene. */
-#preview-disabled {
+.preview-disabled {
   background: var(--overlay-pill);
   border-radius: 999px;
   color: var(--overlay-text);
@@ -279,7 +300,8 @@ button {
 /* The badge classes from difficulty.css set display, which would otherwise
    override the hidden attribute. */
 #preview-badge[hidden],
-#preview-disabled[hidden] {
+#preview-series-badge[hidden],
+.preview-disabled[hidden] {
   display: none;
 }
 
