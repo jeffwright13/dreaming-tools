@@ -114,11 +114,19 @@
     }
   }
 
+  // Unlike on Dreaming, a select here does not take the reveal key: a select
+  // keeps focus after each change, so standing aside let the key reach its
+  // type-to-select, which changed the setting instead of previewing it.
+  // preventDefault below keeps the key from reaching the select.
+  function isTextEntryTarget(target) {
+    return !(target instanceof HTMLSelectElement) && isTypingTarget(target);
+  }
+
   // Bubble-phase listeners: while a new key is being chosen, the capture
   // listener (onCaptureKey) stops the event before it gets here.
   function onPreviewKeyDown(event) {
     if (!previewSettings?.subtitlesEnabled || revealKeyButton.textContent === CAPTURE_PROMPT
-      || !isRevealKeyPress(event, previewSettings.revealKey) || isTypingTarget(event.target)) {
+      || !isRevealKeyPress(event, previewSettings.revealKey) || isTextEntryTarget(event.target)) {
       return;
     }
 

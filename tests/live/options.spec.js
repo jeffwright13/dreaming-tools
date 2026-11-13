@@ -15,8 +15,7 @@ async function openOptions(context, optionsUrl, { clock = false } = {}) {
   return page;
 }
 
-// Switch subtitles on and move focus off the form, so the reveal key is not
-// typed into a control.
+// Switch subtitles on and move focus off the form, as a person would.
 async function enableSubtitles(page) {
   await page.getByLabel("Show difficulty badges").waitFor();
   await page.locator("[name=subtitlesEnabled]").check();
@@ -100,6 +99,27 @@ test("Hold: the reveal key and a pressed preview reveal both previews", async ({
   await expect(html).not.toHaveClass(REVEALED);
 });
 
+// A select keeps focus after it changes; the key must preview from there, not
+// reach the select's type-to-select, which picked "Small and faint" (#26).
+test("the reveal key previews from a focused dropdown without changing it", async ({ context, optionsUrl, getSettings }) => {
+  const page = await openOptions(context, optionsUrl);
+  const html = page.locator("html");
+  await enableSubtitles(page);
+
+  const style = page.locator("[name=subtitleStyle]");
+  await style.selectOption("hidden");
+  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden" });
+  for (const name of ["subtitleStyle", "revealMode"]) {
+    await page.locator(`[name=${name}]`).focus();
+    await page.keyboard.down("KeyS");
+    await expect(html, name).toHaveClass(REVEALED);
+    await page.keyboard.up("KeyS");
+    await expect(html, name).not.toHaveClass(REVEALED);
+  }
+  await expect(style).toHaveValue("hidden");
+  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden", revealMode: "hold" });
+});
+
 test("Toggle: presses and clicks toggle, and auto-hide applies", async ({ context, optionsUrl }) => {
   const page = await openOptions(context, optionsUrl, { clock: true });
   const html = page.locator("html");
@@ -161,7 +181,7 @@ test("choosing a reveal key records it, and only the new key reveals", async ({ 
   await expect.poll(getSettings).toMatchObject({ revealKey: "KeyJ" });
 });
 
-test("ignores the reveal key with Ctrl held or while a control has focus", async ({ context, optionsUrl }) => {
+test("ignores the reveal key with Ctrl held", async ({ context, optionsUrl }) => {
   const page = await openOptions(context, optionsUrl);
   const html = page.locator("html");
   await enableSubtitles(page);
@@ -171,11 +191,6 @@ test("ignores the reveal key with Ctrl held or while a control has focus", async
   await expect(html).not.toHaveClass(REVEALED);
   await page.keyboard.up("KeyS");
   await page.keyboard.up("Control");
-
-  await page.locator("[name=subtitleStyle]").focus();
-  await page.keyboard.down("KeyS");
-  await expect(html).not.toHaveClass(REVEALED);
-  await page.keyboard.up("KeyS");
 });
 
 test("the badge preview follows style, size, position, and the on switch", async ({ context, optionsUrl }) => {
