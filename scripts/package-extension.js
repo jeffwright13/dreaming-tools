@@ -213,13 +213,24 @@ export async function validatePackageInputs(rootDirectory) {
   return { files: [...RUNTIME_FILES], version: manifest.version };
 }
 
-export async function createPackage(rootDirectory, outputPath) {
+// With replaceDifferent false, an existing archive is replaced only by an
+// identical one: release archives are what was tested and published, and the
+// build is reproducible, so a difference means the sources changed.
+export async function createPackage(rootDirectory, outputPath, { replaceDifferent = true } = {}) {
   const { files } = await validatePackageInputs(rootDirectory);
   const entries = await Promise.all(files.map(async (file) => [
     file,
     await readFile(path.join(rootDirectory, file)),
   ]));
   const archive = createZip(entries);
+  if (!replaceDifferent) {
+    const existing = await readFile(outputPath).catch(() => null);
+    if (existing && !existing.equals(archive)) {
+      throw new Error(`${path.basename(outputPath)} already exists with different contents. It may be a released `
+        + "package: bump the version for a new release, use `npm run package:dev` for a test build, "
+        + "or pass --force to replace it.");
+    }
+  }
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, archive);
   return archive;
@@ -234,16 +245,28 @@ export async function verifyPackage(rootDirectory, archivePath) {
   return entries;
 }
 
+// Release builds go to dist/ and are never silently replaced (--force
+// overrides). Test builds (--dev: the live suite and store screenshots) go to
+// dist/dev/ and are replaced freely, so testing a branch cannot overwrite a
+// released ZIP of the same version.
+export function packagePath(rootDirectory, version, { dev = false } = {}) {
+  return path.join(rootDirectory, "dist", ...(dev ? ["dev"] : []), `dreaming-tools-${version}.zip`);
+}
+
 async function run() {
   const rootDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const { version } = await validatePackageInputs(rootDirectory);
-  const archivePath = path.join(rootDirectory, "dist", `dreaming-tools-${version}.zip`);
-  if (process.argv[2] === "--verify") {
-    await verifyPackage(rootDirectory, process.argv[3] ? path.resolve(process.argv[3]) : archivePath);
-    console.log(`Verified ${path.relative(rootDirectory, archivePath)}`);
+  const args = process.argv.slice(2);
+  const dev = args.includes("--dev");
+  const archivePath = packagePath(rootDirectory, version, { dev });
+  if (args.includes("--verify")) {
+    const explicitPath = args.find((arg) => !arg.startsWith("--"));
+    const verifiedPath = explicitPath ? path.resolve(explicitPath) : archivePath;
+    await verifyPackage(rootDirectory, verifiedPath);
+    console.log(`Verified ${path.relative(rootDirectory, verifiedPath)}`);
     return;
   }
-  await createPackage(rootDirectory, archivePath);
+  await createPackage(rootDirectory, archivePath, { replaceDifferent: dev || args.includes("--force") });
   await verifyPackage(rootDirectory, archivePath);
   console.log(`Created ${path.relative(rootDirectory, archivePath)}`);
 }

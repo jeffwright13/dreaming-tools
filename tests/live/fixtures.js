@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test as base, chromium, expect } from "@playwright/test";
-import { extractZip, listZipEntries, RUNTIME_FILES } from "../../scripts/package-extension.js";
+import { extractZip, listZipEntries, packagePath, RUNTIME_FILES } from "../../scripts/package-extension.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -33,9 +33,10 @@ export const SUBTITLE_CHOICE_RECORD = `${LOGGED_IN_PROFILE}.subtitle-choice.json
 // checking that it holds exactly the runtime files.
 export async function extractPackage() {
   const { version } = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
-  const zip = path.join(ROOT, "dist", `dreaming-tools-${version}.zip`);
+  // The test build in dist/dev/, never the release ZIP (see packagePath).
+  const zip = packagePath(ROOT, version, { dev: true });
   if (!existsSync(zip)) {
-    throw new Error(`${path.relative(ROOT, zip)} is missing; run \`npm run package\` (npm run test:live does this)`);
+    throw new Error(`${path.relative(ROOT, zip)} is missing; run \`npm run package:dev\` (npm run test:live does this)`);
   }
   const archive = readFileSync(zip);
   const entries = listZipEntries(archive).sort();

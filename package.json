@@ -1,15 +1,16 @@
 {
   "name": "dreaming-tools",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Chrome extension with small tools for Dreaming, starting with video and series difficulty ratings.",
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "package": "node scripts/package-extension.js",
     "package:verify": "node scripts/package-extension.js --verify",
-    "test:live": "npm run package && playwright test",
-    "test:live:login": "npm run package && node tests/live/login.js",
-    "store:screenshots": "node scripts/store-screenshots.js"
+    "package:dev": "node scripts/package-extension.js --dev",
+    "test:live": "npm run package:dev && playwright test",
+    "test:live:login": "npm run package:dev && node tests/live/login.js",
+    "store:screenshots": "npm run package:dev && node scripts/store-screenshots.js"
   },
   "keywords": [
     "chrome-extension",

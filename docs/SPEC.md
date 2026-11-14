@@ -146,7 +146,7 @@ When the difficulty feature is enabled, process the initial document after downl
 
 ## Distribution package
 
-Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and twelve `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. CI must build, verify, and retain the package as a short-lived artifact.
+Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Require matching package and manifest versions, all manifest-referenced files, and an exact runtime allowlist containing only the manifest, four PNG icons, and twelve `src/` files. Use fixed ZIP metadata and stable file order so unchanged inputs produce byte-identical archives. Never silently replace a release archive: the release build refuses to overwrite an existing `dist/dreaming-tools-VERSION.zip` whose contents differ unless forced. Test builds (`--dev`) go to `dist/dev/` and may be replaced freely. CI must build, verify, and retain the package as a short-lived artifact.
 
 ## Browser compatibility
 
