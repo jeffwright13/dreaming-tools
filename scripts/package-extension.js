@@ -259,9 +259,11 @@ async function run() {
   const args = process.argv.slice(2);
   const dev = args.includes("--dev");
   const archivePath = packagePath(rootDirectory, version, { dev });
-  if (args[0] === "--verify") {
-    await verifyPackage(rootDirectory, args[1] ? path.resolve(args[1]) : archivePath);
-    console.log(`Verified ${path.relative(rootDirectory, archivePath)}`);
+  if (args.includes("--verify")) {
+    const explicitPath = args.find((arg) => !arg.startsWith("--"));
+    const verifiedPath = explicitPath ? path.resolve(explicitPath) : archivePath;
+    await verifyPackage(rootDirectory, verifiedPath);
+    console.log(`Verified ${path.relative(rootDirectory, verifiedPath)}`);
     return;
   }
   await createPackage(rootDirectory, archivePath, { replaceDifferent: dev || args.includes("--force") });
