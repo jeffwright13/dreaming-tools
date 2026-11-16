@@ -28,17 +28,23 @@ const expectFilter = (page, selector, value) => expect.poll(
   () => page.locator(selector).evaluate((element) => getComputedStyle(element).filter),
 ).toBe(value);
 
-test("opens by itself on first install with both tools off", async ({ context, optionsUrl, extension }) => {
-  await expect.poll(() => context.pages().map((page) => page.url())).toContain(optionsUrl);
-  const page = context.pages().find((candidate) => candidate.url() === optionsUrl);
+// The other tests close the first-install tab before they start (see
+// fixtures.js); this one checks it.
+test.describe("first install", () => {
+  test.use({ firstInstallTab: "keep" });
 
-  expect(await page.evaluate(() => chrome.runtime.getManifest().version)).toBe(extension.version);
-  await expect(page.locator("[name=subtitlesEnabled]")).not.toBeChecked();
-  await expect(page.locator("[name=difficultyEnabled]")).not.toBeChecked();
-  // Playwright does not treat a disabled <fieldset> itself as disabled; check
-  // a control inside it, which the fieldset disables.
-  await expect(page.locator("[name=subtitleStyle]")).toBeDisabled();
-  await expect(page.locator("button[type=submit]")).toHaveCount(0);
+  test("opens by itself on first install with both tools off", async ({ context, optionsUrl, extension }) => {
+    await expect.poll(() => context.pages().map((page) => page.url())).toContain(optionsUrl);
+    const page = context.pages().find((candidate) => candidate.url() === optionsUrl);
+
+    expect(await page.evaluate(() => chrome.runtime.getManifest().version)).toBe(extension.version);
+    await expect(page.locator("[name=subtitlesEnabled]")).not.toBeChecked();
+    await expect(page.locator("[name=difficultyEnabled]")).not.toBeChecked();
+    // Playwright does not treat a disabled <fieldset> itself as disabled; check
+    // a control inside it, which the fieldset disables.
+    await expect(page.locator("[name=subtitleStyle]")).toBeDisabled();
+    await expect(page.locator("button[type=submit]")).toHaveCount(0);
+  });
 });
 
 test("saves every change automatically and keeps it after a reload", async ({ context, optionsUrl, getSettings }) => {

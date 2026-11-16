@@ -62,16 +62,24 @@ export function launchWithExtension(profileDirectory, extensionDirectory, option
 }
 
 // Each run loads the extension from a new temporary folder, so Chrome treats
-// it as a first install and opens the options page in a new tab. In the
-// logged-in profile that tab would race the test's own navigation; close it.
+// it as a first install and opens the options page. chrome.runtime.
+// openOptionsPage() reuses a blank tab when there is one, so if install
+// finishes just after a test opens its own tab, Chrome navigates that tab and
+// interrupts the test's page.goto ("interrupted by another navigation").
+// Waiting for the first-install tab and closing it before the test starts
+// removes the race, in fresh profiles as well as the logged-in one.
+// The page may arrive as a new tab or by navigating the browser's initial
+// blank tab, which fires no "page" event, so poll every tab's URL instead.
 const FIRST_INSTALL_TAB_TIMEOUT_MS = 5_000;
+const FIRST_INSTALL_TAB_POLL_MS = 50;
 async function closeFirstInstallOptionsPage(context) {
   const isOptionsPage = (page) => /^chrome-extension:\/\/[^/]+\/src\/options\.html$/.test(page.url());
-  const optionsPage = context.pages().find(isOptionsPage)
-    ?? await context.waitForEvent("page", { predicate: async (page) => {
-      await page.waitForURL(/^chrome-extension:/, { timeout: FIRST_INSTALL_TAB_TIMEOUT_MS }).catch(() => {});
-      return isOptionsPage(page);
-    }, timeout: FIRST_INSTALL_TAB_TIMEOUT_MS }).catch(() => null);
+  const deadline = Date.now() + FIRST_INSTALL_TAB_TIMEOUT_MS;
+  let optionsPage = context.pages().find(isOptionsPage);
+  while (!optionsPage && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, FIRST_INSTALL_TAB_POLL_MS));
+    optionsPage = context.pages().find(isOptionsPage);
+  }
   await optionsPage?.close();
 }
 
@@ -79,6 +87,9 @@ export const test = base.extend({
   // "fresh": a new empty profile per test, so every test is a first install.
   // "persistent": the hand-logged-in profile at LOGGED_IN_PROFILE.
   profileMode: ["fresh", { option: true }],
+  // "close": close the options tab a first install opens, before the test.
+  // "keep": leave it, for the test that checks the page opens by itself.
+  firstInstallTab: ["close", { option: true }],
 
   extension: [async ({}, use) => {
     const extension = await extractPackage();
@@ -86,7 +97,7 @@ export const test = base.extend({
     rmSync(extension.directory, { recursive: true, force: true });
   }, { scope: "worker" }],
 
-  context: async ({ profileMode, extension }, use) => {
+  context: async ({ profileMode, firstInstallTab, extension }, use) => {
     let profileDirectory = LOGGED_IN_PROFILE;
     if (profileMode === "fresh") {
       profileDirectory = mkdtempSync(path.join(os.tmpdir(), "dreaming-tools-profile-"));
@@ -94,7 +105,7 @@ export const test = base.extend({
       test.skip(true, `No logged-in test profile at ${profileDirectory}; run \`npm run test:live:login\` first`);
     }
     const context = await launchWithExtension(profileDirectory, extension.directory);
-    if (profileMode === "persistent") {
+    if (firstInstallTab === "close") {
       await closeFirstInstallOptionsPage(context);
     }
     await use(context);
