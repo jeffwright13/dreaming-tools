@@ -557,6 +557,18 @@ describe("options page layout", () => {
     }
   });
 
+  // Dreaming's video thumbnails carry a duration in the lower right, which is
+  // why the badge positions leave that corner out. Series cards show none.
+  it("shows a duration on the video preview only, even while badges are off", async () => {
+    await loadOptions({ difficultyEnabled: false }, realOptionsMarkup);
+    const duration = document.querySelector(".preview-thumbnail .preview-duration");
+
+    expect(duration?.textContent).toMatch(/^\d{1,2}:\d{2}$/);
+    expect(duration?.hidden).toBe(false);
+    expect(duration?.getAttribute("aria-hidden")).toBe("true");
+    expect(document.querySelector(".preview-series-card .preview-duration")).toBeNull();
+  });
+
   it("works with the options script", async () => {
     document.documentElement.className = "";
     await loadOptions({ subtitlesEnabled: true, difficultyEnabled: true, size: "large" }, realOptionsMarkup);
