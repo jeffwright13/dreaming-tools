@@ -150,7 +150,7 @@ The tests are read-only toward the account in every other way:
 - they never submit a comment: the comment check types one letter and clears it
 - they skip a page with nothing to check
 
-Each run loads the extension from a new temporary folder, so Chrome treats it as a first install and opens the options page. In the logged-in profile the fixture closes that tab before the test starts.
+Each run loads the extension from a new temporary folder, so Chrome treats it as a first install and opens the options page. The fixture closes that tab before every test starts, in both profiles, because `chrome.runtime.openOptionsPage()` reuses a blank tab when there is one: if install finished just after a test opened its own tab, Chrome navigated that tab and the test's `page.goto` failed with "interrupted by another navigation". The page can arrive by navigating the browser's initial blank tab, which fires no new-page event, so the fixture polls every tab's URL for up to 5 seconds. The one test that checks the page opens by itself keeps the tab with `test.use({ firstInstallTab: "keep" })`.
 
 #### What the suite covers
 
