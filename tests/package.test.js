@@ -181,6 +181,36 @@ describe("release packaging", () => {
     const background = await fixtureDirectory();
     await updateJson(background, "manifest.json", (value) => { value.background.service_worker = "src/unexpected.js"; });
     await expect(validatePackageInputs(background)).rejects.toThrow("outside the runtime allowlist");
+
+    const firefoxBackground = await fixtureDirectory();
+    await updateJson(firefoxBackground, "manifest.json", (value) => { value.background.scripts = ["src/unexpected.js"]; });
+    await expect(validatePackageInputs(firefoxBackground)).rejects.toThrow("outside the runtime allowlist");
+  });
+
+  // Chrome runs background.service_worker; Firefox has no MV3 service workers
+  // and runs background.scripts instead. Both must name the same file, or the
+  // two browsers would run different code.
+  it("declares one background script for both Chrome and Firefox", async () => {
+    const manifest = JSON.parse(await readFile(path.join(process.cwd(), "manifest.json"), "utf8"));
+
+    expect(manifest.background).toEqual({
+      service_worker: "src/background.js",
+      scripts: ["src/background.js"],
+    });
+  });
+
+  // Firefox's add-on store requires an ID for MV3 extensions and a data
+  // collection declaration for new submissions. The ID is permanent once
+  // the add-on is listed.
+  it("declares a Firefox add-on ID and no data collection", async () => {
+    const manifest = JSON.parse(await readFile(path.join(process.cwd(), "manifest.json"), "utf8"));
+
+    expect(manifest.browser_specific_settings).toEqual({
+      gecko: {
+        id: "dreaming-tools@jefelabs",
+        data_collection_permissions: { required: ["none"] },
+      },
+    });
   });
 
   it("rejects missing files and invalid icon dimensions", async () => {

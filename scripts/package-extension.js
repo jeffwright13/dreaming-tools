@@ -190,6 +190,7 @@ export async function validatePackageInputs(rootDirectory) {
     ...manifest.content_scripts.flatMap((script) => [...(script.js ?? []), ...(script.css ?? [])]),
     manifest.options_ui?.page,
     manifest.background?.service_worker,
+    ...(manifest.background?.scripts ?? []),
   ].filter(Boolean));
   for (const file of referencedFiles) {
     if (!RUNTIME_FILES.includes(file)) {
