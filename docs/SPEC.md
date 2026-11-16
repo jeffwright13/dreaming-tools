@@ -152,6 +152,8 @@ Build `dist/dreaming-tools-VERSION.zip` with a cross-platform Node script. Requi
 
 Support the current and previous stable desktop Chrome major versions on macOS, Windows, and mainstream Linux environments. Support current stable Microsoft Edge on Windows. Firefox, mobile browsers, and ChromeOS are not currently validated or supported.
 
+The manifest is prepared for a Firefox port, without claiming support. It declares the background file twice: `background.service_worker` for Chrome and `background.scripts` for Firefox, which runs MV3 background code as a non-persistent background script rather than a service worker. Both name `src/background.js`, which has no `importScripts` and runs unchanged in either. `browser_specific_settings.gecko` carries the Firefox add-on ID (`dreaming-tools@jefelabs`) and declares that no data is collected. Chrome ignores both Firefox keys. One manifest and one ZIP serve both browsers.
+
 Automated unit and DOM tests are required for every change. Fixture-based browser tests, including subtitle layout at windowed and fullscreen sizes, are planned for real extension loading without Dreaming credentials. Live Dreaming compatibility remains a manual release gate using the matrix in `docs/TESTING.md`.
 
 ## Security and privacy
