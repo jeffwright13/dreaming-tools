@@ -41,4 +41,14 @@ describe("options page stylesheet", () => {
       expect(RUNTIME_FILES).toContain(url);
     }
   });
+
+  // Dreaming's duration pill sits in the thumbnail's lower-right corner.
+  it("pins the preview duration to the lower-right corner", () => {
+    const rule = css.match(/\.preview-duration\s*\{([^}]*)\}/)?.[1] ?? "";
+
+    expect(rule).toMatch(/position:\s*absolute/);
+    expect(rule).toMatch(/right:/);
+    expect(rule).toMatch(/bottom:/);
+    expect(rule).not.toMatch(/\b(top|left):/);
+  });
 });
