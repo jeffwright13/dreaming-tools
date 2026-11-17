@@ -1,6 +1,12 @@
 # Installing and Testing a Release
 
-Dreaming Tools is not yet published in the Chrome Web Store. Until it is, install an unpacked build from an official GitHub release of this repository.
+Most people should install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc), which keeps it up to date automatically. The listing is Unlisted for now, so it is reachable by that link but not through store search.
+
+The rest of this page covers installing an unpacked build from an official GitHub release of this repository, for testing a release before it reaches the store. Remove the store version first, or use a separate Chrome profile, so the two copies do not both run on Dreaming pages.
+
+## Firefox
+
+From 1.2.0, Dreaming Tools also runs in desktop Firefox; the Firefox Add-ons listing will be linked here once it is published. To test a release build in Firefox before then, open `about:debugging`, select **This Firefox**, then **Load Temporary Add-on…**, and choose `manifest.json` in the extracted directory. Firefox removes a temporary add-on when it quits. The steps below are for Chrome.
 
 ## Before installing
 
@@ -95,6 +101,6 @@ The extension works with both. In Dreaming's player, turn subtitles on with the 
 
 - The extension depends on Dreaming's current page structure and public catalog schema.
 - A YouTube-served video open while the extension is updated keeps the previous settings until the next video or a tab reload.
-- Firefox, mobile browsers, and ChromeOS are not currently supported.
+- Firefox is supported from 1.2.0 and tested on macOS only. Mobile browsers and ChromeOS are not supported.
 - Microsoft Edge is a compatibility target but must be tested separately on Windows.
 - This project is independent and is not currently endorsed by Dreaming.

@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Until the first Chrome Web Store release, security fixes are applied to the latest code on `main`. After publication, this section should list actively supported store versions.
+Only the latest release is supported: the current version in the Chrome Web Store and Firefox Add-ons, and the latest GitHub release. Security fixes go into a new release built from `main`; older versions are not patched.
 
 ## Reporting a vulnerability
 

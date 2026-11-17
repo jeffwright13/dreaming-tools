@@ -7,7 +7,7 @@ Initial desktop support targets:
 - Google Chrome: current and previous stable major versions
 - Microsoft Edge: current stable major version
 - Operating systems: current supported macOS, Windows, and mainstream Linux desktop environments
-- Firefox: not currently supported
+- Firefox: current stable desktop version, from 1.2.0
 - Mobile browsers and ChromeOS: not currently validated
 
 Browser support claims require both automated checks and the manual release matrix below. Record exact browser and operating-system versions in release notes.
@@ -154,7 +154,7 @@ Each run loads the extension from a new temporary folder, so Chrome treats it as
 
 #### What the suite covers
 
-Results on 1.1.0, 2026-11-13: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. On 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
+Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. Firefox was checked by hand (see the release browser matrix). Results on 1.1.0, 2026-11-13: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. On 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
 
 **Logged out**
 - **`options.spec.js` (9):**
@@ -268,6 +268,9 @@ These come from the exploration on 2026-11-07 and from building the suite.
 | Chrome previous stable | Required on the primary development platform | Risk-based | Risk-based |
 | Chrome Beta | Pre-release smoke on the primary platform | Optional | Optional |
 | Edge current stable | Optional | Required | Optional |
+| Firefox current stable | Required (manual) | Optional | Optional |
+
+The live Playwright suite cannot load an extension into Firefox, so Firefox is checked by hand: load the build with `npx web-ext run` (a fresh profile each run) or as a temporary add-on in `about:debugging`, run `npx web-ext lint` on the extracted package, and exercise the INSTALL.md checklist on both players, using a free account for YouTube-served videos.
 
 `Required` coverage may come from physical machines, virtual machines, trusted testers, or a reputable browser-testing service. For each required cell, record:
 

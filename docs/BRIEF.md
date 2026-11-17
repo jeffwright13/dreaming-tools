@@ -13,7 +13,7 @@ Dreaming language learners, for example those who use difficulty to choose appro
 - Do not collect credentials, cookies, tokens, or account data.
 - Select the public language catalog from the current Dreaming URL.
 - Support Spanish and French while keeping language selection extensible.
-- Target desktop Chromium browsers first; do not claim Firefox or mobile support without separate validation.
+- Target desktop Chromium browsers and desktop Firefox; do not claim support for a browser, or for mobile, without separate validation.
 - Ship as one extension in which every tool can be enabled or disabled independently, and any combination of enabled tools works together on the same page.
 - A disabled tool makes no page changes and starts no network requests.
 - Let users enhance all difficulty badges or fill only missing badges.
