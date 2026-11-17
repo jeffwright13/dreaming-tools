@@ -33,7 +33,7 @@ The extension must not imply affiliation or endorsement without explicit permiss
 - [x] Enable Dependabot vulnerability alerts and security updates.
 - [x] Protect `main`: require an up-to-date pull request, passing `Test and audit`, linear history, and resolved conversations; block force pushes and deletion.
 - [x] Add a support link to the repository.
-- [ ] Add the support link to the Chrome Web Store listing when it exists.
+- [x] Add the support link to the Chrome Web Store listing when it exists.
 
 Do not put Dreaming credentials, browser profiles, session cookies, or Chrome Web Store credentials in repository secrets. Current CI requires no secrets.
 
@@ -47,9 +47,9 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 - [x] Justify the `scripting` permission as re-injecting the extension's own packaged content script into Dreaming tabs that were open during an install or update, so they keep responding to settings changes. It injects only files from the package, never remote or generated code.
 - [x] Justify host access to `https://app.dreaming.com/*` as page enhancement and public catalog retrieval.
 - [x] Justify the content script on `https://www.youtube.com/embed/*` as applying the subtitle style to captions in the YouTube player that Dreaming embeds for some videos. There it only styles the caption display and listens for the reveal key, pressed in the player or relayed from the Dreaming page; it makes no network requests and collects no data.
-- [ ] Confirm that no remote code, analytics, advertising, credential access, or premium-access bypass exists.
-- [ ] Run the release checks in `docs/TESTING.md`.
-- [ ] Inspect the final ZIP manually before upload.
+- [x] Confirm that no remote code, analytics, advertising, credential access, or premium-access bypass exists.
+- [x] Run the release checks in `docs/TESTING.md`.
+- [x] Inspect the final ZIP manually before upload.
 
 Official developer dashboard: https://chrome.google.com/webstore/devconsole
 
@@ -97,7 +97,7 @@ The package process must fail if required files are missing, versions disagree, 
 ## 6. Submission and launch
 
 - [x] Upload the ZIP and complete all listing fields.
-- [ ] Save the submitted ZIP and listing text with the release records.
+- [x] Save the submitted ZIP and listing text with the release records.
 - [ ] Address review feedback without weakening permissions, privacy, or security controls.
 - [x] Publish initially to a limited audience if the store supports the desired rollout. Published Unlisted: 1.0.0 approved 2026-11-13, 1.1.0 published 2026-11-15. Store listing: https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc
 - [ ] Verify installation from the store on a clean Chrome profile.
