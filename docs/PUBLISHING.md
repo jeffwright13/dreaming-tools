@@ -39,14 +39,14 @@ Do not put Dreaming credentials, browser profiles, session cookies, or Chrome We
 
 ## 4. Chrome Web Store preparation
 
-- [ ] Register and verify a Chrome Web Store developer account.
-- [ ] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information. The listing text and privacy-tab answers are drafted in `docs/STORE_LISTING.md`.
-- [ ] Link to the repository `PRIVACY.md` using a stable public URL.
-- [ ] Complete the privacy questionnaire consistently with `PRIVACY.md` and `SECURITY.md`.
-- [ ] Justify the `storage` permission as synchronized user preferences.
-- [ ] Justify the `scripting` permission as re-injecting the extension's own packaged content script into Dreaming tabs that were open during an install or update, so they keep responding to settings changes. It injects only files from the package, never remote or generated code.
-- [ ] Justify host access to `https://app.dreaming.com/*` as page enhancement and public catalog retrieval.
-- [ ] Justify the content script on `https://www.youtube.com/embed/*` as applying the subtitle style to captions in the YouTube player that Dreaming embeds for some videos. There it only styles the caption display and listens for the reveal key, pressed in the player or relayed from the Dreaming page; it makes no network requests and collects no data.
+- [x] Register and verify a Chrome Web Store developer account.
+- [x] Add icons, at least one compliant screenshot, a short description, a detailed description, and support information. The listing text and privacy-tab answers are drafted in `docs/STORE_LISTING.md`.
+- [x] Link to the repository `PRIVACY.md` using a stable public URL.
+- [x] Complete the privacy questionnaire consistently with `PRIVACY.md` and `SECURITY.md`.
+- [x] Justify the `storage` permission as synchronized user preferences.
+- [x] Justify the `scripting` permission as re-injecting the extension's own packaged content script into Dreaming tabs that were open during an install or update, so they keep responding to settings changes. It injects only files from the package, never remote or generated code.
+- [x] Justify host access to `https://app.dreaming.com/*` as page enhancement and public catalog retrieval.
+- [x] Justify the content script on `https://www.youtube.com/embed/*` as applying the subtitle style to captions in the YouTube player that Dreaming embeds for some videos. There it only styles the caption display and listens for the reveal key, pressed in the player or relayed from the Dreaming page; it makes no network requests and collects no data.
 - [ ] Confirm that no remote code, analytics, advertising, credential access, or premium-access bypass exists.
 - [ ] Run the release checks in `docs/TESTING.md`.
 - [ ] Inspect the final ZIP manually before upload.
@@ -96,12 +96,24 @@ The package process must fail if required files are missing, versions disagree, 
 
 ## 6. Submission and launch
 
-- [ ] Upload the ZIP and complete all listing fields.
+- [x] Upload the ZIP and complete all listing fields.
 - [ ] Save the submitted ZIP and listing text with the release records.
 - [ ] Address review feedback without weakening permissions, privacy, or security controls.
-- [ ] Publish initially to a limited audience if the store supports the desired rollout.
+- [x] Publish initially to a limited audience if the store supports the desired rollout. Published Unlisted: 1.0.0 approved 2026-11-13, 1.1.0 published 2026-11-15. Store listing: https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc
 - [ ] Verify installation from the store on a clean Chrome profile.
 - [ ] Announce only after store installation and automatic updates are confirmed.
+
+## 6a. Firefox Add-ons
+
+The same ZIP that goes to the Chrome Web Store is submitted to Firefox Add-ons (addons.mozilla.org, AMO), from 1.2.0 on. The listing text is in `docs/STORE_LISTING.md`.
+
+- [x] Create an AMO developer account (Mozilla account with two-step authentication) and accept the Firefox Add-on Distribution Agreement.
+- [ ] Set the developer profile's display name to Jefe Labs, matching the Chrome publisher.
+- [x] Confirm the add-on ID in `manifest.json` (`dreaming-tools@jefelabs`). It is permanent once submitted.
+- [ ] Submit the 1.2.0 ZIP as a listed add-on ("On this site"), answering that it contains no minified, concatenated, or machine-generated code, so no source upload is needed.
+- [ ] Complete the listing: summary, description, category, MIT license, support and homepage URLs, privacy policy link, and screenshots.
+- [ ] Address review feedback without weakening permissions, privacy, or security controls.
+- [ ] Install the published add-on in a clean Firefox profile, then link the listing from `README.md` and `docs/INSTALL.md`.
 
 ## 7. Release checklist
 
@@ -124,7 +136,7 @@ For every release:
 7. Build and inspect the store ZIP (`npm run package`, then `npm run package:verify`). Run the live suite and confirm that its test build in `dist/dev/` has the same SHA-256 as the release ZIP.
 8. Merge through `main`, create the version tag, and push tags.
 9. Create a GitHub Release with changes, known limitations, test results, and the exact ZIP.
-10. Upload the same ZIP to the Chrome Web Store.
+10. Upload the same ZIP to the Chrome Web Store and to Firefox Add-ons.
 11. Verify the published update on a clean profile.
 
 Prove the manual release process before automating publication. CI may build and validate artifacts, but store publishing should remain approval-gated.

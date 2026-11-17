@@ -33,7 +33,7 @@ PRIVACY
 The extension collects no data. It does not read your Dreaming login, cookies, subtitle text, or viewing history, and it sends nothing to the developer. Your settings are stored in Chrome and sync through your Google account if Chrome sync is on. The source code is public.
 
 LIMITATIONS
-Desktop Chrome and other Chromium browsers only, not the Dreaming mobile app. In picture-in-picture, Dreaming's player shows normal subtitles; the extension does not reach that window.
+Desktop Chrome, other Chromium browsers, and Firefox, not the Dreaming mobile app. In picture-in-picture, Dreaming's player shows normal subtitles; the extension does not reach that window.
 
 Dreaming Tools is an independent, unofficial project. It is not affiliated with, endorsed by, or sponsored by Dreaming Languages.
 ```
@@ -72,3 +72,33 @@ Study aids for Dreaming's language-learning website (app.dreaming.com): subtitle
 - **Package:** the published release ZIP, unchanged, with its SHA-256 matching the GitHub release.
 - **Visibility:** Unlisted first. Install from the store on a clean Chrome profile and confirm an update goes through, then switch to Public.
 - **Regions:** all.
+
+## Firefox Add-ons (AMO)
+
+Submitted from 1.2.0 with the same ZIP as the Chrome Web Store. Mozilla shows the name, version, icon, and add-on ID from the package.
+
+**Distribution:** listed ("On this site").
+
+**Summary** (250 characters at most): Companion tools for Dreaming: video difficulty ratings and series ranges, plus subtitle de-emphasis for listen-only practice. Unofficial and independent; collects no data.
+
+**Category:** pick the closest education or language category the form offers.
+
+**License:** MIT.
+
+**Source code:** answer that the package contains no minified, concatenated, or machine-generated code; the files are the readable source from this repository, so no separate source upload is needed.
+
+**Description:** the Chrome detailed description above, with these two paragraphs changed for Firefox:
+
+```text
+PRIVACY
+The extension collects no data. It does not read your Dreaming login, cookies, subtitle text, or viewing history, and it sends nothing to the developer. Your settings are stored in the browser and sync through your Mozilla account if Firefox Sync is on. The source code is public.
+
+LIMITATIONS
+Desktop Firefox and Chrome, not the Dreaming mobile app or mobile browsers. In picture-in-picture, Dreaming's player shows normal subtitles; the extension does not reach that window.
+```
+
+**Data collection** (from the package): `browser_specific_settings.gecko.data_collection_permissions` declares `none`.
+
+**Screenshots:** the same 1280x800 images from `dist/store-assets/`.
+
+**Homepage, support, and privacy policy URLs:** the same as the Chrome listing.

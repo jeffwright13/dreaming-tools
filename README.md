@@ -1,6 +1,6 @@
 # Dreaming Tools
 
-Dreaming Tools is a Chrome extension of companion tools for Dreaming. Each tool is off until you switch it on in the extension options, which open by themselves the first time the extension is installed. Each tool can be switched on or off independently. It supports Dreaming's Spanish and French sections.
+Dreaming Tools is a Chrome and Firefox extension of companion tools for Dreaming. Each tool is off until you switch it on in the extension options, which open by themselves the first time the extension is installed. Each tool can be switched on or off independently. It supports Dreaming's Spanish and French sections.
 
 ## Difficulty badges
 
@@ -23,7 +23,7 @@ The player's own subtitle control stays in charge: **Settings > Subtitles** on D
 
 ## Browser support
 
-The initial target is desktop Chrome on macOS, Windows, and Linux, plus current Microsoft Edge on Windows. Firefox and mobile browsers are not currently supported. See [docs/TESTING.md](docs/TESTING.md) for the compatibility policy and release matrix.
+The target is desktop Chrome on macOS, Windows, and Linux, current Microsoft Edge on Windows, and current desktop Firefox (from 1.2.0). Mobile browsers are not supported. See [docs/TESTING.md](docs/TESTING.md) for the compatibility policy and release matrix.
 
 ## Development
 
@@ -108,9 +108,11 @@ The complete browser/platform matrix and security checks are in [docs/TESTING.md
 
 Switch the difficulty tool off and on and change each behavior mode in Extension options, then verify that an open Dreaming tab updates without reloading. If a badge is missing, open DevTools and check the Console for a message beginning with `Dreaming Tools`.
 
-## Installing a release
+## Installing
 
-Installation, update, test, and reporting instructions for released builds are in [docs/INSTALL.md](docs/INSTALL.md). Install only archives attached to this repository's official GitHub releases.
+Install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc). The listing is Unlisted for now: anyone with the link can install it, but it does not appear in store search. Chrome keeps a store install up to date.
+
+To test a release before it reaches the store, install the unpacked build from this repository's official GitHub releases; see [docs/INSTALL.md](docs/INSTALL.md) for installation, update, test, and reporting instructions.
 
 ## Support and security reports
 
@@ -118,4 +120,4 @@ Use the [GitHub issue chooser](https://github.com/jeffwright13/dreaming-tools/is
 
 ## Publishing and maintenance
 
-Dreaming outreach, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness; the repository is not yet claiming Chrome Web Store availability.
+Dreaming outreach, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness. The extension is published in the Chrome Web Store as an Unlisted item.
