@@ -37,7 +37,15 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
 
-      - name: Audit dependencies
+      # The extension ships no npm packages, so only runtime dependencies can
+      # reach users; an advisory there fails the build. Dev tooling (Vitest,
+      # Vite) is audited too, but only reported, so an advisory with no fixed
+      # version yet cannot block every PR. See docs/DECISIONS.md, 2026-11-17.
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev
+
+      - name: Report dev dependency advisories
+        continue-on-error: true
         run: npm audit
 
       - name: Validate manifest

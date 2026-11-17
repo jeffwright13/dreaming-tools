@@ -127,8 +127,11 @@ For every release:
    npm ci
    npm test
    npm run test:coverage
+   npm audit --omit=dev
    npm audit
    ```
+
+   The runtime audit must report 0 vulnerabilities. Review the full audit's dev-dependency advisories rather than forcing breaking upgrades.
 
 4. Complete the required manual matrix in `docs/TESTING.md`.
 5. Verify `package.json` and `manifest.json` versions match.

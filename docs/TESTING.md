@@ -300,7 +300,7 @@ The extension does not use native binaries or platform APIs, so behavioral diffe
 
 Before release:
 
-- Run `npm audit` and review rather than blindly forcing dependency upgrades.
+- Run `npm audit --omit=dev`, which must report 0 vulnerabilities (CI fails otherwise), and `npm audit`, whose dev-dependency advisories CI only reports; review them rather than blindly forcing dependency upgrades.
 - Confirm the manifest requests only the `storage` and `scripting` permissions, Dreaming host access, and the YouTube embed content-script match (pinned by `tests/package.test.js`).
 - Confirm catalog fetches use `credentials: "omit"`.
 - Confirm no analytics, trackers, remote code, `eval`, HTML injection, cookies, history, or credential APIs were added.
