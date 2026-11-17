@@ -67,6 +67,19 @@ Study aids for Dreaming's language-learning website (app.dreaming.com): subtitle
 
 **Privacy policy URL:** https://github.com/jeffwright13/dreaming-tools/blob/main/PRIVACY.md
 
+## Test instructions tab
+
+The text submitted for reviewers (500 characters at most), copied from the dashboard on 2026-11-17. No reviewer credentials are given.
+
+```text
+No login needed for badges; subtitles need a free Dreaming account (app.dreaming.com).
+
+1. In the options page that opens on install, switch on both tools.
+2. Badges: open app.dreaming.com/spanish/browse. Videos show a difficulty number, series a range.
+3. Subtitles: sign in, play a video, turn on Subtitles in the player settings. They are blurred; hold S to reveal.
+4. The options page previews both tools; press S there too.
+```
+
 ## Distribution
 
 - **Package:** the published release ZIP, unchanged, with its SHA-256 matching the GitHub release.
