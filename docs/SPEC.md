@@ -22,7 +22,7 @@ A feature exposes a `name` and one method, `update(settings)`. It starts itself 
 
 Current features:
 
-- Difficulty badges (`difficultyEnabled`), described below.
+- Difficulty badges (`difficultyEnabled`), described below. Feature-frozen since 2026-11-19: maintained, but no new features (see DECISIONS.md).
 - Subtitle de-emphasis (`subtitlesEnabled`), described in [Subtitles](#subtitles).
 
 ## Language selection
