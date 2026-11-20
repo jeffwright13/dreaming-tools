@@ -148,6 +148,8 @@ Playwright projects:
 
 The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared. The current test profile uses a free account, which the YouTube-served tests depend on (see [Which player a page uses](#which-player-a-page-uses)).
 
+The persistent profile also keeps the extension's settings between tests and runs, and the `setSettings` fixture merges into them. A setting a test leaves out keeps whatever an earlier test chose, so each suite's base settings name every setting its tests depend on. A 2-second Jump back left by one test once made another test's three Toggle presses one series of reveals, which looked like a flaky auto-hide.
+
 The tests are read-only toward the account in every other way:
 - they never add to the Library or My list
 - they never submit a comment: the comment check types one letter and clears it

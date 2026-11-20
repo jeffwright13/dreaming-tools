@@ -2,7 +2,7 @@
 // player's subtitles are set to Spanish before each test; account.teardown.js
 // restores the account's original choice afterwards.
 import { test, expect } from "./fixtures.js";
-import { dreamingPlayer, expectStyle, openWatchPage } from "./players.js";
+import { dreamingPlayer, expectHidesAtPlaybackTime, expectStyle, openWatchPage } from "./players.js";
 import { DREAMING_PLAYER_VIDEO } from "./routes.js";
 
 const AUTO_HIDE_SECONDS = 3;
@@ -13,7 +13,11 @@ const CAUGHT_UP_JUMP_SECONDS = 2;
 const SPOKEN_SECONDS = 40;
 const GLIDE_SAMPLES = 20;
 const GLIDE_SAMPLE_INTERVAL_MS = 25;
-const BASE_SETTINGS = { subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5 };
+// Every reveal setting is spelled out: setSettings merges into the persistent
+// profile's storage, so one left out keeps another test's value.
+const BASE_SETTINGS = {
+  subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5, revealJumpBack: 0,
+};
 
 let player;
 test.beforeEach(async ({ context, setSettings }) => {
@@ -50,7 +54,6 @@ test("Hold: revealed only while the key is down, and key repeat does not toggle"
 });
 
 test(`Toggle: a press reveals, a second hides, and auto-hide hides after ${AUTO_HIDE_SECONDS} s`, async ({ setSettings }) => {
-  // page.clock would also freeze the player's own timers, so wait in real time.
   await setSettings({ revealMode: "toggle", revealAutoHide: AUTO_HIDE_SECONDS });
   const { keyboard } = player.page;
   await keyboard.press("KeyS");
@@ -58,11 +61,10 @@ test(`Toggle: a press reveals, a second hides, and auto-hide hides after ${AUTO_
   await keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(false);
 
+  const pressedAt = await player.currentTime();
   await keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
-  await player.page.waitForTimeout(AUTO_HIDE_SECONDS * 1_000 - 800);
-  expect(await isRevealed(), "still revealed just before auto-hide").toBe(true);
-  await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AUTO_HIDE_SECONDS);
 });
 
 // Paused, so the expected position is exact; the player keeps its paused
@@ -87,11 +89,10 @@ test("jump back with When caught up: the reveal hides once playback returns to t
   await player.seek(SPOKEN_SECONDS);
   await player.page.waitForTimeout(1_000);
 
+  const pressedAt = await player.currentTime();
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
-  await player.page.waitForTimeout(CAUGHT_UP_JUMP_SECONDS * 1_000 - 800);
-  expect(await isRevealed(), "still revealed before playback catches up").toBe(true);
-  await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt);
 });
 
 test("a Toggle reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {

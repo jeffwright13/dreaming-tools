@@ -2,12 +2,16 @@
 // captions are turned on with its own "c" shortcut before each test; that
 // choice belongs to the embed, not the Dreaming account.
 import { test, expect } from "./fixtures.js";
-import { expectStyle, openWatchPage, youtubePlayer } from "./players.js";
+import { expectHidesAtPlaybackTime, expectStyle, openWatchPage, youtubePlayer } from "./players.js";
 import { YOUTUBE_SERVED_VIDEO } from "./routes.js";
 
 const AUTO_HIDE_SECONDS = 3;
 const JUMP_BACK_SECONDS = 3;
-const BASE_SETTINGS = { subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5 };
+// Every reveal setting is spelled out: setSettings merges into the persistent
+// profile's storage, so one left out keeps another test's value.
+const BASE_SETTINGS = {
+  subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5, revealJumpBack: 0,
+};
 
 let player;
 test.beforeEach(async ({ context, setSettings }) => {
@@ -51,11 +55,10 @@ test(`Toggle in the player: a press reveals, a second hides, and auto-hide hides
   await keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(false);
 
+  const pressedAt = await player.currentTime();
   await keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
-  await player.page.waitForTimeout(AUTO_HIDE_SECONDS * 1_000 - 800);
-  expect(await isRevealed(), "still revealed just before auto-hide").toBe(true);
-  await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AUTO_HIDE_SECONDS);
 });
 
 // The press is made with focus on the Dreaming page, so it is forwarded:
