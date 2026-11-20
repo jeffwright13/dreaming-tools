@@ -9,7 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
-import { extractPackage, launchWithExtension } from "../tests/live/fixtures.js";
+import { closeFirstInstallOptionsPage, extractPackage, launchWithExtension } from "../tests/live/fixtures.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_DIRECTORY = path.join(ROOT, "dist", "store-assets");
@@ -52,10 +52,13 @@ async function openOptions(colorScheme, overrides = {}) {
   const worker = context.serviceWorkers().find((candidate) => candidate.url().endsWith("/src/background.js"))
     ?? await context.waitForEvent("serviceworker");
   await worker.evaluate((settings) => chrome.storage.sync.set(settings), { ...SHOWCASE_SETTINGS, ...overrides });
+  // Close the first-install options tab before opening ours: the install can
+  // otherwise navigate our new blank tab mid-load (the live-test race in #38).
+  await closeFirstInstallOptionsPage(context);
   const page = await context.newPage();
   await page.goto(`chrome-extension://${new URL(worker.url()).host}/src/options.html`);
   await page.waitForTimeout(SETTLE_MS);
-  // Close the first-install tab the extension opens, so only one page is left.
+  // Close anything else, such as the browser's initial blank tab.
   for (const other of context.pages()) {
     if (other !== page) await other.close();
   }
