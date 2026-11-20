@@ -75,14 +75,18 @@
   // none. Measured in playback time from the series anchor, so a paused video
   // keeps its text, slower speeds take longer, and several taps back still
   // show the text up to where the learner started. "Caught up" hides at the
-  // anchor; when the video is not behind it (landed, where this reveal left
-  // the video), there is nothing to catch up to.
-  function autoHidePoint({ revealMode, revealAutoHide }, anchor, landed) {
+  // anchor. When the video is not behind it (landed, where this reveal left
+  // the video) because the jump was skipped, it hides where the jump would
+  // have landed back to; with jump back off it acts as Off.
+  function autoHidePoint({ revealMode, revealAutoHide, revealJumpBack }, anchor, landed) {
     if (revealMode !== "toggle" || revealAutoHide === 0) {
       return null;
     }
     if (revealAutoHide === CAUGHT_UP) {
-      return landed < anchor ? anchor : null;
+      if (landed < anchor) {
+        return anchor;
+      }
+      return revealJumpBack > 0 ? anchor + revealJumpBack : null;
     }
     return anchor + revealAutoHide;
   }

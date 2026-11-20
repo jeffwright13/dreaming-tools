@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 
 // Every combination of the reveal settings, driven by realistic key-tap
-// sequences against a simulated playing video. Instead of a hand-written
-// expected result per cell, each run is checked against rules that must hold
-// in every cell. Set MATRIX_REPORT=<file> to also write a readable table of
-// what each tap sequence does with a 3-second jump.
+// sequences against a simulated playing video, some with slow seeks, pauses,
+// seeks made with the player's own controls, a new episode, or a lost key
+// release. Instead of a hand-written expected result per cell, each run is
+// checked against rules that must hold in every cell. Set MATRIX_REPORT=<file>
+// to also write a readable table of what each sequence does with a 3-second
+// jump.
 
 import { writeFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -26,7 +28,8 @@ const RANDOM_MIN_INTERVAL_MS = 50;
 const RANDOM_MAX_INTERVAL_MS = 450;
 const START_TIME_S = 40;
 const NEAR_START_TIME_S = 4;
-// Simulated player: plays at 1x, a seek takes SEEK_MS, timeupdate every TICK_MS.
+// Simulated player: plays at 1x, a seek takes SEEK_MS unless a sequence sets
+// a slower one, timeupdate every TICK_MS.
 const SEEK_MS = 120;
 const TICK_MS = 250;
 // After the last key, how long playback runs while waiting for an auto-hide:
@@ -49,39 +52,64 @@ function key(type, init = {}) {
   document.body.dispatchEvent(new KeyboardEvent(type, { code: "KeyS", bubbles: true, cancelable: true, ...init }));
 }
 
-// A playing video: time advances only while not seeking, and a seek is
-// asynchronous, as in the real players. Every seek comes from the extension.
-function simulatedPlayer(video, start) {
+// A video that plays while not paused or seeking. As in real media elements,
+// a seek is asynchronous but currentTime reports its target at once, and a
+// new seek replaces one in flight. Setting currentTime is the extension's
+// seek (recorded); the player's own controls seek through seekTo.
+function simulatedPlayer(video, start, seekMs) {
   let time = start;
   let seeking = false;
+  let paused = false;
+  let pendingSeek = null;
   const seeks = [];
+  function seek(to) {
+    time = to;
+    seeking = true;
+    video.dispatchEvent(new Event("seeking"));
+    clearTimeout(pendingSeek);
+    pendingSeek = setTimeout(() => {
+      seeking = false;
+      video.dispatchEvent(new Event("seeked"));
+    }, seekMs);
+  }
   Object.defineProperty(video, "currentTime", {
     configurable: true,
     get: () => time,
     set: (value) => {
       seeks.push({ at: Date.now(), from: time, to: value });
-      time = value;
-      seeking = true;
-      setTimeout(() => {
-        seeking = false;
-        video.dispatchEvent(new Event("seeked"));
-      }, SEEK_MS);
+      seek(value);
     },
   });
   Object.defineProperty(video, "readyState", { configurable: true, get: () => 4 });
   Object.defineProperty(video, "seeking", { configurable: true, get: () => seeking });
   const ticker = setInterval(() => {
-    if (!seeking) {
+    if (!seeking && !paused) {
       time += TICK_MS / 1000;
       video.dispatchEvent(new Event("timeupdate"));
     }
   }, TICK_MS);
-  return { get time() { return time; }, seeks, stop: () => clearInterval(ticker) };
+  return {
+    get time() { return time; },
+    seeks,
+    seekTo: seek,
+    pause() { paused = true; video.dispatchEvent(new Event("timeupdate")); },
+    play() { paused = false; },
+    // The next episode loads into the same element.
+    newEpisode(at) {
+      video.dispatchEvent(new Event("emptied"));
+      time = at;
+      video.dispatchEvent(new Event("timeupdate"));
+    },
+    stop() { clearInterval(ticker); clearTimeout(pendingSeek); },
+  };
 }
 
-// A sequence is a list of taps: { at } in ms from the start, with how long the
-// key is held. "fresh repeats" models keyboards that auto-repeat without the
-// repeat flag.
+// A sequence is a list of steps at { at } ms from the start: a tap, held for
+// holdMs, or a player action. "fresh repeats" models keyboards that
+// auto-repeat without the repeat flag; lostKeyup models S released while Cmd
+// is down on macOS, which sends no keyup until Cmd is released. Each entry
+// names the reveal its auto-hide should count from: the furthest press (taps
+// back from one point) or the last one (after leaving the earlier range).
 function taps(count, intervalMs) {
   return Array.from({ length: count }, (_, index) => ({ at: index * intervalMs, holdMs: Math.min(TAP_HOLD_MS, intervalMs / 2) }));
 }
@@ -109,22 +137,54 @@ function randomSequences() {
   });
 }
 
+const tapAt = (at) => ({ at, holdMs: TAP_HOLD_MS });
+const CATCH_UP_MS = 13000;
+
 const SEQUENCES = [
   ...TAP_COUNTS.flatMap((count) => TAP_INTERVALS_MS.map((interval) => ({
     name: count === 1 ? "1 tap" : `${count} taps, ${interval} ms apart`,
     sequence: taps(count, interval),
-    start: START_TIME_S,
   }))).filter((entry, index, all) => all.findIndex((other) => other.name === entry.name) === index),
-  { name: "held 2 s (auto-repeat)", sequence: [{ at: 0, holdMs: 2000, repeat: true }], start: START_TIME_S },
-  { name: "held 2 s (fresh repeats)", sequence: [{ at: 0, holdMs: 2000, freshRepeat: true }], start: START_TIME_S },
+  { name: "held 2 s (auto-repeat)", sequence: [{ at: 0, holdMs: 2000, repeat: true }] },
+  { name: "held 2 s (fresh repeats)", sequence: [{ at: 0, holdMs: 2000, freshRepeat: true }] },
+  { name: "3 taps 100 ms apart, slow seeks (600 ms)", sequence: taps(3, 100), seekMs: 600 },
+  { name: "5 taps 150 ms apart, slow seeks (800 ms)", sequence: taps(5, 150), seekMs: 800 },
+  { name: "held 2 s, then 2 quick taps", sequence: [{ at: 0, holdMs: 2000, repeat: true }, tapAt(2200), tapAt(2400)] },
+  { name: "tap, pause 2 s, 2 taps", sequence: [tapAt(0), { at: 200, action: "pause" }, { at: 2200, action: "play" }, tapAt(2300), tapAt(2500)] },
+  { name: "player rewinds 5 s, tap during its seek", sequence: [{ at: 0, action: "seekBy", by: -5 }, tapAt(50)], anchor: "last" },
+  { name: "tap, catch up, player rewinds into the old range, tap", sequence: [tapAt(0), { at: CATCH_UP_MS, action: "seekTo", to: START_TIME_S - 2 }, tapAt(CATCH_UP_MS + 100)], anchor: "last" },
+  { name: "tap, next episode loads, tap in the old range", sequence: [tapAt(0), { at: 500, action: "newEpisode", to: START_TIME_S - 2 }, tapAt(600)], anchor: "last" },
+  { name: "S released while Cmd is down, then a tap", sequence: [{ at: 0, holdMs: TAP_HOLD_MS, lostKeyup: true }, tapAt(300)] },
   ...randomSequences(),
-];
+].map((entry) => ({ start: START_TIME_S, seekMs: SEEK_MS, anchor: "furthest", ...entry }));
 
-function run(settings, { sequence, start }) {
+function runAction(player, step) {
+  switch (step.action) {
+    case "pause":
+      player.pause();
+      break;
+    case "play":
+      player.play();
+      break;
+    case "seekBy":
+      player.seekTo(player.time + step.by);
+      break;
+    case "seekTo":
+      player.seekTo(step.to);
+      break;
+    case "newEpisode":
+      player.newEpisode(step.to);
+      break;
+    default:
+      throw new Error(`unknown action ${step.action}`);
+  }
+}
+
+function run(settings, { sequence, start, seekMs }) {
   vi.useFakeTimers();
   vi.setSystemTime(1_000_000);
   document.body.innerHTML = SUBTITLES_ON;
-  const player = simulatedPlayer(document.querySelector("video"), start);
+  const player = simulatedPlayer(document.querySelector("video"), start, seekMs);
   const feature = createSubtitlesFeature();
   feature.update({ ...DEFAULT_SETTINGS, subtitlesEnabled: true, ...settings });
   const presses = [];
@@ -132,6 +192,11 @@ function run(settings, { sequence, start }) {
   let elapsed = 0;
   for (const tap of sequence) {
     vi.advanceTimersByTime(tap.at - elapsed);
+    if (tap.action) {
+      runAction(player, tap);
+      elapsed = tap.at;
+      continue;
+    }
     const before = revealed();
     const time = player.time;
     key("keydown");
@@ -145,8 +210,13 @@ function run(settings, { sequence, start }) {
     } else {
       vi.advanceTimersByTime(tap.holdMs);
     }
-    key("keyup");
-    releases.push({ after: revealed() });
+    if (tap.lostKeyup) {
+      key("keydown", { code: "MetaLeft", key: "Meta", metaKey: true });
+      key("keyup", { code: "MetaLeft", key: "Meta" });
+    } else {
+      key("keyup");
+      releases.push({ after: revealed() });
+    }
     elapsed = tap.at + tap.holdMs;
   }
   const revealedAtEnd = revealed();
@@ -196,16 +266,14 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
     }
   });
 
-  // A reveal is skipped only while the previous jump's seek is in flight, or
-  // at the very start of the video: tap speed no longer decides the distance.
-  it(`${name}: every reveal jumps unless a seek is in flight or the video is at 0`, () => {
+  // Tap speed never decides the distance, even with seeks still in flight.
+  it(`${name}: every reveal jumps unless the video is at 0`, () => {
     for (const { entry, result } of results) {
       if (config.revealJumpBack === 0) {
         continue;
       }
       for (const press of result.presses.filter((candidate) => !candidate.before && candidate.after)) {
-        const seekInFlight = result.seeks.some((seek) => seek.at < press.at && press.at - seek.at < SEEK_MS);
-        if (press.time > 0 && !seekInFlight) {
+        if (press.time > 0) {
           expect(result.seeks.some((seek) => seek.at === press.at), `${entry.name} at ${press.at} ms`).toBe(true);
         }
       }
@@ -213,7 +281,7 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
   });
 
   if (config.revealMode === "hold") {
-    it(`${name}: shows exactly while the key is held`, () => {
+    it(`${name}: shows while the key is held and hides on release`, () => {
       for (const { entry, result } of results) {
         result.presses.forEach((press) => expect(press.after, entry.name).toBe(true));
         result.releases.forEach((release) => expect(release.after, entry.name).toBe(false));
@@ -244,16 +312,19 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
 
       // Several taps back are one series, so the text stays up past the
       // furthest point any reveal was pressed at (where the learner started),
-      // not just the last reveal; and it hides within a tick of that point.
+      // not just the last reveal; after leaving that range (a new episode, a
+      // rewind after catching up), the last reveal starts afresh. It hides
+      // within a tick of that point.
       it(`${name}: hides once playback passes where the taps started, not before`, () => {
         for (const { entry, result } of results) {
           if (!result.revealedAtEnd || result.hiddenAfterMs === null) {
             continue;
           }
-          const furthest = Math.max(...result.presses.filter((press) => !press.before && press.after).map((press) => press.time));
+          const reveals = result.presses.filter((press) => !press.before && press.after).map((press) => press.time);
+          const anchor = entry.anchor === "last" ? reveals.at(-1) : Math.max(...reveals);
           const extra = config.revealAutoHide === "caught-up" ? 0 : config.revealAutoHide;
-          expect(result.timeWhenHidden + TIME_EPSILON, entry.name).toBeGreaterThanOrEqual(furthest + extra);
-          expect(result.timeWhenHidden, entry.name).toBeLessThan(furthest + extra + TICK_MS / 1000 + TIME_EPSILON);
+          expect(result.timeWhenHidden + TIME_EPSILON, entry.name).toBeGreaterThanOrEqual(anchor + extra);
+          expect(result.timeWhenHidden, entry.name).toBeLessThan(anchor + extra + TICK_MS / 1000 + TIME_EPSILON);
         }
       });
     } else {
@@ -272,7 +343,7 @@ const REPORT_PATH = process.env.MATRIX_REPORT;
 describe.runIf(REPORT_PATH)("reveal matrix report", () => {
   it("writes what each tap sequence does with a 3-second jump", () => {
     const lines = ["# Reveal matrix, jump back 3 s", "",
-      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms; taps are held ${TAP_HOLD_MS} ms.`, ""];
+      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms unless the sequence says otherwise; taps are held ${TAP_HOLD_MS} ms.`, ""];
     for (const revealMode of MODES) {
       for (const revealAutoHide of revealMode === "hold" ? [0] : AUTO_HIDES) {
         const config = { revealMode, revealJumpBack: 3, revealAutoHide };

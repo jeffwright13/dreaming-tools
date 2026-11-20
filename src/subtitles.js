@@ -82,9 +82,11 @@
     }
 
     // Moves the video back by the jump-back setting and returns how far it
-    // moved, or 0 when it could not or should not move.
+    // moved, or 0 when it could not or should not move. A seek still in
+    // flight is no reason to skip: currentTime already reports its target,
+    // so quick taps add up, and setting it again replaces the pending seek.
     function jumpBack(video) {
-      if (settings.revealJumpBack === 0 || video.readyState < HAVE_METADATA || video.seeking
+      if (settings.revealJumpBack === 0 || video.readyState < HAVE_METADATA
         || (jumpBlockedSelector && video.closest(jumpBlockedSelector))) {
         return 0;
       }
@@ -97,13 +99,43 @@
       return from - to;
     }
 
+    // A series is watched while it lasts, hidden or not, so it ends as soon
+    // as playback catches up or leaves its range (a seek with the player's
+    // own controls), or the element loads another video. Otherwise a later
+    // press could pick up a stale anchor.
+    function onSeriesTime() {
+      if (!continuesSeries(series, series.video.currentTime)) {
+        endSeries();
+      }
+    }
+
+    function endSeries() {
+      if (!series) {
+        return;
+      }
+      for (const type of PLAYBACK_EVENTS) {
+        series.video.removeEventListener(type, onSeriesTime);
+      }
+      for (const type of VIDEO_GONE_EVENTS) {
+        series.video.removeEventListener(type, endSeries);
+      }
+      series = null;
+    }
+
     // Starts a series at this press, or extends the current one when the
     // press falls inside it, and returns it.
     function seriesFor(video, pressTime, landed) {
       if (series?.video === video && continuesSeries(series, pressTime)) {
         series.floor = Math.min(series.floor, landed);
-      } else {
-        series = { video, anchor: pressTime, floor: landed };
+        return series;
+      }
+      endSeries();
+      series = { video, anchor: pressTime, floor: landed };
+      for (const type of PLAYBACK_EVENTS) {
+        video.addEventListener(type, onSeriesTime);
+      }
+      for (const type of VIDEO_GONE_EVENTS) {
+        video.addEventListener(type, endSeries);
       }
       return series;
     }
@@ -255,6 +287,12 @@
     }
 
     function onKeyUp(event) {
+      // On macOS a key released while Cmd is down sends no keyup, so Cmd's
+      // own release stands in for it.
+      if (event.key === "Meta") {
+        keyHeld = false;
+        return;
+      }
       if (event.code !== settings.revealKey) {
         return;
       }
@@ -330,7 +368,7 @@
       clearAutoHide();
       unwatch();
       revealed = false;
-      series = null;
+      endSeries();
       keyHeld = false;
       for (const name of [...root.classList]) {
         if (name.startsWith(ROOT_CLASS)) {
@@ -356,7 +394,7 @@
       }
       setStyleClass(settings.subtitleStyle);
       if (previous && revealSettingsChanged(previous, settings)) {
-        series = null;
+        endSeries();
         setRevealed(false);
       }
     }

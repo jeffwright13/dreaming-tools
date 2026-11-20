@@ -117,9 +117,15 @@ describe("autoHidePoint", () => {
     expect(autoHidePoint(toggle("caught-up"), 40, 37)).toBe(40);
   });
 
-  // Nothing to catch up to: the reveal stays until the next press.
-  it("is none when caught up but the video is not behind the anchor", () => {
-    expect(autoHidePoint(toggle("caught-up"), 40, 40)).toBeNull();
+  // The jump was skipped (video not ready, an ad): hide where it would have
+  // landed, so the reveal still ends.
+  it("is the jump amount past the anchor when caught up but the video did not move back", () => {
+    expect(autoHidePoint({ ...toggle("caught-up"), revealJumpBack: 3 }, 40, 40)).toBe(43);
+  });
+
+  // With jump back off, When caught up acts as Off.
+  it("is none when caught up with jump back off", () => {
+    expect(autoHidePoint({ ...toggle("caught-up"), revealJumpBack: 0 }, 40, 40)).toBeNull();
   });
 
   it("is none with auto-hide off or in hold mode", () => {

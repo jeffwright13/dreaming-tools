@@ -416,13 +416,37 @@ describe("jump back on reveal", () => {
     expect(video.time).toBe(40);
   });
 
-  it("still reveals without jumping while the video is already seeking", async () => {
+  // While a seek is in flight, currentTime already reports its target, so
+  // a jump from there adds to it.
+  it("jumps from the pending target while the video is still seeking", async () => {
     const video = fakeVideo(undefined, { seeking: true });
     await feature.update(JUMP);
 
     press("keydown");
     expect(revealed()).toBe(true);
-    expect(video.time).toBe(40);
+    expect(video.time).toBe(37);
+  });
+
+  it("adds up quick taps even when each seek is still in flight", async () => {
+    const video = fakeVideo();
+    await feature.update(JUMP);
+
+    tap();
+    video.state.seeking = true;
+    tap();
+    tap();
+    expect(video.time).toBe(31);
+  });
+
+  // On macOS a key released while Cmd is down sends no keyup.
+  it("counts the next press after Cmd is released over a lost key release", async () => {
+    await feature.update({ ...ENABLED, revealMode: "toggle", revealAutoHide: 0 });
+
+    press("keydown");
+    press("keydown", { code: "MetaLeft", key: "Meta", metaKey: true });
+    press("keyup", { code: "MetaLeft", key: "Meta" });
+    press("keydown");
+    expect(revealed()).toBe(false);
   });
 
   it("uses the video in the player whose subtitles are shown", async () => {
@@ -492,10 +516,12 @@ describe("jump back on reveal", () => {
 
       tap();
       tap();
-      video.state.seeking = true;
+      video.state.readyState = 0;
       tap();
       expect(video.time).toBe(37);
-      video.state.seeking = false;
+      video.state.readyState = 4;
+      video.advance(39.9);
+      expect(revealed()).toBe(true);
       video.advance(40);
       expect(revealed()).toBe(false);
     });
@@ -512,6 +538,46 @@ describe("jump back on reveal", () => {
       video.advance(49.9);
       expect(revealed()).toBe(true);
       video.advance(50);
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides where the jump would have landed when the first jump was skipped", async () => {
+      const video = fakeVideo(undefined, { readyState: 0 });
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      expect(video.time).toBe(40);
+      video.state.readyState = 4;
+      video.advance(42.9);
+      expect(revealed()).toBe(true);
+      video.advance(43);
+      expect(revealed()).toBe(false);
+    });
+
+    it("starts a new series when another video loads into the same element", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      video.fire("emptied");
+      video.advance(38);
+      tap();
+      expect(video.time).toBe(35);
+      video.advance(38);
+      expect(revealed()).toBe(false);
+    });
+
+    it("starts a new series after catching up, even if the player rewinds into the old range", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      video.advance(40);
+      video.advance(60);
+      video.seekTo(38);
+      tap();
+      expect(video.time).toBe(35);
+      video.advance(38);
       expect(revealed()).toBe(false);
     });
 
