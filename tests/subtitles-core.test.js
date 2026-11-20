@@ -5,40 +5,48 @@ import "../src/subtitles-core.js";
 
 const {
   SERIES_SLACK_S,
-  autoHidePoint,
+  TAP_MAX_MS,
   continuesSeries,
   formatKeyCode,
+  hidePoint,
   isRevealKeyPress,
+  isTap,
   isTypingTarget,
   jumpTarget,
-  nextRevealState,
+  previewTapMs,
+  tapKeepsShown,
 } = globalThis.DreamingSubtitlesCore;
 
-describe("nextRevealState in hold mode", () => {
-  const hold = { revealMode: "hold" };
-
-  it("reveals while the key is down and hides on release", () => {
-    expect(nextRevealState(false, "press", hold)).toBe(true);
-    expect(nextRevealState(true, "release", hold)).toBe(false);
+describe("isTap", () => {
+  it("is a press released within the tap time", () => {
+    expect(isTap(0)).toBe(true);
+    expect(isTap(TAP_MAX_MS - 1)).toBe(true);
   });
 
-  it("hides when the window loses focus", () => {
-    expect(nextRevealState(true, "blur", hold)).toBe(false);
+  it("is not a hold of the tap time or longer", () => {
+    expect(isTap(TAP_MAX_MS)).toBe(false);
+    expect(isTap(2000)).toBe(false);
+  });
+
+  // A forwarded release with no valid hold time counts as a hold.
+  it.each([undefined, null, -1, Number.NaN, Number.POSITIVE_INFINITY, "50"])("is not a tap for a held time of %s", (heldMs) => {
+    expect(isTap(heldMs)).toBe(false);
   });
 });
 
-describe("nextRevealState in toggle mode", () => {
-  const toggle = { revealMode: "toggle" };
+describe("tapKeepsShown", () => {
+  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
 
-  it("flips on each press and ignores release", () => {
-    expect(nextRevealState(false, "press", toggle)).toBe(true);
-    expect(nextRevealState(true, "release", toggle)).toBe(true);
-    expect(nextRevealState(true, "press", toggle)).toBe(false);
+  it("keeps the text up after a tap for every choice but Hide on release", () => {
+    expect(tapKeepsShown(settings("hide"))).toBe(false);
+    expect(tapKeepsShown(settings("caught-up"))).toBe(true);
+    expect(tapKeepsShown(settings(5))).toBe(true);
+    expect(tapKeepsShown(settings(5, 0))).toBe(true);
   });
 
-  it("hides on auto-hide timeout and on window blur", () => {
-    expect(nextRevealState(true, "timeout", toggle)).toBe(false);
-    expect(nextRevealState(true, "blur", toggle)).toBe(false);
+  // With nothing to catch up to, Show until caught up acts as Hide on release.
+  it("treats Show until caught up as Hide on release with jump back off", () => {
+    expect(tapKeepsShown(settings("caught-up", 0))).toBe(false);
   });
 });
 
@@ -103,34 +111,49 @@ describe("jumpTarget", () => {
   });
 });
 
-describe("autoHidePoint", () => {
-  const toggle = (revealAutoHide) => ({ revealMode: "toggle", revealAutoHide });
+describe("hidePoint", () => {
+  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
 
-  // The anchor is where the series of reveals started; landed is where the
-  // video is after this reveal's jump.
-  it("is a number of playback seconds after the anchor", () => {
-    expect(autoHidePoint(toggle(5), 40, 37)).toBe(45);
-    expect(autoHidePoint(toggle(5), 40, 40)).toBe(45);
+  // The anchor is where the series of presses started; landed is where the
+  // video is after this press's jump.
+  it("is that many playback seconds past the anchor for a timed choice", () => {
+    expect(hidePoint(settings(5), 40, 37)).toBe(45);
+    expect(hidePoint(settings(5, 0), 40, 40)).toBe(45);
   });
 
-  it("is the anchor itself when caught up", () => {
-    expect(autoHidePoint(toggle("caught-up"), 40, 37)).toBe(40);
+  it("is the anchor itself for Show until caught up", () => {
+    expect(hidePoint(settings("caught-up"), 40, 37)).toBe(40);
   });
 
   // The jump was skipped (video not ready, an ad): hide where it would have
-  // landed, so the reveal still ends.
-  it("is the jump amount past the anchor when caught up but the video did not move back", () => {
-    expect(autoHidePoint({ ...toggle("caught-up"), revealJumpBack: 3 }, 40, 40)).toBe(43);
+  // landed back to, so the reveal still ends.
+  it("is the jump amount past the anchor when the video did not move back", () => {
+    expect(hidePoint(settings("caught-up"), 40, 40)).toBe(43);
   });
 
-  // With jump back off, When caught up acts as Off.
-  it("is none when caught up with jump back off", () => {
-    expect(autoHidePoint({ ...toggle("caught-up"), revealJumpBack: 0 }, 40, 40)).toBeNull();
+  it("is none for Hide on release, or Show until caught up with jump back off", () => {
+    expect(hidePoint(settings("hide"), 40, 37)).toBeNull();
+    expect(hidePoint(settings("caught-up", 0), 40, 40)).toBeNull();
+  });
+});
+
+// The options preview has no video: a tap there lasts as long as it would on
+// a playing video, measured from the press.
+describe("previewTapMs", () => {
+  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
+
+  it("is the jump amount for Show until caught up", () => {
+    expect(previewTapMs(settings("caught-up"))).toBe(3000);
   });
 
-  it("is none with auto-hide off or in hold mode", () => {
-    expect(autoHidePoint(toggle(0), 40, 37)).toBeNull();
-    expect(autoHidePoint({ revealMode: "hold", revealAutoHide: 5 }, 40, 37)).toBeNull();
+  it("is the jump amount plus the seconds for a timed choice", () => {
+    expect(previewTapMs(settings(5))).toBe(8000);
+    expect(previewTapMs(settings(5, 0))).toBe(5000);
+  });
+
+  it("is none when a tap hides on release", () => {
+    expect(previewTapMs(settings("hide"))).toBeNull();
+    expect(previewTapMs(settings("caught-up", 0))).toBeNull();
   });
 });
 

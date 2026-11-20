@@ -15,11 +15,11 @@ import "../src/subtitles-core.js";
 import "../src/subtitles.js";
 
 const { DEFAULT_SETTINGS } = globalThis.DreamingToolsSettings;
+const { TAP_MAX_MS, tapKeepsShown } = globalThis.DreamingSubtitlesCore;
 const { createSubtitlesFeature } = globalThis.DreamingSubtitlesFeature;
 
-const MODES = ["hold", "toggle"];
+const AFTER_TAPS = ["hide", "caught-up", 3, 5, 10];
 const JUMPS = [0, 1, 2, 3, 5, 10];
-const AUTO_HIDES = [0, "caught-up", 3, 5, 10];
 const TAP_COUNTS = [1, 2, 3, 5];
 const TAP_INTERVALS_MS = [150, 400, 750, 1000];
 const TAP_HOLD_MS = 80;
@@ -155,6 +155,8 @@ const SEQUENCES = [
   { name: "tap, catch up, player rewinds into the old range, tap", sequence: [tapAt(0), { at: CATCH_UP_MS, action: "seekTo", to: START_TIME_S - 2 }, tapAt(CATCH_UP_MS + 100)], anchor: "last" },
   { name: "tap, next episode loads, tap in the old range", sequence: [tapAt(0), { at: 500, action: "newEpisode", to: START_TIME_S - 2 }, tapAt(600)], anchor: "last" },
   { name: "S released while Cmd is down, then a tap", sequence: [{ at: 0, holdMs: TAP_HOLD_MS, lostKeyup: true }, tapAt(300)] },
+  { name: "tap, then a hold during its reveal", sequence: [tapAt(0), { at: 500, holdMs: 1500 }] },
+  { name: "hold, then a tap", sequence: [{ at: 0, holdMs: 1500 }, tapAt(1700)] },
   ...randomSequences(),
 ].map((entry) => ({ start: START_TIME_S, seekMs: SEEK_MS, anchor: "furthest", ...entry }));
 
@@ -200,7 +202,8 @@ function run(settings, { sequence, start, seekMs }) {
     const before = revealed();
     const time = player.time;
     key("keydown");
-    presses.push({ at: Date.now(), time, before, after: revealed() });
+    const press = { at: Date.now(), time, before, after: revealed(), heldMs: tap.holdMs };
+    presses.push(press);
     if (tap.repeat || tap.freshRepeat) {
       for (let held = KEY_REPEAT_MS; held < tap.holdMs; held += KEY_REPEAT_MS) {
         vi.advanceTimersByTime(KEY_REPEAT_MS);
@@ -210,13 +213,14 @@ function run(settings, { sequence, start, seekMs }) {
     } else {
       vi.advanceTimersByTime(tap.holdMs);
     }
+    press.whileHeld = revealed();
     if (tap.lostKeyup) {
       key("keydown", { code: "MetaLeft", key: "Meta", metaKey: true });
       key("keyup", { code: "MetaLeft", key: "Meta" });
     } else {
       key("keyup");
-      releases.push({ after: revealed() });
     }
+    releases.push({ heldMs: tap.holdMs, after: revealed(), time: player.time, pressIndex: presses.length - 1 });
     elapsed = tap.at + tap.holdMs;
   }
   const revealedAtEnd = revealed();
@@ -236,12 +240,9 @@ function run(settings, { sequence, start, seekMs }) {
   return { presses, releases, seeks: player.seeks, revealedAtEnd, hiddenAfterMs, timeWhenHidden };
 }
 
-const CONFIGS = MODES.flatMap((revealMode) => JUMPS.flatMap((revealJumpBack) => AUTO_HIDES.map((revealAutoHide) => (
-  { revealMode, revealJumpBack, revealAutoHide }
-))));
+const CONFIGS = AFTER_TAPS.flatMap((revealAfterTap) => JUMPS.map((revealJumpBack) => ({ revealAfterTap, revealJumpBack })));
 
-const label = ({ revealMode, revealJumpBack, revealAutoHide }) =>
-  `${revealMode}, jump ${revealJumpBack || "off"}, auto-hide ${revealAutoHide || "off"}`;
+const label = ({ revealAfterTap, revealJumpBack }) => `after a tap ${revealAfterTap}, jump ${revealJumpBack || "off"}`;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -250,8 +251,9 @@ afterEach(() => {
 describe.each(CONFIGS)("reveal matrix: %s", (config) => {
   const name = label(config);
   const results = SEQUENCES.map((entry) => ({ entry, result: run(config, entry) }));
+  const keepsShown = tapKeepsShown(config);
 
-  it(`${name}: the video only ever moves back, by the jump amount, once per reveal`, () => {
+  it(`${name}: the video only ever moves back, by the jump amount, at most once per press`, () => {
     for (const { entry, result } of results) {
       if (config.revealJumpBack === 0) {
         expect(result.seeks, entry.name).toEqual([]);
@@ -261,18 +263,17 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
         expect(seek.to, entry.name).toBeLessThan(seek.from);
         expect(seek.from - seek.to, entry.name).toBeCloseTo(Math.min(config.revealJumpBack, seek.from), 6);
       }
-      const reveals = result.presses.filter((press) => !press.before && press.after);
-      expect(result.seeks.length, entry.name).toBeLessThanOrEqual(reveals.length);
+      expect(result.seeks.length, entry.name).toBeLessThanOrEqual(result.presses.length);
     }
   });
 
   // Tap speed never decides the distance, even with seeks still in flight.
-  it(`${name}: every reveal jumps unless the video is at 0`, () => {
+  it(`${name}: every press jumps unless the video is at 0`, () => {
     for (const { entry, result } of results) {
       if (config.revealJumpBack === 0) {
         continue;
       }
-      for (const press of result.presses.filter((candidate) => !candidate.before && candidate.after)) {
+      for (const press of result.presses) {
         if (press.time > 0) {
           expect(result.seeks.some((seek) => seek.at === press.at), `${entry.name} at ${press.at} ms`).toBe(true);
         }
@@ -280,84 +281,89 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
     }
   });
 
-  if (config.revealMode === "hold") {
-    it(`${name}: shows while the key is held and hides on release`, () => {
-      for (const { entry, result } of results) {
-        result.presses.forEach((press) => expect(press.after, entry.name).toBe(true));
-        result.releases.forEach((release) => expect(release.after, entry.name).toBe(false));
-        expect(result.revealedAtEnd, entry.name).toBe(false);
-      }
-    });
-
-    it(`${name}: behaves the same whatever the auto-hide setting`, () => {
-      const offResults = SEQUENCES.map((entry) => run({ ...config, revealAutoHide: 0 }, entry));
-      results.forEach(({ entry, result }, index) => {
-        expect(result, entry.name).toEqual(offResults[index]);
+  it(`${name}: shows while the key is down`, () => {
+    for (const { entry, result } of results) {
+      result.presses.forEach((press) => {
+        expect(press.after, entry.name).toBe(true);
+        expect(press.whileHeld, entry.name).toBe(true);
       });
-    });
-  } else {
-    it(`${name}: each separate press flips the subtitles`, () => {
-      for (const { entry, result } of results) {
-        result.presses.forEach((press) => expect(press.after, entry.name).toBe(!press.before));
-      }
-    });
+    }
+  });
 
-    const autoHideActive = config.revealAutoHide !== 0
-      && !(config.revealAutoHide === "caught-up" && config.revealJumpBack === 0);
-    if (autoHideActive) {
-      it(`${name}: a reveal left on screen hides by itself as playback continues`, () => {
-        const stuck = results.filter(({ result }) => result.revealedAtEnd && result.hiddenAfterMs === null);
-        expect(stuck.map(({ entry }) => entry.name)).toEqual([]);
-      });
-
-      // Several taps back are one series, so the text stays up past the
-      // furthest point any reveal was pressed at (where the learner started),
-      // not just the last reveal; after leaving that range (a new episode, a
-      // rewind after catching up), the last reveal starts afresh. It hides
-      // within a tick of that point.
-      it(`${name}: hides once playback passes where the taps started, not before`, () => {
-        for (const { entry, result } of results) {
-          if (!result.revealedAtEnd || result.hiddenAfterMs === null) {
-            continue;
-          }
-          const reveals = result.presses.filter((press) => !press.before && press.after).map((press) => press.time);
-          const anchor = entry.anchor === "last" ? reveals.at(-1) : Math.max(...reveals);
-          const extra = config.revealAutoHide === "caught-up" ? 0 : config.revealAutoHide;
-          expect(result.timeWhenHidden + TIME_EPSILON, entry.name).toBeGreaterThanOrEqual(anchor + extra);
-          expect(result.timeWhenHidden, entry.name).toBeLessThan(anchor + extra + TICK_MS / 1000 + TIME_EPSILON);
-        }
-      });
-    } else {
-      it(`${name}: a reveal left on screen stays until the next press`, () => {
-        for (const { entry, result } of results) {
-          if (result.revealedAtEnd) {
-            expect(result.hiddenAfterMs, entry.name).toBeNull();
-          }
+  it(`${name}: a hold hides on release${keepsShown ? "" : ", and so does a tap"}`, () => {
+    for (const { entry, result } of results) {
+      result.releases.forEach((release) => {
+        if (release.heldMs >= TAP_MAX_MS || !keepsShown) {
+          expect(release.after, entry.name).toBe(false);
         }
       });
     }
+  });
+
+  if (keepsShown) {
+    it(`${name}: a tap's reveal hides by itself as playback continues`, () => {
+      const stuck = results.filter(({ result }) => result.revealedAtEnd && result.hiddenAfterMs === null);
+      expect(stuck.map(({ entry }) => entry.name)).toEqual([]);
+    });
+
+    it(`${name}: a tap keeps the text up while playback is short of where the taps started`, () => {
+      for (const { entry, result } of results) {
+        for (const release of result.releases) {
+          if (release.heldMs >= TAP_MAX_MS) {
+            continue;
+          }
+          const times = result.presses.slice(0, release.pressIndex + 1).map((press) => press.time);
+          const anchor = entry.anchor === "last" ? times.at(-1) : Math.max(...times);
+          const extra = config.revealAfterTap === "caught-up" ? 0 : config.revealAfterTap;
+          if (release.time < anchor + extra) {
+            expect(release.after, `${entry.name}, release ${release.pressIndex + 1}`).toBe(true);
+          }
+        }
+      }
+    });
+
+    // Several taps back are one series, so the text stays up past the
+    // furthest point any press was made at (where the learner started), not
+    // just the last; after leaving that range (a new episode, a rewind after
+    // catching up), the last press starts afresh. It hides within a tick.
+    it(`${name}: hides once playback passes where the taps started, not before`, () => {
+      for (const { entry, result } of results) {
+        if (!result.revealedAtEnd || result.hiddenAfterMs === null) {
+          continue;
+        }
+        const times = result.presses.map((press) => press.time);
+        const anchor = entry.anchor === "last" ? times.at(-1) : Math.max(...times);
+        const extra = config.revealAfterTap === "caught-up" ? 0 : config.revealAfterTap;
+        expect(result.timeWhenHidden + TIME_EPSILON, entry.name).toBeGreaterThanOrEqual(anchor + extra);
+        expect(result.timeWhenHidden, entry.name).toBeLessThan(anchor + extra + TICK_MS / 1000 + TIME_EPSILON);
+      }
+    });
+  } else {
+    it(`${name}: nothing stays shown after the last release`, () => {
+      for (const { entry, result } of results) {
+        expect(result.revealedAtEnd, entry.name).toBe(false);
+      }
+    });
   }
 });
 
 const REPORT_PATH = process.env.MATRIX_REPORT;
 describe.runIf(REPORT_PATH)("reveal matrix report", () => {
-  it("writes what each tap sequence does with a 3-second jump", () => {
+  it("writes what each sequence does with a 3-second jump", () => {
     const lines = ["# Reveal matrix, jump back 3 s", "",
-      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms unless the sequence says otherwise; taps are held ${TAP_HOLD_MS} ms.`, ""];
-    for (const revealMode of MODES) {
-      for (const revealAutoHide of revealMode === "hold" ? [0] : AUTO_HIDES) {
-        const config = { revealMode, revealJumpBack: 3, revealAutoHide };
-        lines.push(`## ${revealMode}${revealMode === "toggle" ? `, auto-hide ${revealAutoHide || "off"}` : ""}`, "",
-          "| Sequence | Jumps | Moved back | Starts at | Shown after last key | Hides after |",
-          "|---|---|---|---|---|---|");
-        for (const entry of SEQUENCES) {
-          const result = run(config, entry);
-          const moved = result.seeks.reduce((sum, seek) => sum + seek.from - seek.to, 0);
-          const hides = !result.revealedAtEnd ? "–" : result.hiddenAfterMs === null ? "**never**" : `${(result.hiddenAfterMs / 1000).toFixed(2)} s, at ${result.timeWhenHidden.toFixed(2)} s`;
-          lines.push(`| ${entry.name} | ${result.seeks.length} | ${moved.toFixed(1)} s | from ${entry.start} s | ${result.revealedAtEnd ? "yes" : "no"} | ${hides} |`);
-        }
-        lines.push("");
+      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms unless the sequence says otherwise; taps are held ${TAP_HOLD_MS} ms, holds ${TAP_MAX_MS} ms or more.`, ""];
+    for (const revealAfterTap of AFTER_TAPS) {
+      const config = { revealAfterTap, revealJumpBack: 3 };
+      lines.push(`## After a tap: ${revealAfterTap}`, "",
+        "| Sequence | Jumps | Moved back | Starts at | Shown after last key | Hides after |",
+        "|---|---|---|---|---|---|");
+      for (const entry of SEQUENCES) {
+        const result = run(config, entry);
+        const moved = result.seeks.reduce((sum, seek) => sum + seek.from - seek.to, 0);
+        const hides = !result.revealedAtEnd ? "–" : result.hiddenAfterMs === null ? "**never**" : `${(result.hiddenAfterMs / 1000).toFixed(2)} s, at ${result.timeWhenHidden.toFixed(2)} s`;
+        lines.push(`| ${entry.name} | ${result.seeks.length} | ${moved.toFixed(1)} s | from ${entry.start} s | ${result.revealedAtEnd ? "yes" : "no"} | ${hides} |`);
       }
+      lines.push("");
     }
     writeFileSync(REPORT_PATH, lines.join("\n"));
   });

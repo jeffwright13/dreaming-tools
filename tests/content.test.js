@@ -8,7 +8,7 @@ import "../src/subtitles-core.js";
 import "../src/subtitles.js";
 import "../src/content.js";
 
-const { DEFAULT_SETTINGS, SETTING_KEYS } = globalThis.DreamingToolsSettings;
+const { DEFAULT_SETTINGS, STORED_KEYS } = globalThis.DreamingToolsSettings;
 const { initialize, selectFeatures } = globalThis.DreamingToolsContent;
 
 function stubChromeStorage(stored = {}) {
@@ -45,10 +45,21 @@ describe("initialize", () => {
 
     await initialize(features);
 
-    expect(get).toHaveBeenCalledWith(SETTING_KEYS);
+    expect(get).toHaveBeenCalledWith(STORED_KEYS);
     for (const feature of features) {
       expect(feature.update).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, size: "large" });
     }
+  });
+
+  // Before the background worker migrates storage after an update, a page
+  // can still read the Hold and Toggle settings stored by 1.2.0.
+  it("maps the Hold and Toggle settings stored by 1.2.0", async () => {
+    stubChromeStorage({ revealMode: "toggle", revealAutoHide: 3 });
+    const feature = fakeFeature();
+
+    await initialize([feature]);
+
+    expect(feature.update).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, revealAfterTap: 3 });
   });
 
   it("passes merged synchronized changes to every feature and ignores other storage areas", async () => {

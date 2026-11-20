@@ -19,22 +19,29 @@
   // continues slightly below its lowest jump.
   const SERIES_SLACK_S = 0.5;
   const CAUGHT_UP = "caught-up";
+  const HIDE_ON_RELEASE = "hide";
+  // A press released within this time is a tap; a longer one is a hold.
+  // Fixed rather than a setting: slow fingers get hold behavior, which is
+  // the default anyway.
+  const TAP_MAX_MS = 300;
+  const MILLISECONDS_PER_SECOND = 1000;
   const TYPING_INPUT_TYPES = new Set([
     "email", "number", "password", "search", "tel", "text", "url",
   ]);
 
-  // Events are "press", "release", "timeout" (toggle auto-hide), and "blur"
-  // (window lost focus, so a release may never arrive). Returns whether the
-  // subtitles should now be readable.
-  function nextRevealState(revealed, event, { revealMode }) {
-    switch (event) {
-      case "press":
-        return revealMode === "hold" ? true : !revealed;
-      case "release":
-        return revealMode === "hold" ? false : revealed;
-      default:
-        return false;
+  // Whether a press held for heldMs is a tap. A missing or invalid time (a
+  // forwarded release from an older copy, say) counts as a hold.
+  function isTap(heldMs) {
+    return typeof heldMs === "number" && Number.isFinite(heldMs) && heldMs >= 0 && heldMs < TAP_MAX_MS;
+  }
+
+  // Whether the text stays up after a tap's release. Show until caught up
+  // needs a jump: with jump back off it acts as Hide on release.
+  function tapKeepsShown({ revealAfterTap, revealJumpBack }) {
+    if (revealAfterTap === HIDE_ON_RELEASE) {
+      return false;
     }
+    return revealAfterTap !== CAUGHT_UP || revealJumpBack > 0;
   }
 
   // Shift is allowed; Ctrl, Alt, and Cmd combinations are browser shortcuts.
@@ -71,24 +78,32 @@
     return series !== null && time >= series.floor - SERIES_SLACK_S && time < series.anchor;
   }
 
-  // The playback time at which a toggle reveal hides again, or null for
-  // none. Measured in playback time from the series anchor, so a paused video
+  // The playback time at which a tap's reveal hides, or null for none.
+  // Measured in playback time from the series anchor, so a paused video
   // keeps its text, slower speeds take longer, and several taps back still
-  // show the text up to where the learner started. "Caught up" hides at the
-  // anchor. When the video is not behind it (landed, where this reveal left
-  // the video) because the jump was skipped, it hides where the jump would
-  // have landed back to; with jump back off it acts as Off.
-  function autoHidePoint({ revealMode, revealAutoHide, revealJumpBack }, anchor, landed) {
-    if (revealMode !== "toggle" || revealAutoHide === 0) {
+  // show the text up to where the learner started. Show until caught up hides
+  // at the anchor; when the video is not behind it (landed, where this press
+  // left the video) because the jump was skipped, it hides where the jump
+  // would have landed back to.
+  function hidePoint(settings, anchor, landed) {
+    if (!tapKeepsShown(settings)) {
       return null;
     }
-    if (revealAutoHide === CAUGHT_UP) {
-      if (landed < anchor) {
-        return anchor;
-      }
-      return revealJumpBack > 0 ? anchor + revealJumpBack : null;
+    if (settings.revealAfterTap === CAUGHT_UP) {
+      return landed < anchor ? anchor : anchor + settings.revealJumpBack;
     }
-    return anchor + revealAutoHide;
+    return anchor + settings.revealAfterTap;
+  }
+
+  // How long a tap keeps the options preview revealed, or null for not at
+  // all. The preview has no video, so this is how long the text would stay
+  // up on a playing video after a full jump: to the anchor, or past it.
+  function previewTapMs(settings) {
+    if (!tapKeepsShown(settings)) {
+      return null;
+    }
+    const extra = settings.revealAfterTap === CAUGHT_UP ? 0 : settings.revealAfterTap;
+    return (settings.revealJumpBack + extra) * MILLISECONDS_PER_SECOND;
   }
 
   function formatKeyCode(code) {
@@ -98,12 +113,15 @@
   globalThis.DreamingSubtitlesCore = {
     CAUGHT_UP,
     SERIES_SLACK_S,
-    autoHidePoint,
+    TAP_MAX_MS,
     continuesSeries,
     formatKeyCode,
-    jumpTarget,
+    hidePoint,
     isRevealKeyPress,
+    isTap,
     isTypingTarget,
-    nextRevealState,
+    jumpTarget,
+    previewTapMs,
+    tapKeepsShown,
   };
 })();

@@ -2,14 +2,16 @@
   const {
     DEFAULT_SETTINGS,
     SETTING_KEYS,
+    STORED_KEYS,
     isRevealKeyCode,
     normalizeSettings,
   } = globalThis.DreamingToolsSettings;
   const {
     formatKeyCode,
     isRevealKeyPress,
+    isTap,
     isTypingTarget,
-    nextRevealState,
+    previewTapMs,
   } = globalThis.DreamingSubtitlesCore;
   const form = document.querySelector("#settings-form");
   const behaviorControls = document.querySelector("#behavior-controls");
@@ -21,8 +23,8 @@
   ];
   const previewDisabledNotices = document.querySelectorAll(".preview-disabled");
   const subtitleControls = document.querySelector("#subtitle-controls");
-  const autoHideControl = document.querySelector("#auto-hide-control");
   const caughtUpOption = document.querySelector("#caught-up-option");
+  const afterTapHint = document.querySelector("#after-tap-hint");
   const revealKeyButton = document.querySelector("#reveal-key-button");
   const revealKeyInput = form.elements.namedItem("revealKey");
   const subtitlePreviews = document.querySelectorAll("#subtitle-preview, #youtube-subtitle-preview");
@@ -30,22 +32,27 @@
   const status = document.querySelector("#status");
   const root = document.documentElement;
   const CAPTURE_PROMPT = "Press a key…";
-  const NUMERIC_SETTINGS = new Set(["revealAutoHide", "revealJumpBack"]);
-  // The one non-numeric value of a numeric menu.
-  const { CAUGHT_UP } = globalThis.DreamingSubtitlesCore;
+  // Menus whose values are numbers, apart from named choices such as "hide"
+  // and "caught-up" in After a tap.
+  const NUMERIC_SETTINGS = new Set(["revealAfterTap", "revealJumpBack"]);
+  const NUMBER_PATTERN = /^\d+$/;
   const REVEALED_CLASS = "dt-subtitles--revealed";
-  const REVEAL_SETTINGS = ["revealMode", "revealKey", "revealAutoHide", "revealJumpBack"];
-  const MILLISECONDS_PER_SECOND = 1000;
+  const REVEAL_SETTINGS = ["revealKey", "revealAfterTap", "revealJumpBack"];
+  // macOS sends no keyup for a key released while Cmd is down; Cmd's own
+  // release stands in for it, as on Dreaming.
+  const META_KEY = "Meta";
 
   // The previews can be revealed with the configured key, page-wide, or by
-  // pressing a preview, following the chosen mode as on Dreaming. This uses
-  // the shared reveal logic in subtitles-core.js rather than the content
+  // pressing a preview, with tap and hold as on Dreaming. This uses the
+  // shared reveal logic in subtitles-core.js rather than the content
   // script's feature: that feature listens in the capture phase on window,
   // which would swallow the key press while a new reveal key is being
   // chosen, and it offers no way for a mouse press to share its state.
   let previewSettings = null;
   let previewRevealed = false;
-  let autoHideTimer = null;
+  let previewTimer = null;
+  // The timeStamp of the key or pointer press waiting for its release.
+  let previewPressedAt = null;
 
   // Read each control directly rather than through FormData: FormData skips
   // controls inside a disabled fieldset, which would reset a switched-off
@@ -58,7 +65,7 @@
         return [key, control.checked];
       }
       const value = control?.value;
-      return [key, NUMERIC_SETTINGS.has(key) && value !== CAUGHT_UP ? Number(value) : value];
+      return [key, NUMERIC_SETTINGS.has(key) && NUMBER_PATTERN.test(value) ? Number(value) : value];
     })));
   }
 
@@ -85,16 +92,18 @@
   // options page sets the same classes the content script would.
   function renderSubtitlePreview(settings) {
     subtitleControls.disabled = !settings.subtitlesEnabled;
-    autoHideControl.hidden = settings.revealMode !== "toggle";
-    // A disabled option still shows when it is the stored choice; the
-    // content script treats When caught up as Off while jump back is off.
+    // A disabled option still shows when it is the stored choice; the content
+    // script treats Show until caught up as Hide on release while jump back
+    // is off.
     caughtUpOption.disabled = settings.revealJumpBack === 0;
+    afterTapHint.hidden = !(settings.revealJumpBack > 0 && settings.revealAfterTap === "hide");
     if (revealKeyButton.textContent !== CAPTURE_PROMPT) {
       revealKeyButton.textContent = formatKeyCode(settings.revealKey);
     }
     const previous = previewSettings;
     previewSettings = settings;
     if (!settings.subtitlesEnabled || REVEAL_SETTINGS.some((key) => previous && previous[key] !== settings[key])) {
+      previewPressedAt = null;
       setPreviewRevealed(false);
     }
     for (const name of [...root.classList]) {
@@ -111,23 +120,38 @@
   function setPreviewRevealed(next) {
     previewRevealed = next;
     root.classList.toggle(REVEALED_CLASS, previewRevealed);
-    clearTimeout(autoHideTimer);
-    autoHideTimer = null;
-    const { revealMode, revealAutoHide } = previewSettings ?? {};
-    // Timed auto-hide only: the preview has no video, so it neither jumps
-    // back nor has a point to catch up to, and When caught up acts as Off.
-    if (previewRevealed && revealMode === "toggle" && typeof revealAutoHide === "number" && revealAutoHide > 0) {
-      autoHideTimer = setTimeout(
-        () => setPreviewRevealed(nextRevealState(previewRevealed, "timeout", previewSettings)),
-        revealAutoHide * MILLISECONDS_PER_SECOND,
-      );
-    }
+    clearTimeout(previewTimer);
+    previewTimer = null;
   }
 
-  function applyRevealEvent(event) {
-    if (previewSettings?.subtitlesEnabled) {
-      setPreviewRevealed(nextRevealState(previewRevealed, event, previewSettings));
+  function previewPress(timeStamp) {
+    if (!previewSettings?.subtitlesEnabled || previewPressedAt !== null) {
+      return;
     }
+    previewPressedAt = timeStamp;
+    setPreviewRevealed(true);
+  }
+
+  // A hold hides on release. The preview has no video to jump back or to
+  // catch up with, so a tap keeps it up on a timer for as long as it would
+  // stay up on a playing video (previewTapMs), or hides it at once.
+  function previewRelease(timeStamp) {
+    if (previewPressedAt === null) {
+      return;
+    }
+    const heldMs = timeStamp - previewPressedAt;
+    previewPressedAt = null;
+    const tapMs = isTap(heldMs) ? previewTapMs(previewSettings) : null;
+    if (tapMs === null) {
+      setPreviewRevealed(false);
+      return;
+    }
+    previewTimer = setTimeout(() => setPreviewRevealed(false), tapMs);
+  }
+
+  function previewBlur() {
+    previewPressedAt = null;
+    setPreviewRevealed(false);
   }
 
   // Unlike on Dreaming, a select here does not take the reveal key: a select
@@ -148,13 +172,13 @@
 
     event.preventDefault();
     if (!event.repeat) {
-      applyRevealEvent("press");
+      previewPress(event.timeStamp);
     }
   }
 
   function onPreviewKeyUp(event) {
-    if (event.code === previewSettings?.revealKey) {
-      applyRevealEvent("release");
+    if (event.code === previewSettings?.revealKey || event.key === META_KEY) {
+      previewRelease(event.timeStamp);
     }
   }
 
@@ -226,18 +250,18 @@
   });
 
   // One preview per player. The reveal class is on <html>, so pressing
-  // either preview reveals both. A press acts like the reveal key, so in
-  // Toggle mode a click toggles and leaving the preview does not hide.
+  // either preview reveals both. A press acts like the reveal key: a click
+  // is a tap and a long press a hold; leaving the preview ends the press.
   for (const preview of subtitlePreviews) {
-    preview.addEventListener("pointerdown", () => applyRevealEvent("press"));
+    preview.addEventListener("pointerdown", (event) => previewPress(event.timeStamp));
     for (const type of ["pointerup", "pointerleave"]) {
-      preview.addEventListener(type, () => applyRevealEvent("release"));
+      preview.addEventListener(type, (event) => previewRelease(event.timeStamp));
     }
   }
 
   document.addEventListener("keydown", onPreviewKeyDown);
   document.addEventListener("keyup", onPreviewKeyUp);
-  window.addEventListener("blur", () => applyRevealEvent("blur"));
+  window.addEventListener("blur", previewBlur);
 
   form.addEventListener("change", () => {
     status.textContent = "";
@@ -253,7 +277,7 @@
     }
   });
 
-  chrome.storage.sync.get(SETTING_KEYS).then((stored) => {
+  chrome.storage.sync.get(STORED_KEYS).then((stored) => {
     populateForm(normalizeSettings(stored));
   });
 })();

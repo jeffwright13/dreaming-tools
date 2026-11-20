@@ -190,12 +190,14 @@ describe("release packaging", () => {
   // Chrome runs background.service_worker; Firefox has no MV3 service workers
   // and runs background.scripts instead. Both must name the same file, or the
   // two browsers would run different code.
-  it("declares one background script for both Chrome and Firefox", async () => {
+  // Chrome's service worker loads settings.js itself with importScripts;
+  // Firefox's background scripts list it first.
+  it("declares the background script for both Chrome and Firefox, with settings.js for Firefox", async () => {
     const manifest = JSON.parse(await readFile(path.join(process.cwd(), "manifest.json"), "utf8"));
 
     expect(manifest.background).toEqual({
       service_worker: "src/background.js",
-      scripts: ["src/background.js"],
+      scripts: ["src/settings.js", "src/background.js"],
     });
   });
 

@@ -26,9 +26,9 @@ const optionsMarkup = `
     <input type="checkbox" name="subtitlesEnabled">
     <fieldset id="subtitle-controls">
       <select name="subtitleStyle"><option value="blur">Blur</option><option value="small-faint">Small and faint</option><option value="hidden">Hidden</option></select>
-      <select name="revealMode"><option value="hold">Hold</option><option value="toggle">Toggle</option></select>
       <select name="revealJumpBack"><option value="0">Off</option><option value="1">1</option><option value="3">3</option></select>
-      <label id="auto-hide-control"><select name="revealAutoHide"><option value="0">Off</option><option id="caught-up-option" value="caught-up">When caught up</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select></label>
+      <select name="revealAfterTap"><option value="hide">Hide on release</option><option id="caught-up-option" value="caught-up">Show until caught up</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select>
+      <small id="after-tap-hint" hidden></small>
       <button id="reveal-key-button" type="button"></button>
       <input type="hidden" name="revealKey">
     </fieldset>
@@ -142,7 +142,7 @@ describe("options page", () => {
   it("reads only stored keys so legacy settings can migrate", async () => {
     const storage = await loadOptions({ behavior: "original" });
 
-    expect(storage.get).toHaveBeenCalledWith(globalThis.DreamingToolsSettings.SETTING_KEYS);
+    expect(storage.get).toHaveBeenCalledWith(globalThis.DreamingToolsSettings.STORED_KEYS);
     expect(document.querySelector('[name="difficultyEnabled"]')?.checked).toBe(false);
     expect(document.querySelector('input[name="behavior"]:checked')?.value).toBe("fill-missing");
   });
@@ -281,7 +281,7 @@ describe("subtitle options", () => {
   });
 
   describe("previewing the reveal key", () => {
-    it("reveals while the key is held in Hold mode and ignores repeats", async () => {
+    it("shows while the key is down, ignores repeats, and hides on release by default", async () => {
       await loadOptions({ subtitlesEnabled: true });
 
       expect(pressKey("KeyS").defaultPrevented).toBe(true);
@@ -292,41 +292,76 @@ describe("subtitle options", () => {
       expect(revealed()).toBe(false);
     });
 
-    it("toggles on each press in Toggle mode and auto-hides after the delay", async () => {
-      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 3 });
+    // The preview has no video: a tap keeps it up for as long as it would
+    // stay up on a playing video, the jump amount plus the chosen seconds.
+    it("keeps the preview up after a tap for the jump plus the chosen seconds", async () => {
       vi.useFakeTimers();
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 5, revealJumpBack: 3 });
+
+      pressKey("KeyS");
+      vi.advanceTimersByTime(80);
+      releaseKey("KeyS");
+      vi.advanceTimersByTime(7999);
+      expect(revealed()).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(revealed()).toBe(false);
+    });
+
+    it("keeps the preview up after a tap for the jump amount with Show until caught up", async () => {
+      vi.useFakeTimers();
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: "caught-up", revealJumpBack: 3 });
 
       pressKey("KeyS");
       releaseKey("KeyS");
-      expect(revealed()).toBe(true);
-      pressKey("KeyS");
-      expect(revealed()).toBe(false);
-
-      pressKey("KeyS");
       vi.advanceTimersByTime(2999);
       expect(revealed()).toBe(true);
       vi.advanceTimersByTime(1);
       expect(revealed()).toBe(false);
     });
 
-    // The preview has no video to move back or to catch up with.
-    it("stays revealed with When caught up until the next press", async () => {
-      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: "caught-up", revealJumpBack: 3 });
+    it("hides on release after a hold, whatever After a tap says", async () => {
       vi.useFakeTimers();
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 5 });
 
       pressKey("KeyS");
-      vi.advanceTimersByTime(60_000);
-      expect(revealed()).toBe(true);
-      pressKey("KeyS");
+      vi.advanceTimersByTime(1500);
+      releaseKey("KeyS");
       expect(revealed()).toBe(false);
     });
 
-    it("hides when the jump back changes", async () => {
-      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
-      pressKey("KeyS");
-      expect(revealed()).toBe(true);
+    it("keeps the preview up while the key is down, past a tap's time, and restarts it on a new tap", async () => {
+      vi.useFakeTimers();
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 3 });
 
+      pressKey("KeyS");
+      releaseKey("KeyS");
+      vi.advanceTimersByTime(2000);
+      pressKey("KeyS");
+      vi.advanceTimersByTime(2000);
+      expect(revealed()).toBe(true);
+      releaseKey("KeyS");
+      expect(revealed()).toBe(false);
+
+      pressKey("KeyS");
+      releaseKey("KeyS");
+      vi.advanceTimersByTime(2999);
+      expect(revealed()).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides when the jump back or After a tap changes", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 10 });
+      pressKey("KeyS");
+      releaseKey("KeyS");
+      expect(revealed()).toBe(true);
       change('[name="revealJumpBack"]', (control) => { control.value = "3"; });
+      expect(revealed()).toBe(false);
+
+      pressKey("KeyS");
+      releaseKey("KeyS");
+      expect(revealed()).toBe(true);
+      change('[name="revealAfterTap"]', (control) => { control.value = "5"; });
       expect(revealed()).toBe(false);
     });
 
@@ -368,7 +403,7 @@ describe("subtitle options", () => {
     it("previews from a focused select without the key reaching the select", async () => {
       await loadOptions({ subtitlesEnabled: true });
 
-      for (const name of ["subtitleStyle", "revealMode", "size"]) {
+      for (const name of ["subtitleStyle", "revealAfterTap", "size"]) {
         const select = document.querySelector(`[name="${name}"]`);
         expect(pressKey("KeyS", {}, select).defaultPrevented, name).toBe(true);
         expect(revealed(), name).toBe(true);
@@ -386,29 +421,30 @@ describe("subtitle options", () => {
       expect(revealed()).toBe(false);
     });
 
-    it("hides when the reveal mode changes or the window loses focus", async () => {
-      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
+    it("hides when the window loses focus", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 10 });
 
       pressKey("KeyS");
-      expect(revealed()).toBe(true);
-      change('[name="revealMode"]', (control) => { control.value = "hold"; });
-      expect(revealed()).toBe(false);
-
-      pressKey("KeyS");
+      releaseKey("KeyS");
       expect(revealed()).toBe(true);
       window.dispatchEvent(new Event("blur"));
       expect(revealed()).toBe(false);
     });
 
-    it("makes a click on the preview toggle in Toggle mode", async () => {
-      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
+    it("treats a click on the preview as a tap and a long press as a hold", async () => {
+      vi.useFakeTimers();
+      await loadOptions({ subtitlesEnabled: true, revealAfterTap: 10 });
       const preview = document.querySelector("#subtitle-preview");
 
       preview.dispatchEvent(new Event("pointerdown"));
+      vi.advanceTimersByTime(80);
       preview.dispatchEvent(new Event("pointerup"));
       preview.dispatchEvent(new Event("pointerleave"));
       expect(revealed()).toBe(true);
+
       preview.dispatchEvent(new Event("pointerdown"));
+      vi.advanceTimersByTime(1500);
+      preview.dispatchEvent(new Event("pointerup"));
       expect(revealed()).toBe(false);
     });
   });
@@ -444,34 +480,37 @@ describe("subtitle options", () => {
     expect(root().classList.contains("dt-subtitles--revealed")).toBe(false);
   });
 
-  it("shows auto-hide only in toggle mode and saves it as a number", async () => {
+  it("saves After a tap as a number or as itself, and the jump back as a number", async () => {
     const storage = await loadOptions({ subtitlesEnabled: true });
-    expect(document.querySelector("#auto-hide-control")?.hidden).toBe(true);
-
-    change('[name="revealMode"]', (control) => { control.value = "toggle"; });
-    expect(document.querySelector("#auto-hide-control")?.hidden).toBe(false);
-    change('[name="revealAutoHide"]', (control) => { control.value = "10"; });
-
-    const saved = await lastSaved(storage);
-    expect(saved).toMatchObject({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 10 });
-  });
-
-  it("saves the jump back as a number and When caught up as itself", async () => {
-    const storage = await loadOptions({ subtitlesEnabled: true, revealMode: "toggle" });
 
     change('[name="revealJumpBack"]', (control) => { control.value = "3"; });
-    change('[name="revealAutoHide"]', (control) => { control.value = "caught-up"; });
+    change('[name="revealAfterTap"]', (control) => { control.value = "10"; });
+    expect(await lastSaved(storage)).toMatchObject({ subtitlesEnabled: true, revealJumpBack: 3, revealAfterTap: 10 });
 
-    expect(await lastSaved(storage)).toMatchObject({ revealJumpBack: 3, revealAutoHide: "caught-up" });
+    change('[name="revealAfterTap"]', (control) => { control.value = "caught-up"; });
+    expect(await lastSaved(storage)).toMatchObject({ revealAfterTap: "caught-up" });
   });
 
-  it("offers When caught up only while jump back is on", async () => {
-    await loadOptions({ subtitlesEnabled: true, revealMode: "toggle" });
+  it("offers Show until caught up only while jump back is on", async () => {
+    await loadOptions({ subtitlesEnabled: true });
     const caughtUp = () => document.querySelector("#caught-up-option");
     expect(caughtUp().disabled).toBe(true);
 
     change('[name="revealJumpBack"]', (control) => { control.value = "1"; });
     expect(caughtUp().disabled).toBe(false);
+  });
+
+  // A quick tap rewinds but hides almost at once with Hide on release.
+  it("hints at Show until caught up while jump back is on and a tap hides on release", async () => {
+    await loadOptions({ subtitlesEnabled: true });
+    const hint = () => document.querySelector("#after-tap-hint");
+    expect(hint().hidden).toBe(true);
+
+    change('[name="revealJumpBack"]', (control) => { control.value = "3"; });
+    expect(hint().hidden).toBe(false);
+
+    change('[name="revealAfterTap"]', (control) => { control.value = "caught-up"; });
+    expect(hint().hidden).toBe(true);
   });
 
   it("records a new reveal key from the next key press", async () => {
@@ -509,9 +548,9 @@ describe("options page layout", () => {
       '[name="subtitlesEnabled"]',
       "#subtitle-controls",
       '[name="subtitleStyle"]',
-      '[name="revealMode"]',
-      '[name="revealAutoHide"]',
       '[name="revealJumpBack"]',
+      '[name="revealAfterTap"]',
+      "#after-tap-hint",
       "#reveal-key-button",
       // Same structure as the real player: a block line inside the container,
       // so the line-level styles (including scale) apply as they do there.
@@ -576,11 +615,12 @@ describe("options page layout", () => {
 
   // The settings module drops any other value, so the menus must offer
   // exactly the values it accepts.
-  it("offers exactly the jump back and auto-hide values the settings accept", () => {
+  it("offers exactly the jump back and after-a-tap values the settings accept", () => {
     const values = (name) => [...document.querySelectorAll(`[name="${name}"] option`)].map((option) => option.value);
 
     expect(values("revealJumpBack")).toEqual(["0", "1", "2", "3", "5", "10"]);
-    expect(values("revealAutoHide")).toEqual(["0", "caught-up", "3", "5", "10"]);
+    expect(values("revealAfterTap")).toEqual(["hide", "caught-up", "3", "5", "10"]);
+    expect(document.querySelector('[name="revealMode"], [name="revealAutoHide"]')).toBeNull();
   });
 
   it("has no Save button, because changes save automatically", () => {

@@ -5,9 +5,10 @@ import { test, expect } from "./fixtures.js";
 import { dreamingPlayer, expectHidesAtPlaybackTime, expectStyle, openWatchPage } from "./players.js";
 import { DREAMING_PLAYER_VIDEO } from "./routes.js";
 
-const AUTO_HIDE_SECONDS = 3;
+const AFTER_TAP_SECONDS = 3;
 const JUMP_BACK_SECONDS = 3;
 const CAUGHT_UP_JUMP_SECONDS = 2;
+const TAPS = 3;
 // A stretch of the pinned video with steady speech, so a subtitle line is on
 // screen (checked 2026-11-09).
 const SPOKEN_SECONDS = 40;
@@ -16,7 +17,7 @@ const GLIDE_SAMPLE_INTERVAL_MS = 25;
 // Every reveal setting is spelled out: setSettings merges into the persistent
 // profile's storage, so one left out keeps another test's value.
 const BASE_SETTINGS = {
-  subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5, revealJumpBack: 0,
+  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterTap: "hide", revealJumpBack: 0,
 };
 
 let player;
@@ -42,7 +43,7 @@ for (const style of ["blur", "small-faint", "hidden"]) {
   });
 }
 
-test("Hold: revealed only while the key is down, and key repeat does not toggle", async () => {
+test("a hold shows only while the key is down, and key repeat is not a new press", async () => {
   const { keyboard } = player.page;
   await keyboard.down("KeyS");
   await expect.poll(isRevealed).toBe(true);
@@ -53,18 +54,18 @@ test("Hold: revealed only while the key is down, and key repeat does not toggle"
   await expect.poll(isRevealed).toBe(false);
 });
 
-test(`Toggle: a press reveals, a second hides, and auto-hide hides after ${AUTO_HIDE_SECONDS} s`, async ({ setSettings }) => {
-  await setSettings({ revealMode: "toggle", revealAutoHide: AUTO_HIDE_SECONDS });
-  const { keyboard } = player.page;
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(true);
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(false);
+test("a tap hides on release with the default After a tap", async () => {
+  await player.page.keyboard.press("KeyS");
+  await player.page.waitForTimeout(300);
+  expect(await isRevealed()).toBe(false);
+});
 
+test(`a tap with Show ${AFTER_TAP_SECONDS} s keeps the text up until that far past the press`, async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: AFTER_TAP_SECONDS });
   const pressedAt = await player.currentTime();
-  await keyboard.press("KeyS");
+  await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
-  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AUTO_HIDE_SECONDS);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AFTER_TAP_SECONDS);
 });
 
 // Paused, so the expected position is exact; the player keeps its paused
@@ -84,8 +85,24 @@ test("jump back: a reveal moves the video back by the setting; the release does 
   expect(await player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
 });
 
-test("jump back with When caught up: the reveal hides once playback returns to the press", async ({ setSettings }) => {
-  await setSettings({ revealMode: "toggle", revealAutoHide: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+// Paused, so the positions are exact and the text stays up: a paused video
+// never catches up.
+test(`${TAPS} quick taps move back ${TAPS} times the jump and keep the text up`, async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.pause();
+  const before = await player.currentTime();
+
+  for (let tap = 0; tap < TAPS; tap += 1) {
+    await player.page.keyboard.press("KeyS");
+  }
+  await expect.poll(() => player.currentTime()).toBeCloseTo(before - TAPS * CAUGHT_UP_JUMP_SECONDS, 1);
+  await player.page.waitForTimeout(1_000);
+  expect(await isRevealed()).toBe(true);
+});
+
+test("jump back with Show until caught up: a tap hides once playback returns to the press", async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
   await player.seek(SPOKEN_SECONDS);
   await player.page.waitForTimeout(1_000);
 
@@ -95,8 +112,8 @@ test("jump back with When caught up: the reveal hides once playback returns to t
   await expectHidesAtPlaybackTime(player, isRevealed, pressedAt);
 });
 
-test("a Toggle reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {
-  await setSettings({ revealMode: "toggle", revealAutoHide: 0 });
+test("a tap's reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
 
@@ -116,10 +133,10 @@ test("with the player's subtitles off, the reveal key reveals nothing", async ()
   await player.page.keyboard.up("KeyS");
 });
 
-test("losing window focus hides a Toggle reveal", async ({ setSettings }) => {
+test("losing window focus hides a tap's reveal", async ({ setSettings }) => {
   // Headless has no second window to switch to; dispatching the window's
   // blur event exercises the same listener a real window switch triggers.
-  await setSettings({ revealMode: "toggle", revealAutoHide: 0 });
+  await setSettings({ revealAfterTap: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
   await player.page.evaluate(() => window.dispatchEvent(new Event("blur")));

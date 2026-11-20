@@ -5,12 +5,12 @@ import { test, expect } from "./fixtures.js";
 import { expectHidesAtPlaybackTime, expectStyle, openWatchPage, youtubePlayer } from "./players.js";
 import { YOUTUBE_SERVED_VIDEO } from "./routes.js";
 
-const AUTO_HIDE_SECONDS = 3;
+const AFTER_TAP_SECONDS = 3;
 const JUMP_BACK_SECONDS = 3;
 // Every reveal setting is spelled out: setSettings merges into the persistent
 // profile's storage, so one left out keeps another test's value.
 const BASE_SETTINGS = {
-  subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5, revealJumpBack: 0,
+  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterTap: "hide", revealJumpBack: 0,
 };
 
 let player;
@@ -46,19 +46,26 @@ test("with focus on the Dreaming page, the reveal key still reveals the captions
   await expect.poll(isRevealed).toBe(false);
 });
 
-test(`Toggle in the player: a press reveals, a second hides, and auto-hide hides after ${AUTO_HIDE_SECONDS} s`, async ({ setSettings }) => {
-  await setSettings({ revealMode: "toggle", revealAutoHide: AUTO_HIDE_SECONDS });
+test(`a tap in the player with Show ${AFTER_TAP_SECONDS} s keeps the captions up until that far past the press`, async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: AFTER_TAP_SECONDS });
   await player.focusFrame();
-  const { keyboard } = player.page;
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(true);
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(false);
-
   const pressedAt = await player.currentTime();
-  await keyboard.press("KeyS");
+  await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
-  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AUTO_HIDE_SECONDS);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AFTER_TAP_SECONDS);
+});
+
+// The release is forwarded with how long the key was down, so the frame
+// keeps a tap's reveal; then focus moves into the player, as a click on the
+// video to pause does. The page does not forward that blur.
+test("a forwarded tap keeps the captions up when focus moves into the player", async ({ setSettings }) => {
+  await setSettings({ revealAfterTap: 10 });
+  await player.focusPage();
+  await player.page.keyboard.press("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await player.focusFrame();
+  await player.page.waitForTimeout(500);
+  expect(await isRevealed()).toBe(true);
 });
 
 // The press is made with focus on the Dreaming page, so it is forwarded:
@@ -96,7 +103,7 @@ test("with YouTube's captions off, the reveal key shows nothing", async () => {
 test("losing window focus on the Dreaming page hides a reveal in the player", async ({ setSettings }) => {
   // The page forwards its window blur to the frame. Headless has no second
   // window, so dispatch the page's blur event directly.
-  await setSettings({ revealMode: "toggle", revealAutoHide: 0 });
+  await setSettings({ revealAfterTap: 10 });
   await player.focusPage();
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);

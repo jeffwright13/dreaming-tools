@@ -93,7 +93,7 @@ test("Hold: the reveal key and a pressed preview reveal both previews", async ({
   await expect(html).toHaveClass(REVEALED);
   await expectFilter(page, SHAKA_PREVIEW, "none");
   await expectFilter(page, YOUTUBE_PREVIEW, "none");
-  await page.keyboard.down("KeyS"); // auto-repeat must not toggle
+  await page.keyboard.down("KeyS"); // auto-repeat is not a new press
   await expect(html).toHaveClass(REVEALED);
   await page.keyboard.up("KeyS");
   await expect(html).not.toHaveClass(REVEALED);
@@ -115,7 +115,7 @@ test("the reveal key previews from a focused dropdown without changing it", asyn
   const style = page.locator("[name=subtitleStyle]");
   await style.selectOption("hidden");
   await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden" });
-  for (const name of ["subtitleStyle", "revealMode"]) {
+  for (const name of ["subtitleStyle", "revealAfterTap"]) {
     await page.locator(`[name=${name}]`).focus();
     await page.keyboard.down("KeyS");
     await expect(html, name).toHaveClass(REVEALED);
@@ -123,34 +123,34 @@ test("the reveal key previews from a focused dropdown without changing it", asyn
     await expect(html, name).not.toHaveClass(REVEALED);
   }
   await expect(style).toHaveValue("hidden");
-  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden", revealMode: "hold" });
+  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden", revealAfterTap: "hide" });
 });
 
-test("Toggle: presses and clicks toggle, and auto-hide applies", async ({ context, optionsUrl }) => {
+// The preview has no video: a tap keeps it up for the jump plus the chosen
+// seconds, here 3 + 3. Event timestamps are not faked by page.clock, so a
+// press and release made back to back always count as a tap.
+test("a tap or a click keeps the preview up for the jump plus the chosen seconds", async ({ context, optionsUrl }) => {
   const page = await openOptions(context, optionsUrl, { clock: true });
   const html = page.locator("html");
   await enableSubtitles(page);
-  await page.locator("[name=revealMode]").selectOption("toggle");
-  await page.locator("[name=revealAutoHide]").selectOption("3");
+  await page.locator("[name=revealJumpBack]").selectOption("3");
+  await expect(page.locator("#after-tap-hint")).toBeVisible();
+  await page.locator("[name=revealAfterTap]").selectOption("3");
+  await expect(page.locator("#after-tap-hint")).toBeHidden();
   await page.locator("h1").click();
 
   await page.keyboard.press("KeyS");
-  await expect(html).toHaveClass(REVEALED);
-  await page.keyboard.press("KeyS");
-  await expect(html).not.toHaveClass(REVEALED);
-
-  await page.keyboard.press("KeyS");
-  await page.clock.runFor(2_900);
+  await page.clock.runFor(5_900);
   await expect(html).toHaveClass(REVEALED);
   await page.clock.runFor(200);
   await expect(html).not.toHaveClass(REVEALED);
 
   await page.locator("#subtitle-preview").click();
   await expect(html).toHaveClass(REVEALED);
-  await page.mouse.move(5, 5); // leaving the preview does not hide in Toggle
+  await page.mouse.move(5, 5);
   await expect(html).toHaveClass(REVEALED);
 
-  await page.locator("[name=revealMode]").selectOption("hold");
+  await page.locator("[name=revealAfterTap]").selectOption("hide");
   await expect(html).not.toHaveClass(REVEALED);
 });
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import "../src/settings.js";
 
-const { DEFAULT_SETTINGS, SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
+const {
+  DEFAULT_SETTINGS, LEGACY_REVEAL_KEYS, SETTING_KEYS, STORED_KEYS, normalizeSettings, revealAfterTapFromLegacy,
+} = globalThis.DreamingToolsSettings;
 
 describe("settings", () => {
   it("supplies conservative defaults for a fresh installation", () => {
@@ -13,9 +15,8 @@ describe("settings", () => {
       position: "upper-right",
       subtitlesEnabled: false,
       subtitleStyle: "blur",
-      revealMode: "hold",
       revealKey: "KeyS",
-      revealAutoHide: 5,
+      revealAfterTap: "hide",
       revealJumpBack: 0,
     });
   });
@@ -33,9 +34,8 @@ describe("settings", () => {
       position: "lower-right",
       subtitlesEnabled: "on",
       subtitleStyle: "invisible",
-      revealMode: "press",
       revealKey: "Space",
-      revealAutoHide: 7,
+      revealAfterTap: 7,
       revealJumpBack: 4,
     })).toEqual({
       difficultyEnabled: false,
@@ -45,9 +45,8 @@ describe("settings", () => {
       position: "upper-right",
       subtitlesEnabled: false,
       subtitleStyle: "blur",
-      revealMode: "hold",
       revealKey: "KeyS",
-      revealAutoHide: 5,
+      revealAfterTap: "hide",
       revealJumpBack: 0,
     });
   });
@@ -61,9 +60,8 @@ describe("settings", () => {
       position: "upper-left",
       subtitlesEnabled: true,
       subtitleStyle: "small-faint",
-      revealMode: "toggle",
       revealKey: "KeyJ",
-      revealAutoHide: "caught-up",
+      revealAfterTap: "caught-up",
       revealJumpBack: 3,
     })).toEqual({
       difficultyEnabled: false,
@@ -73,15 +71,22 @@ describe("settings", () => {
       position: "upper-left",
       subtitlesEnabled: true,
       subtitleStyle: "small-faint",
-      revealMode: "toggle",
       revealKey: "KeyJ",
-      revealAutoHide: "caught-up",
+      revealAfterTap: "caught-up",
       revealJumpBack: 3,
     });
   });
 
-  it("lists every stored key so reads return only what the user saved", () => {
+  it("lists every setting key so reads return only what the user saved", () => {
     expect(SETTING_KEYS).toEqual(Object.keys(DEFAULT_SETTINGS));
+  });
+
+  // Storage is read with the old reveal keys too, so their values can be
+  // migrated; normalizing never returns them.
+  it("reads the old reveal keys from storage but never returns them", () => {
+    expect(STORED_KEYS).toEqual([...SETTING_KEYS, ...LEGACY_REVEAL_KEYS]);
+    expect(LEGACY_REVEAL_KEYS).toEqual(["revealMode", "revealAutoHide"]);
+    expect(Object.keys(normalizeSettings({ revealMode: "toggle", revealAutoHide: 3 }))).toEqual(SETTING_KEYS);
   });
 });
 
@@ -98,7 +103,7 @@ describe("reveal key validation", () => {
   );
 });
 
-describe("jump back and auto-hide values", () => {
+describe("jump back and after-a-tap values", () => {
   it.each([0, 1, 2, 3, 5, 10])("accepts a jump back of %s seconds", (revealJumpBack) => {
     expect(normalizeSettings({ revealJumpBack }).revealJumpBack).toBe(revealJumpBack);
   });
@@ -107,14 +112,48 @@ describe("jump back and auto-hide values", () => {
     expect(normalizeSettings({ revealJumpBack }).revealJumpBack).toBe(0);
   });
 
-  it.each([0, "caught-up", 3, 5, 10])("accepts auto-hide %s", (revealAutoHide) => {
-    expect(normalizeSettings({ revealAutoHide }).revealAutoHide).toBe(revealAutoHide);
+  it.each(["hide", "caught-up", 3, 5, 10])("accepts after a tap %s", (revealAfterTap) => {
+    expect(normalizeSettings({ revealAfterTap }).revealAfterTap).toBe(revealAfterTap);
   });
 
-  // "When caught up" is kept even with jump back off; the feature treats it
-  // as Off then, so turning jump back on again restores it.
-  it("keeps When caught up stored while jump back is off", () => {
-    expect(normalizeSettings({ revealAutoHide: "caught-up", revealJumpBack: 0 }).revealAutoHide).toBe("caught-up");
+  it.each([0, 1, "toggle", "3", null])("rejects after a tap %s", (revealAfterTap) => {
+    expect(normalizeSettings({ revealAfterTap }).revealAfterTap).toBe("hide");
+  });
+
+  // Show until caught up is kept even with jump back off; the feature treats
+  // it as Hide on release then, so turning jump back on again restores it.
+  it("keeps Show until caught up stored while jump back is off", () => {
+    expect(normalizeSettings({ revealAfterTap: "caught-up", revealJumpBack: 0 }).revealAfterTap).toBe("caught-up");
+  });
+});
+
+// 1.2.0 and earlier stored revealMode (Hold or Toggle) and revealAutoHide.
+describe("migration from the Hold and Toggle settings", () => {
+  it.each([
+    [{ revealMode: "hold" }, "hide"],
+    [{ revealMode: "hold", revealAutoHide: 3 }, "hide"],
+    [{ revealMode: "toggle", revealAutoHide: 3 }, 3],
+    [{ revealMode: "toggle", revealAutoHide: 5 }, 5],
+    [{ revealMode: "toggle", revealAutoHide: 10 }, 10],
+    // Off kept the text up until the next press: no equivalent; the longest.
+    [{ revealMode: "toggle", revealAutoHide: 0 }, 10],
+    // Never stored: the old default auto-hide was 5 seconds.
+    [{ revealMode: "toggle" }, 5],
+  ])("maps %o to after a tap %s", (stored, revealAfterTap) => {
+    expect(revealAfterTapFromLegacy(stored)).toBe(revealAfterTap);
+    expect(normalizeSettings(stored).revealAfterTap).toBe(revealAfterTap);
+  });
+
+  // A second device still on 1.2.0 can write revealMode back through sync.
+  it("leaves a stored after-a-tap choice alone", () => {
+    const stored = { revealMode: "toggle", revealAutoHide: 3, revealAfterTap: "caught-up" };
+    expect(revealAfterTapFromLegacy(stored)).toBeUndefined();
+    expect(normalizeSettings(stored).revealAfterTap).toBe("caught-up");
+  });
+
+  it("has nothing to migrate without an old reveal mode", () => {
+    expect(revealAfterTapFromLegacy({})).toBeUndefined();
+    expect(revealAfterTapFromLegacy({ revealMode: "press" })).toBeUndefined();
   });
 });
 

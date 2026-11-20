@@ -20,10 +20,10 @@ const SETTLE_MS = 500;
 const SHOWCASE_SETTINGS = {
   subtitlesEnabled: true,
   subtitleStyle: "blur",
-  revealMode: "hold",
   revealKey: "KeyS",
-  // Shown set, so the store images show the feature exists.
+  // Shown set, so the store images show the features exist.
   revealJumpBack: 3,
+  revealAfterTap: "caught-up",
   difficultyEnabled: true,
   behavior: "enhanced-everywhere",
   style: "enhanced",

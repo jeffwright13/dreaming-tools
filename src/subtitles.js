@@ -16,33 +16,43 @@
   const HAVE_METADATA = 1;
   const PLAYBACK_EVENTS = ["timeupdate", "seeked"];
   const VIDEO_GONE_EVENTS = ["ended", "emptied"];
+  // On macOS a key released while Cmd is down sends no keyup, so Cmd's own
+  // release stands in for the reveal key's.
+  const META_KEY = "Meta";
+  const REVEAL_SETTINGS = ["revealKey", "revealAfterTap", "revealJumpBack"];
 
   const { normalizeSettings } = globalThis.DreamingToolsSettings;
   const {
-    autoHidePoint,
     continuesSeries,
+    hidePoint,
     isRevealKeyPress,
+    isTap,
     isTypingTarget,
     jumpTarget,
-    nextRevealState,
+    tapKeepsShown,
   } = globalThis.DreamingSubtitlesCore;
 
   // The feature never edits the player. It only sets classes on <html>, and
   // subtitles.css styles the subtitle container through them, so a container
   // the player removes and re-creates is styled without observing the page.
   //
+  // A press jumps the video back (when Jump back is on) and shows the
+  // subtitles while the key is down. A hold hides on release; a tap (released
+  // within TAP_MAX_MS) follows the After a tap setting. See docs/SPEC.md.
+  //
   // YouTube-served videos draw captions inside a cross-origin YouTube frame,
   // where a second instance of this feature runs. Keys pressed while focus is
   // on the Dreaming page never reach that frame, so the Dreaming instance
-  // forwards them (forwardTargets/forwardOrigin) and the frame instance
-  // applies messages only from the Dreaming origin (acceptOrigin).
+  // forwards them (forwardTargets/forwardOrigin), with how long the key was
+  // down, and the frame instance applies messages only from the Dreaming
+  // origin (acceptOrigin).
   function createSubtitlesFeature({
     root = document.documentElement,
     target = window,
     // Matches only while the player's own subtitles are on. Styling always
     // comes from subtitles.css; this decides whether a key press is handled.
     shownSelector = SHAKA_CONTAINER_SELECTOR,
-    // While a video's ancestor matches this (a YouTube ad), a reveal does not
+    // While a video's ancestor matches this (a YouTube ad), a press does not
     // move the video, which would then be the ad.
     jumpBlockedSelector = null,
     forwardTargets = () => [],
@@ -51,18 +61,23 @@
   } = {}) {
     let settings = null;
     let revealed = false;
-    let autoHideTimer = null;
     let listening = false;
-    // While revealed: the video being watched, and the playback time at
-    // which a toggle reveal hides again (null for none).
+    // While shown: the video watched for the hide point, the hide point (a
+    // playback time, or null), and whether it applies yet. It applies only
+    // after a tap's release, because until then the press may be a hold.
     let watchedVideo = null;
     let hideAt = null;
-    // The current series of reveals ({ video, anchor, floor }), kept across
+    let hideArmed = false;
+    // A timed After a tap with no video to watch falls back to this.
+    let fallbackTimer = null;
+    // The current series of presses ({ video, anchor, floor }), kept across
     // hides so a few taps back count as one; see continuesSeries.
     let series = null;
-    // Whether the reveal key is down. A keydown before its keyup is not a new
-    // press: some keyboards send auto-repeat without the repeat flag.
-    let keyHeld = false;
+    // The event.timeStamp of the press waiting for its release (a local
+    // keydown or a forwarded press), or null. A keydown while one is pending
+    // is not a new press: some keyboards send auto-repeat without the repeat
+    // flag. A release with none pending does nothing.
+    let pressedAt = null;
 
     function subtitlesShown() {
       return root.ownerDocument.querySelector(shownSelector) !== null;
@@ -141,23 +156,18 @@
     }
 
     function onPlaybackTime() {
-      if (hideAt !== null && watchedVideo.currentTime >= hideAt) {
-        applyEvent("timeout");
+      if (hideArmed && hideAt !== null && watchedVideo.currentTime >= hideAt) {
+        hide();
       }
     }
 
-    function onVideoGone() {
-      setRevealed(false);
-    }
-
-    function watch(video, point) {
+    function watch(video) {
       watchedVideo = video;
-      hideAt = point;
       for (const type of PLAYBACK_EVENTS) {
         video.addEventListener(type, onPlaybackTime);
       }
       for (const type of VIDEO_GONE_EVENTS) {
-        video.addEventListener(type, onVideoGone);
+        video.addEventListener(type, hide);
       }
     }
 
@@ -169,89 +179,108 @@
         watchedVideo.removeEventListener(type, onPlaybackTime);
       }
       for (const type of VIDEO_GONE_EVENTS) {
-        watchedVideo.removeEventListener(type, onVideoGone);
+        watchedVideo.removeEventListener(type, hide);
       }
       watchedVideo = null;
+    }
+
+    function clearFallbackTimer() {
+      clearTimeout(fallbackTimer);
+      fallbackTimer = null;
+    }
+
+    // Shows the subtitles; with a video, watches it for the hide point
+    // (pending until a tap's release) and for the video ending.
+    function show(video, point) {
+      revealed = true;
+      root.classList.add(REVEALED_CLASS);
+      clearFallbackTimer();
+      unwatch();
+      hideAt = point;
+      hideArmed = false;
+      if (video) {
+        watch(video);
+      }
+    }
+
+    function hide() {
+      revealed = false;
+      root.classList.remove(REVEALED_CLASS);
+      clearFallbackTimer();
+      unwatch();
       hideAt = null;
+      hideArmed = false;
+    }
+
+    // Every press jumps back and shows, including one while a tap keeps the
+    // text up; a press inside the current series keeps its hide point.
+    function onPress() {
+      const video = findVideo();
+      if (!video) {
+        show(null, null);
+        return;
+      }
+      const pressTime = video.currentTime;
+      const landed = pressTime - jumpBack(video);
+      const { anchor } = seriesFor(video, pressTime, landed);
+      show(video, hidePoint(settings, anchor, landed));
+    }
+
+    // A hold hides on release; so does a tap with Hide on release. Any other
+    // tap keeps the text up until its hide point, and hides at once if that
+    // has already passed. With no video, a timed choice uses a timer and
+    // Show until caught up has nothing to catch up to.
+    function onRelease(heldMs) {
+      if (!revealed) {
+        return;
+      }
+      if (!isTap(heldMs) || !tapKeepsShown(settings)) {
+        hide();
+        return;
+      }
+      if (watchedVideo && hideAt !== null) {
+        hideArmed = true;
+        onPlaybackTime();
+        return;
+      }
+      if (typeof settings.revealAfterTap === "number") {
+        fallbackTimer = setTimeout(hide, settings.revealAfterTap * MILLISECONDS_PER_SECOND);
+        return;
+      }
+      hide();
+    }
+
+    // A press while the player shows no subtitles belongs to the page: it
+    // does not jump, it hides a shown reveal, and it ends the series, so a
+    // reveal kept up by a tap does not reappear when subtitles come back.
+    function hideWithoutSubtitles() {
+      if (revealed) {
+        hide();
+      }
+      endSeries();
     }
 
     function frameTargets() {
       return forwardOrigin ? forwardTargets() : [];
     }
 
-    function forward(frames, event) {
+    function forward(frames, data) {
       for (const frame of frames) {
-        frame.postMessage({ source: MESSAGE_SOURCE, type: MESSAGE_TYPE, event }, forwardOrigin);
+        frame.postMessage({ source: MESSAGE_SOURCE, type: MESSAGE_TYPE, ...data }, forwardOrigin);
       }
+    }
+
+    // A click on the YouTube video (to pause, say) moves focus into its
+    // frame, which blurs this page; the key's release, if any, now reaches
+    // the frame directly, so the frame need not hide.
+    function focusMovedInto(frames) {
+      const focused = root.ownerDocument.activeElement;
+      return frames.some((frame) => focused?.contentWindow === frame);
     }
 
     function consume(event) {
       event.preventDefault();
       event.stopPropagation();
-    }
-
-    function clearAutoHide() {
-      clearTimeout(autoHideTimer);
-      autoHideTimer = null;
-    }
-
-    // A reveal with a video watches it: auto-hide follows playback time,
-    // and the video ending or being replaced hides. Without a video, a
-    // numeric auto-hide falls back to a timer.
-    function setRevealed(next, { video = null, anchor = 0, landed = 0 } = {}) {
-      revealed = next;
-      root.classList.toggle(REVEALED_CLASS, revealed);
-      clearAutoHide();
-      unwatch();
-      if (!revealed) {
-        return;
-      }
-      if (video) {
-        watch(video, autoHidePoint(settings, anchor, landed));
-      } else if (settings.revealMode === "toggle" && typeof settings.revealAutoHide === "number"
-        && settings.revealAutoHide > 0) {
-        autoHideTimer = setTimeout(
-          () => applyEvent("timeout"),
-          settings.revealAutoHide * MILLISECONDS_PER_SECOND,
-        );
-      }
-    }
-
-    // Only a press that reveals moves the video back; a press that hides,
-    // a release, a timeout, or a blur never does.
-    function onPress() {
-      const next = nextRevealState(revealed, "press", settings);
-      if (next === revealed) {
-        return;
-      }
-      const video = next ? findVideo() : null;
-      if (!video) {
-        setRevealed(next);
-        return;
-      }
-      const pressTime = video.currentTime;
-      const landed = pressTime - jumpBack(video);
-      const { anchor } = seriesFor(video, pressTime, landed);
-      setRevealed(true, { video, anchor, landed });
-    }
-
-    // Releases, blurs, and timeouts change the state only when it changes:
-    // a Toggle release leaves the reveal, and its auto-hide, as they are.
-    function applyEvent(event) {
-      const next = nextRevealState(revealed, event, settings);
-      if (next !== revealed) {
-        setRevealed(next);
-      }
-    }
-
-    // A press while the player shows no subtitles would flip the state
-    // invisibly, so it only hides. Otherwise a Toggle reveal made before the
-    // player's subtitles were turned off would still be in effect when they
-    // are turned back on.
-    function hideWithoutSubtitles() {
-      if (revealed) {
-        setRevealed(false);
-      }
     }
 
     // Listeners run in the capture phase on window, before the player's own
@@ -260,8 +289,10 @@
       if (!isRevealKeyPress(event, settings.revealKey) || isTypingTarget(event.target)) {
         return;
       }
-      const newPress = !event.repeat && !keyHeld;
-      keyHeld = true;
+      const newPress = !event.repeat && pressedAt === null;
+      if (newPress) {
+        pressedAt = event.timeStamp;
+      }
 
       if (subtitlesShown()) {
         consume(event);
@@ -281,38 +312,52 @@
       if (frames.length > 0) {
         consume(event);
         if (newPress) {
-          forward(frames, "press");
+          forward(frames, { event: "press" });
         }
       }
     }
 
+    // Hold time comes from the events' own timestamps, so a busy page does
+    // not turn a tap into a hold.
+    function release(event, frames) {
+      const heldMs = event.timeStamp - pressedAt;
+      pressedAt = null;
+      forward(frames, { event: "release", heldMs });
+      onRelease(heldMs);
+    }
+
     function onKeyUp(event) {
-      // On macOS a key released while Cmd is down sends no keyup, so Cmd's
-      // own release stands in for it.
-      if (event.key === "Meta") {
-        keyHeld = false;
+      const frames = frameTargets();
+      if (event.key === META_KEY) {
+        if (pressedAt !== null) {
+          release(event, frames);
+        }
         return;
       }
       if (event.code !== settings.revealKey) {
         return;
       }
-      keyHeld = false;
 
-      // Release even if the player's subtitles were turned off while held,
-      // or focus moved into a text field, but let a typed key's release
-      // reach that field.
-      const frames = frameTargets();
+      // Consume the release even if the player's subtitles were turned off
+      // while held, but let a typed key's release reach a text field.
       if (!isTypingTarget(event.target) && (subtitlesShown() || frames.length > 0)) {
         consume(event);
       }
-      forward(frames, "release");
-      applyEvent("release");
+      if (pressedAt !== null) {
+        release(event, frames);
+      }
     }
 
+    // The release may never arrive once the window loses focus.
     function onBlur() {
-      keyHeld = false;
-      forward(frameTargets(), "blur");
-      applyEvent("blur");
+      pressedAt = null;
+      if (revealed) {
+        hide();
+      }
+      const frames = frameTargets();
+      if (!focusMovedInto(frames)) {
+        forward(frames, { event: "blur" });
+      }
     }
 
     // Accepts any sender with the Dreaming origin, not only the parent window
@@ -326,17 +371,30 @@
         return;
       }
 
-      // Releases and blurs always apply so nothing stays revealed.
-      if (data.event === "press" && !subtitlesShown()) {
-        hideWithoutSubtitles();
-        return;
-      }
-
       if (data.event === "press") {
+        if (!subtitlesShown()) {
+          hideWithoutSubtitles();
+          return;
+        }
+        pressedAt = event.timeStamp;
         onPress();
         return;
       }
-      applyEvent(data.event);
+
+      // A release's hold time was measured on the Dreaming page; isTap
+      // treats a missing or invalid one as a hold.
+      if (data.event === "release") {
+        if (pressedAt !== null) {
+          pressedAt = null;
+          onRelease(data.heldMs);
+        }
+        return;
+      }
+
+      pressedAt = null;
+      if (revealed) {
+        hide();
+      }
     }
 
     function setStyleClass(style) {
@@ -365,11 +423,9 @@
       target.removeEventListener("blur", onBlur);
       target.removeEventListener("message", onMessage);
       listening = false;
-      clearAutoHide();
-      unwatch();
-      revealed = false;
+      hide();
       endSeries();
-      keyHeld = false;
+      pressedAt = null;
       for (const name of [...root.classList]) {
         if (name.startsWith(ROOT_CLASS)) {
           root.classList.remove(name);
@@ -378,7 +434,7 @@
     }
 
     function revealSettingsChanged(previous, next) {
-      return ["revealMode", "revealKey", "revealAutoHide", "revealJumpBack"].some((key) => previous[key] !== next[key]);
+      return REVEAL_SETTINGS.some((key) => previous[key] !== next[key]);
     }
 
     function update(nextSettings) {
@@ -394,8 +450,9 @@
       }
       setStyleClass(settings.subtitleStyle);
       if (previous && revealSettingsChanged(previous, settings)) {
+        pressedAt = null;
         endSeries();
-        setRevealed(false);
+        hide();
       }
     }
 
