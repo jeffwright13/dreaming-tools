@@ -668,6 +668,7 @@ describe("YouTube-served videos on the Dreaming page", () => {
     vi.advanceTimersByTime(TAP_MS);
     press("keyup");
     window.dispatchEvent(new Event("blur"));
+    vi.runAllTimers();
 
     expect(frameWindow.postMessage.mock.calls).toEqual([
       [message("press"), "https://www.youtube.com"],
@@ -694,6 +695,35 @@ describe("YouTube-served videos on the Dreaming page", () => {
     Object.defineProperty(document, "activeElement", { configurable: true, get: () => document.querySelector("iframe") });
 
     window.dispatchEvent(new Event("blur"));
+    expect(sent()).toEqual([]);
+  });
+
+  // Firefox fires the page's blur while activeElement is still <body> and
+  // reports the iframe only by the next task (measured by Devin with
+  // Playwright: Firefox 159; Chromium 158 reports it inside the handler).
+  it("does not forward the blur when the frame takes focus just after it, as in Firefox", async () => {
+    await topFeature.update(ENABLED);
+
+    window.dispatchEvent(new Event("blur"));
+    Object.defineProperty(document, "activeElement", { configurable: true, get: () => document.querySelector("iframe") });
+    vi.runAllTimers();
+    expect(sent()).toEqual([]);
+  });
+
+  it("still forwards the blur when focus leaves the browser window", async () => {
+    await topFeature.update(ENABLED);
+
+    window.dispatchEvent(new Event("blur"));
+    vi.runAllTimers();
+    expect(sent()).toEqual([message("blur")]);
+  });
+
+  it("drops a pending blur check when disabled", async () => {
+    await topFeature.update(ENABLED);
+
+    window.dispatchEvent(new Event("blur"));
+    await topFeature.update({ ...ENABLED, subtitlesEnabled: false });
+    expect(vi.getTimerCount()).toBe(0);
     expect(sent()).toEqual([]);
   });
 

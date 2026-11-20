@@ -78,6 +78,8 @@
     // is not a new press: some keyboards send auto-repeat without the repeat
     // flag. A release with none pending does nothing.
     let pressedAt = null;
+    // A blur waits one task before deciding whether to forward; see onBlur.
+    let blurCheck = null;
 
     function subtitlesShown() {
       return root.ownerDocument.querySelector(shownSelector) !== null;
@@ -348,16 +350,33 @@
       }
     }
 
-    // The release may never arrive once the window loses focus.
+    function clearBlurCheck() {
+      clearTimeout(blurCheck);
+      blurCheck = null;
+    }
+
+    // The release may never arrive once the window loses focus. Whether
+    // focus moved into the YouTube frame is decided one task later: Firefox
+    // fires this blur while activeElement is still <body> and reports the
+    // iframe only by the next task, where Chromium already reports it here.
+    // A real window blur therefore reaches the frame one task late, while
+    // its window is in the background.
     function onBlur() {
       pressedAt = null;
       if (revealed) {
         hide();
       }
       const frames = frameTargets();
-      if (!focusMovedInto(frames)) {
-        forward(frames, { event: "blur" });
+      if (frames.length === 0) {
+        return;
       }
+      clearBlurCheck();
+      blurCheck = setTimeout(() => {
+        blurCheck = null;
+        if (!focusMovedInto(frames)) {
+          forward(frames, { event: "blur" });
+        }
+      });
     }
 
     // Accepts any sender with the Dreaming origin, not only the parent window
@@ -423,6 +442,7 @@
       target.removeEventListener("blur", onBlur);
       target.removeEventListener("message", onMessage);
       listening = false;
+      clearBlurCheck();
       hide();
       endSeries();
       pressedAt = null;

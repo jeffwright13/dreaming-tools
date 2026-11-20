@@ -280,7 +280,7 @@ These come from the exploration on 2026-11-07 and from building the suite.
 | Edge current stable | Optional | Required | Optional |
 | Firefox current stable | Required (manual) | Optional | Optional |
 
-The live Playwright suite cannot load an extension into Firefox, so Firefox is checked by hand: load the build with `npx web-ext run` (a fresh profile each run) or as a temporary add-on in `about:debugging`, run `npx web-ext lint` on the extracted package, and exercise the INSTALL.md checklist on both players, using a free account for YouTube-served videos.
+The live Playwright suite cannot load an extension into Firefox, so Firefox is checked by hand: load the build with `npx web-ext run` (a fresh profile each run) or as a temporary add-on in `about:debugging`, run `npx web-ext lint` on the extracted package, and exercise the INSTALL.md checklist on both players, using a free account for YouTube-served videos. A build loaded this way starts without access to app.dreaming.com (its icon is greyed in the Extensions menu, and the reveal key does nothing): allow the site from that menu, or in `about:addons` under Permissions, then reload the tab. Firefox-specific check: on a YouTube-served video, with After a tap set to a number, tap the key with focus on the Dreaming page, then click the video to pause; the subtitles must stay up (Firefox reports the focused iframe a task later than Chromium; see DECISIONS.md).
 
 `Required` coverage may come from physical machines, virtual machines, trusted testers, or a reputable browser-testing service. For each required cell, record:
 
