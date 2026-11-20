@@ -25,6 +25,31 @@ function press(type, init = {}, target = document.body) {
   return event;
 }
 
+// jsdom's video never plays, so give it a controllable clock. advance()
+// moves playback forward and fires timeupdate, as a playing video would.
+function fakeVideo(video = document.querySelector("video"), { time = 40, readyState = 4, seeking = false } = {}) {
+  let currentTime = time;
+  const state = { readyState, seeking };
+  Object.defineProperty(video, "currentTime", { configurable: true, get: () => currentTime, set: (value) => { currentTime = value; } });
+  Object.defineProperty(video, "readyState", { configurable: true, get: () => state.readyState });
+  Object.defineProperty(video, "seeking", { configurable: true, get: () => state.seeking });
+  return {
+    get time() { return currentTime; },
+    state,
+    advance(to) {
+      currentTime = to;
+      video.dispatchEvent(new Event("timeupdate"));
+    },
+    seekTo(to) {
+      currentTime = to;
+      video.dispatchEvent(new Event("seeked"));
+    },
+    fire(type) {
+      video.dispatchEvent(new Event(type));
+    },
+  };
+}
+
 let feature;
 
 beforeEach(() => {
@@ -156,27 +181,76 @@ describe("subtitles feature", () => {
       expect(revealed()).toBe(false);
     });
 
-    it("auto-hides after the configured delay", async () => {
+    it("auto-hides after the configured seconds of playback", async () => {
+      const video = fakeVideo();
+      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
+
+      press("keydown");
+      video.advance(44.9);
+      expect(revealed()).toBe(true);
+      video.advance(45);
+      expect(revealed()).toBe(false);
+    });
+
+    // A real key press ends with a release, which must not restart or drop
+    // the playback-time auto-hide.
+    it("still auto-hides by playback after the key is released", async () => {
       vi.useFakeTimers();
+      const video = fakeVideo();
+      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
+
+      press("keydown");
+      press("keyup");
+      vi.advanceTimersByTime(60_000);
+      expect(revealed()).toBe(true);
+      video.advance(45);
+      expect(revealed()).toBe(false);
+    });
+
+    it("keeps the text up while the video is paused", async () => {
+      vi.useFakeTimers();
+      fakeVideo();
+      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
+
+      press("keydown");
+      vi.advanceTimersByTime(60_000);
+      expect(revealed()).toBe(true);
+    });
+
+    it("restarts the auto-hide point on a new reveal after an early toggle off", async () => {
+      const video = fakeVideo();
+      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
+
+      press("keydown");
+      press("keydown");
+      video.advance(42);
+      press("keydown");
+      video.advance(46.9);
+      expect(revealed()).toBe(true);
+      video.advance(47);
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides on a manual seek past the auto-hide point and not on one before it", async () => {
+      const video = fakeVideo();
+      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
+
+      press("keydown");
+      video.seekTo(30);
+      expect(revealed()).toBe(true);
+      video.seekTo(60);
+      expect(revealed()).toBe(false);
+    });
+
+    it("falls back to a timer when no video is found", async () => {
+      vi.useFakeTimers();
+      document.querySelector("video").remove();
       await feature.update({ ...TOGGLE, revealAutoHide: 5 });
 
       press("keydown");
       vi.advanceTimersByTime(4999);
       expect(revealed()).toBe(true);
       vi.advanceTimersByTime(1);
-      expect(revealed()).toBe(false);
-    });
-
-    it("cancels the auto-hide timer when toggled off early", async () => {
-      vi.useFakeTimers();
-      await feature.update({ ...TOGGLE, revealAutoHide: 5 });
-
-      press("keydown");
-      press("keydown");
-      press("keydown");
-      vi.advanceTimersByTime(4000);
-      expect(revealed()).toBe(true);
-      vi.advanceTimersByTime(1000);
       expect(revealed()).toBe(false);
     });
 
@@ -198,6 +272,14 @@ describe("subtitles feature", () => {
     expect(revealed()).toBe(false);
   });
 
+  it("returns to hidden when the jump back changes", async () => {
+    await feature.update({ ...ENABLED, revealMode: "toggle", revealAutoHide: 0 });
+    press("keydown");
+
+    await feature.update({ ...ENABLED, revealMode: "toggle", revealAutoHide: 0, revealJumpBack: 3 });
+    expect(revealed()).toBe(false);
+  });
+
   it("removes its classes, listeners, and timer when disabled", async () => {
     vi.useFakeTimers();
     await feature.update({ ...ENABLED, revealMode: "toggle", revealAutoHide: 5 });
@@ -216,6 +298,170 @@ describe("subtitles feature", () => {
     await feature.update({ ...ENABLED, subtitleStyle: "small-faint" });
 
     expect(addListener.mock.calls.filter(([type]) => type === "keydown")).toHaveLength(1);
+  });
+});
+
+describe("jump back on reveal", () => {
+  const JUMP = { ...ENABLED, revealJumpBack: 3 };
+  const TOGGLE_JUMP = { ...JUMP, revealMode: "toggle", revealAutoHide: 0 };
+
+  it("moves the video back when a press reveals, and not on release", async () => {
+    const video = fakeVideo();
+    await feature.update(JUMP);
+
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(37);
+    press("keyup");
+    expect(video.time).toBe(37);
+  });
+
+  it("leaves the video alone with jump back off", async () => {
+    const video = fakeVideo();
+    await feature.update(ENABLED);
+
+    press("keydown");
+    expect(video.time).toBe(40);
+  });
+
+  it("does not jump on held-key repeats", async () => {
+    const video = fakeVideo();
+    await feature.update(JUMP);
+
+    press("keydown");
+    press("keydown", { repeat: true });
+    expect(video.time).toBe(37);
+  });
+
+  it("stops at the start of the video", async () => {
+    const video = fakeVideo(undefined, { time: 1.5 });
+    await feature.update(JUMP);
+
+    press("keydown");
+    expect(video.time).toBe(0);
+  });
+
+  it("does not jump on the press that hides in toggle mode", async () => {
+    vi.useFakeTimers();
+    const video = fakeVideo();
+    await feature.update(TOGGLE_JUMP);
+
+    press("keydown");
+    vi.advanceTimersByTime(1000);
+    press("keydown");
+    expect(revealed()).toBe(false);
+    expect(video.time).toBe(37);
+  });
+
+  it("jumps again on each later reveal", async () => {
+    vi.useFakeTimers();
+    const video = fakeVideo();
+    await feature.update(JUMP);
+
+    press("keydown");
+    press("keyup");
+    vi.advanceTimersByTime(1000);
+    press("keydown");
+    expect(video.time).toBe(34);
+  });
+
+  // Some keyboards send auto-repeat as fresh presses without the repeat flag.
+  it("ignores a second jump within the guard time but still reveals", async () => {
+    vi.useFakeTimers();
+    const video = fakeVideo();
+    await feature.update(JUMP);
+
+    press("keydown");
+    press("keyup");
+    vi.advanceTimersByTime(100);
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(37);
+  });
+
+  it("still reveals without jumping before the video is ready", async () => {
+    const video = fakeVideo(undefined, { readyState: 0 });
+    await feature.update(JUMP);
+
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(40);
+  });
+
+  it("still reveals without jumping while the video is already seeking", async () => {
+    const video = fakeVideo(undefined, { seeking: true });
+    await feature.update(JUMP);
+
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(40);
+  });
+
+  it("uses the video in the player whose subtitles are shown", async () => {
+    document.body.insertAdjacentHTML("afterbegin", "<video id='other'></video>");
+    const other = fakeVideo(document.querySelector("#other"));
+    const player = fakeVideo(document.querySelector(".ds-shaka-player video"));
+    await feature.update(JUMP);
+
+    press("keydown");
+    expect(player.time).toBe(37);
+    expect(other.time).toBe(40);
+  });
+
+  describe("when caught up", () => {
+    const CAUGHT_UP = { ...JUMP, revealMode: "toggle", revealAutoHide: "caught-up" };
+
+    it("hides once playback returns to where the key was pressed", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      press("keydown");
+      video.advance(39.9);
+      expect(revealed()).toBe(true);
+      video.advance(40);
+      expect(revealed()).toBe(false);
+    });
+
+    it("still catches up after the key is released", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      press("keydown");
+      press("keyup");
+      video.advance(40);
+      expect(revealed()).toBe(false);
+    });
+
+    it("acts as off with jump back off", async () => {
+      const video = fakeVideo();
+      await feature.update({ ...CAUGHT_UP, revealJumpBack: 0 });
+
+      press("keydown");
+      video.advance(100);
+      expect(revealed()).toBe(true);
+    });
+  });
+
+  it.each(["ended", "emptied"])("hides when the video fires %s", async (type) => {
+    const video = fakeVideo();
+    await feature.update(TOGGLE_JUMP);
+
+    press("keydown");
+    video.fire(type);
+    expect(revealed()).toBe(false);
+  });
+
+  it("stops watching the video once hidden or disabled", async () => {
+    const video = fakeVideo();
+    await feature.update({ ...TOGGLE_JUMP, revealAutoHide: 5 });
+    press("keydown");
+    press("keydown");
+    press("keydown");
+    await feature.update({ ...ENABLED, subtitlesEnabled: false });
+    await feature.update({ ...TOGGLE_JUMP, revealAutoHide: 5 });
+
+    video.advance(100);
+    expect(revealed()).toBe(false);
   });
 });
 
@@ -269,7 +515,12 @@ describe("YouTube-served videos on the Dreaming page", () => {
 
 describe("inside the YouTube frame", () => {
   const DREAMING_ORIGIN = "https://app.dreaming.com";
-  const CAPTIONS_ON = '<div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>';
+  const CAPTIONS_ON = `
+    <div id="movie_player" class="html5-video-player">
+      <video class="html5-main-video"></video>
+      <div class="ytp-caption-window-container"><div class="caption-window">Hola</div></div>
+    </div>
+  `;
   let frameFeature;
 
   function receive(data, origin = DREAMING_ORIGIN) {
@@ -280,6 +531,7 @@ describe("inside the YouTube frame", () => {
     document.body.innerHTML = CAPTIONS_ON;
     frameFeature = createSubtitlesFeature({
       shownSelector: ".ytp-caption-window-container",
+      jumpBlockedSelector: ".ad-showing",
       acceptOrigin: DREAMING_ORIGIN,
     });
   });
@@ -302,6 +554,25 @@ describe("inside the YouTube frame", () => {
     expect(revealed()).toBe(true);
     receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "release" });
     expect(revealed()).toBe(false);
+  });
+
+  it("jumps the frame's video back on a press forwarded from the Dreaming page", async () => {
+    const video = fakeVideo();
+    await frameFeature.update({ ...ENABLED, revealJumpBack: 5 });
+
+    receive({ source: "dreaming-tools", type: "subtitles-reveal", event: "press" });
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(35);
+  });
+
+  it("reveals without jumping while YouTube plays an ad", async () => {
+    const video = fakeVideo();
+    document.querySelector("#movie_player").classList.add("ad-showing");
+    await frameFeature.update({ ...ENABLED, revealJumpBack: 5 });
+
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(40);
   });
 
   it("ignores messages from other origins, other senders, and unknown events", async () => {

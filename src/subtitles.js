@@ -11,11 +11,19 @@
   const REVEALED_CLASS = "dt-subtitles--revealed";
   const STYLE_CLASS_PREFIX = "dt-subtitles--style-";
   const MILLISECONDS_PER_SECOND = 1000;
+  // HTMLMediaElement.HAVE_METADATA: before this, the video has no duration
+  // and a seek may be overridden by the player's start position.
+  const HAVE_METADATA = 1;
+  const PLAYBACK_EVENTS = ["timeupdate", "seeked"];
+  const VIDEO_GONE_EVENTS = ["ended", "emptied"];
 
   const { normalizeSettings } = globalThis.DreamingToolsSettings;
   const {
+    autoHidePoint,
+    isJumpGuarded,
     isRevealKeyPress,
     isTypingTarget,
+    jumpTarget,
     nextRevealState,
   } = globalThis.DreamingSubtitlesCore;
 
@@ -34,6 +42,9 @@
     // Matches only while the player's own subtitles are on. Styling always
     // comes from subtitles.css; this decides whether a key press is handled.
     shownSelector = SHAKA_CONTAINER_SELECTOR,
+    // While a video's ancestor matches this (a YouTube ad), a reveal does not
+    // move the video, which would then be the ad.
+    jumpBlockedSelector = null,
     forwardTargets = () => [],
     forwardOrigin = null,
     acceptOrigin = null,
@@ -42,9 +53,80 @@
     let revealed = false;
     let autoHideTimer = null;
     let listening = false;
+    // While revealed: the video being watched, and the playback time at
+    // which a toggle reveal hides again (null for none).
+    let watchedVideo = null;
+    let hideAt = null;
+    let lastJumpAt = null;
 
     function subtitlesShown() {
       return root.ownerDocument.querySelector(shownSelector) !== null;
+    }
+
+    // The video of the player whose subtitles are shown: the nearest one
+    // around the subtitle container, so another video on the page is never
+    // moved. Looked up on each press, because players replace the element.
+    function findVideo() {
+      for (let node = root.ownerDocument.querySelector(shownSelector)?.parentElement; node; node = node.parentElement) {
+        const video = node.querySelector("video");
+        if (video) {
+          return video;
+        }
+      }
+      return null;
+    }
+
+    // Moves the video back by the jump-back setting and returns how far it
+    // moved, or 0 when it could not or should not move.
+    function jumpBack(video) {
+      const now = Date.now();
+      if (settings.revealJumpBack === 0 || video.readyState < HAVE_METADATA || video.seeking
+        || (jumpBlockedSelector && video.closest(jumpBlockedSelector)) || isJumpGuarded(lastJumpAt, now)) {
+        return 0;
+      }
+      const from = video.currentTime;
+      const to = jumpTarget(from, settings.revealJumpBack);
+      if (to >= from) {
+        return 0;
+      }
+      video.currentTime = to;
+      lastJumpAt = now;
+      return from - to;
+    }
+
+    function onPlaybackTime() {
+      if (hideAt !== null && watchedVideo.currentTime >= hideAt) {
+        applyEvent("timeout");
+      }
+    }
+
+    function onVideoGone() {
+      setRevealed(false);
+    }
+
+    function watch(video, point) {
+      watchedVideo = video;
+      hideAt = point;
+      for (const type of PLAYBACK_EVENTS) {
+        video.addEventListener(type, onPlaybackTime);
+      }
+      for (const type of VIDEO_GONE_EVENTS) {
+        video.addEventListener(type, onVideoGone);
+      }
+    }
+
+    function unwatch() {
+      if (!watchedVideo) {
+        return;
+      }
+      for (const type of PLAYBACK_EVENTS) {
+        watchedVideo.removeEventListener(type, onPlaybackTime);
+      }
+      for (const type of VIDEO_GONE_EVENTS) {
+        watchedVideo.removeEventListener(type, onVideoGone);
+      }
+      watchedVideo = null;
+      hideAt = null;
     }
 
     function frameTargets() {
@@ -67,15 +149,51 @@
       autoHideTimer = null;
     }
 
-    function setRevealed(next) {
+    // A reveal with a video watches it: auto-hide follows playback time,
+    // and the video ending or being replaced hides. Without a video, a
+    // numeric auto-hide falls back to a timer.
+    function setRevealed(next, { video = null, pressTime = 0, jumped = 0 } = {}) {
       revealed = next;
       root.classList.toggle(REVEALED_CLASS, revealed);
       clearAutoHide();
-      if (revealed && settings.revealMode === "toggle" && settings.revealAutoHide > 0) {
+      unwatch();
+      if (!revealed) {
+        return;
+      }
+      if (video) {
+        watch(video, autoHidePoint(settings, pressTime, jumped));
+      } else if (settings.revealMode === "toggle" && typeof settings.revealAutoHide === "number"
+        && settings.revealAutoHide > 0) {
         autoHideTimer = setTimeout(
-          () => setRevealed(nextRevealState(revealed, "timeout", settings)),
+          () => applyEvent("timeout"),
           settings.revealAutoHide * MILLISECONDS_PER_SECOND,
         );
+      }
+    }
+
+    // Only a press that reveals moves the video back; a press that hides,
+    // a release, a timeout, or a blur never does.
+    function onPress() {
+      const next = nextRevealState(revealed, "press", settings);
+      if (next === revealed) {
+        return;
+      }
+      const video = next ? findVideo() : null;
+      if (!video) {
+        setRevealed(next);
+        return;
+      }
+      const pressTime = video.currentTime;
+      const jumped = jumpBack(video);
+      setRevealed(true, { video, pressTime, jumped });
+    }
+
+    // Releases, blurs, and timeouts change the state only when it changes:
+    // a Toggle release leaves the reveal, and its auto-hide, as they are.
+    function applyEvent(event) {
+      const next = nextRevealState(revealed, event, settings);
+      if (next !== revealed) {
+        setRevealed(next);
       }
     }
 
@@ -99,7 +217,7 @@
       if (subtitlesShown()) {
         consume(event);
         if (!event.repeat) {
-          setRevealed(nextRevealState(revealed, "press", settings));
+          onPress();
         }
         return;
       }
@@ -132,12 +250,12 @@
         consume(event);
       }
       forward(frames, "release");
-      setRevealed(nextRevealState(revealed, "release", settings));
+      applyEvent("release");
     }
 
     function onBlur() {
       forward(frameTargets(), "blur");
-      setRevealed(nextRevealState(revealed, "blur", settings));
+      applyEvent("blur");
     }
 
     // Accepts any sender with the Dreaming origin, not only the parent window
@@ -157,7 +275,11 @@
         return;
       }
 
-      setRevealed(nextRevealState(revealed, data.event, settings));
+      if (data.event === "press") {
+        onPress();
+        return;
+      }
+      applyEvent(data.event);
     }
 
     function setStyleClass(style) {
@@ -187,6 +309,7 @@
       target.removeEventListener("message", onMessage);
       listening = false;
       clearAutoHide();
+      unwatch();
       revealed = false;
       for (const name of [...root.classList]) {
         if (name.startsWith(ROOT_CLASS)) {
@@ -196,7 +319,7 @@
     }
 
     function revealSettingsChanged(previous, next) {
-      return ["revealMode", "revealKey", "revealAutoHide"].some((key) => previous[key] !== next[key]);
+      return ["revealMode", "revealKey", "revealAutoHide", "revealJumpBack"].some((key) => previous[key] !== next[key]);
     }
 
     function update(nextSettings) {

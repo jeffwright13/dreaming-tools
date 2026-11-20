@@ -6,6 +6,7 @@ import { expectStyle, openWatchPage, youtubePlayer } from "./players.js";
 import { YOUTUBE_SERVED_VIDEO } from "./routes.js";
 
 const AUTO_HIDE_SECONDS = 3;
+const JUMP_BACK_SECONDS = 3;
 const BASE_SETTINGS = { subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5 };
 
 let player;
@@ -55,6 +56,23 @@ test(`Toggle in the player: a press reveals, a second hides, and auto-hide hides
   await player.page.waitForTimeout(AUTO_HIDE_SECONDS * 1_000 - 800);
   expect(await isRevealed(), "still revealed just before auto-hide").toBe(true);
   await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+});
+
+// The press is made with focus on the Dreaming page, so it is forwarded:
+// the frame, which owns the video, does the jump.
+test("jump back: a forwarded reveal moves the YouTube video back by the setting", async ({ setSettings }) => {
+  await setSettings({ revealJumpBack: JUMP_BACK_SECONDS });
+  await player.page.waitForTimeout(2_000);
+  await player.pause();
+  const before = await player.currentTime();
+
+  await player.focusPage();
+  await player.page.keyboard.down("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await expect.poll(() => player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
+  expect((await player.state()).paused).toBe(true);
+  await player.page.keyboard.up("KeyS");
+  await expect.poll(isRevealed).toBe(false);
 });
 
 test("with YouTube's captions off, the reveal key shows nothing", async () => {

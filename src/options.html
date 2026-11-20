@@ -48,10 +48,23 @@
                   <option value="toggle">Toggle on each press</option>
                 </select>
               </label>
+              <label>
+                Jump back on reveal
+                <select name="revealJumpBack" aria-describedby="jump-back-help">
+                  <option value="0">Off</option>
+                  <option value="1">1 second</option>
+                  <option value="2">2 seconds</option>
+                  <option value="3">3 seconds</option>
+                  <option value="5">5 seconds</option>
+                  <option value="10">10 seconds</option>
+                </select>
+              </label>
+              <small id="jump-back-help" class="control-help">Each reveal moves the video back, so you hear the line you missed while you read it.</small>
               <label id="auto-hide-control">
                 Auto-hide after reveal
                 <select name="revealAutoHide">
                   <option value="0">Off</option>
+                  <option id="caught-up-option" value="caught-up">When caught up (needs Jump back)</option>
                   <option value="3">3 seconds</option>
                   <option value="5">5 seconds</option>
                   <option value="10">10 seconds</option>

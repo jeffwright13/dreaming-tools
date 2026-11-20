@@ -15,6 +15,10 @@
     Semicolon: ";",
     Slash: "/",
   };
+  // Some keyboards send auto-repeat as fresh key presses without the repeat
+  // flag; this keeps a held key from rewinding the video many times a second.
+  const JUMP_GUARD_MS = 500;
+  const CAUGHT_UP = "caught-up";
   const TYPING_INPUT_TYPES = new Set([
     "email", "number", "password", "search", "tel", "text", "url",
   ]);
@@ -54,12 +58,40 @@
     return target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
   }
 
+  function jumpTarget(currentTime, jumpBack) {
+    return Math.max(0, currentTime - jumpBack);
+  }
+
+  function isJumpGuarded(lastJumpAt, now) {
+    return lastJumpAt !== null && now - lastJumpAt < JUMP_GUARD_MS;
+  }
+
+  // The playback time at which a toggle reveal hides again, or null for
+  // none. Measured in playback time from the press (pressTime, before any
+  // jump), so a paused video keeps its text and slower speeds take longer.
+  // "Caught up" hides once playback returns to the press; when the video did
+  // not move back (jumped is 0) there is nothing to catch up to.
+  function autoHidePoint({ revealMode, revealAutoHide }, pressTime, jumped) {
+    if (revealMode !== "toggle" || revealAutoHide === 0) {
+      return null;
+    }
+    if (revealAutoHide === CAUGHT_UP) {
+      return jumped > 0 ? pressTime : null;
+    }
+    return pressTime + revealAutoHide;
+  }
+
   function formatKeyCode(code) {
     return KEY_LABELS[code] ?? code.replace(/^(Key|Digit)/, "");
   }
 
   globalThis.DreamingSubtitlesCore = {
+    CAUGHT_UP,
+    JUMP_GUARD_MS,
+    autoHidePoint,
     formatKeyCode,
+    isJumpGuarded,
+    jumpTarget,
     isRevealKeyPress,
     isTypingTarget,
     nextRevealState,

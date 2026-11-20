@@ -4,9 +4,13 @@ import { describe, expect, it } from "vitest";
 import "../src/subtitles-core.js";
 
 const {
+  JUMP_GUARD_MS,
+  autoHidePoint,
   formatKeyCode,
+  isJumpGuarded,
   isRevealKeyPress,
   isTypingTarget,
+  jumpTarget,
   nextRevealState,
 } = globalThis.DreamingSubtitlesCore;
 
@@ -82,5 +86,56 @@ describe("formatKeyCode", () => {
     ["BracketLeft", "["],
   ])("formats %s as %s", (code, label) => {
     expect(formatKeyCode(code)).toBe(label);
+  });
+});
+
+describe("jumpTarget", () => {
+  it("moves back by the jump", () => {
+    expect(jumpTarget(42.5, 3)).toBe(39.5);
+  });
+
+  it("stops at the start of the video", () => {
+    expect(jumpTarget(1.2, 5)).toBe(0);
+  });
+
+  it("stays put with jump back off", () => {
+    expect(jumpTarget(42.5, 0)).toBe(42.5);
+  });
+});
+
+describe("autoHidePoint", () => {
+  const toggle = (revealAutoHide) => ({ revealMode: "toggle", revealAutoHide });
+
+  it("is a number of playback seconds after the press", () => {
+    expect(autoHidePoint(toggle(5), 40, 3)).toBe(45);
+    expect(autoHidePoint(toggle(5), 40, 0)).toBe(45);
+  });
+
+  it("is the press point itself when caught up", () => {
+    expect(autoHidePoint(toggle("caught-up"), 40, 3)).toBe(40);
+  });
+
+  // Nothing to catch up to: the reveal stays until the next press.
+  it("is none when caught up but the video did not move back", () => {
+    expect(autoHidePoint(toggle("caught-up"), 40, 0)).toBeNull();
+  });
+
+  it("is none with auto-hide off or in hold mode", () => {
+    expect(autoHidePoint(toggle(0), 40, 3)).toBeNull();
+    expect(autoHidePoint({ revealMode: "hold", revealAutoHide: 5 }, 40, 3)).toBeNull();
+  });
+});
+
+describe("isJumpGuarded", () => {
+  it("blocks a second jump within the guard time", () => {
+    expect(isJumpGuarded(10_000, 10_000 + JUMP_GUARD_MS - 1)).toBe(true);
+  });
+
+  it("allows a jump once the guard time has passed", () => {
+    expect(isJumpGuarded(10_000, 10_000 + JUMP_GUARD_MS)).toBe(false);
+  });
+
+  it("allows the first jump", () => {
+    expect(isJumpGuarded(null, 10_000)).toBe(false);
   });
 });

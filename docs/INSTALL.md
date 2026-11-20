@@ -52,7 +52,8 @@ To help test, record the extension version, browser version, operating system, D
 - Series catalogs and series modals
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
-- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
+- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds of playback (not while paused), or stays with auto-hide off
+- Subtitles: with Jump back on reveal set, each reveal moves the video back by that amount, playing or paused, and the earlier line shows; releasing the key or a Toggle press that hides does not move it; with Toggle and When caught up, the subtitles hide once playback returns to where you pressed
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
 - Subtitles on a YouTube-served video (free accounts only; see [Which video player you'll see](#which-video-player-youll-see)), in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes

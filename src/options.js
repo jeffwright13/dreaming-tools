@@ -22,6 +22,7 @@
   const previewDisabledNotices = document.querySelectorAll(".preview-disabled");
   const subtitleControls = document.querySelector("#subtitle-controls");
   const autoHideControl = document.querySelector("#auto-hide-control");
+  const caughtUpOption = document.querySelector("#caught-up-option");
   const revealKeyButton = document.querySelector("#reveal-key-button");
   const revealKeyInput = form.elements.namedItem("revealKey");
   const subtitlePreviews = document.querySelectorAll("#subtitle-preview, #youtube-subtitle-preview");
@@ -29,9 +30,11 @@
   const status = document.querySelector("#status");
   const root = document.documentElement;
   const CAPTURE_PROMPT = "Press a key…";
-  const NUMERIC_SETTINGS = new Set(["revealAutoHide"]);
+  const NUMERIC_SETTINGS = new Set(["revealAutoHide", "revealJumpBack"]);
+  // The one non-numeric value of a numeric menu.
+  const { CAUGHT_UP } = globalThis.DreamingSubtitlesCore;
   const REVEALED_CLASS = "dt-subtitles--revealed";
-  const REVEAL_SETTINGS = ["revealMode", "revealKey", "revealAutoHide"];
+  const REVEAL_SETTINGS = ["revealMode", "revealKey", "revealAutoHide", "revealJumpBack"];
   const MILLISECONDS_PER_SECOND = 1000;
 
   // The previews can be revealed with the configured key, page-wide, or by
@@ -55,7 +58,7 @@
         return [key, control.checked];
       }
       const value = control?.value;
-      return [key, NUMERIC_SETTINGS.has(key) ? Number(value) : value];
+      return [key, NUMERIC_SETTINGS.has(key) && value !== CAUGHT_UP ? Number(value) : value];
     })));
   }
 
@@ -83,6 +86,9 @@
   function renderSubtitlePreview(settings) {
     subtitleControls.disabled = !settings.subtitlesEnabled;
     autoHideControl.hidden = settings.revealMode !== "toggle";
+    // A disabled option still shows when it is the stored choice; the
+    // content script treats When caught up as Off while jump back is off.
+    caughtUpOption.disabled = settings.revealJumpBack === 0;
     if (revealKeyButton.textContent !== CAPTURE_PROMPT) {
       revealKeyButton.textContent = formatKeyCode(settings.revealKey);
     }
@@ -108,7 +114,9 @@
     clearTimeout(autoHideTimer);
     autoHideTimer = null;
     const { revealMode, revealAutoHide } = previewSettings ?? {};
-    if (previewRevealed && revealMode === "toggle" && revealAutoHide > 0) {
+    // Timed auto-hide only: the preview has no video, so it neither jumps
+    // back nor has a point to catch up to, and When caught up acts as Off.
+    if (previewRevealed && revealMode === "toggle" && typeof revealAutoHide === "number" && revealAutoHide > 0) {
       autoHideTimer = setTimeout(
         () => setPreviewRevealed(nextRevealState(previewRevealed, "timeout", previewSettings)),
         revealAutoHide * MILLISECONDS_PER_SECOND,

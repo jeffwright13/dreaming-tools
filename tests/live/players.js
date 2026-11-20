@@ -117,8 +117,19 @@ export function dreamingPlayer(page) {
       return choice;
     },
 
+    // Waits for the seek to finish: a reveal pressed mid-seek does not jump.
     async seek(seconds) {
       await video.evaluate((element, time) => { element.currentTime = time; }, seconds);
+      await expect.poll(() => video.evaluate((element) => !element.seeking && element.readyState >= 1)).toBe(true);
+    },
+
+    currentTime() {
+      return video.evaluate((element) => element.currentTime);
+    },
+
+    async pause() {
+      await video.evaluate((element) => element.pause());
+      await expect.poll(() => video.evaluate((element) => element.paused)).toBe(true);
     },
 
     state() {
@@ -186,6 +197,15 @@ export function youtubePlayer(page) {
         await page.mouse.click(x, y);
       }
       await expect.poll(async () => (await player.state()).paused).toBe(false);
+    },
+
+    currentTime() {
+      return frame().evaluate(() => document.querySelector("video.html5-main-video").currentTime);
+    },
+
+    async pause() {
+      await frame().evaluate(() => document.querySelector("video.html5-main-video").pause());
+      await expect.poll(async () => (await player.state()).paused).toBe(true);
     },
 
     // "c" is YouTube's own captions shortcut; it needs focus in the frame.

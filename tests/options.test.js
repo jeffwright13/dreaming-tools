@@ -27,7 +27,8 @@ const optionsMarkup = `
     <fieldset id="subtitle-controls">
       <select name="subtitleStyle"><option value="blur">Blur</option><option value="small-faint">Small and faint</option><option value="hidden">Hidden</option></select>
       <select name="revealMode"><option value="hold">Hold</option><option value="toggle">Toggle</option></select>
-      <label id="auto-hide-control"><select name="revealAutoHide"><option value="0">Off</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select></label>
+      <select name="revealJumpBack"><option value="0">Off</option><option value="1">1</option><option value="3">3</option></select>
+      <label id="auto-hide-control"><select name="revealAutoHide"><option value="0">Off</option><option id="caught-up-option" value="caught-up">When caught up</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select></label>
       <button id="reveal-key-button" type="button"></button>
       <input type="hidden" name="revealKey">
     </fieldset>
@@ -308,6 +309,27 @@ describe("subtitle options", () => {
       expect(revealed()).toBe(false);
     });
 
+    // The preview has no video to move back or to catch up with.
+    it("stays revealed with When caught up until the next press", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: "caught-up", revealJumpBack: 3 });
+      vi.useFakeTimers();
+
+      pressKey("KeyS");
+      vi.advanceTimersByTime(60_000);
+      expect(revealed()).toBe(true);
+      pressKey("KeyS");
+      expect(revealed()).toBe(false);
+    });
+
+    it("hides when the jump back changes", async () => {
+      await loadOptions({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 0 });
+      pressKey("KeyS");
+      expect(revealed()).toBe(true);
+
+      change('[name="revealJumpBack"]', (control) => { control.value = "3"; });
+      expect(revealed()).toBe(false);
+    });
+
     it("follows a newly chosen key", async () => {
       await loadOptions({ subtitlesEnabled: true });
       keyButton().click();
@@ -434,6 +456,24 @@ describe("subtitle options", () => {
     expect(saved).toMatchObject({ subtitlesEnabled: true, revealMode: "toggle", revealAutoHide: 10 });
   });
 
+  it("saves the jump back as a number and When caught up as itself", async () => {
+    const storage = await loadOptions({ subtitlesEnabled: true, revealMode: "toggle" });
+
+    change('[name="revealJumpBack"]', (control) => { control.value = "3"; });
+    change('[name="revealAutoHide"]', (control) => { control.value = "caught-up"; });
+
+    expect(await lastSaved(storage)).toMatchObject({ revealJumpBack: 3, revealAutoHide: "caught-up" });
+  });
+
+  it("offers When caught up only while jump back is on", async () => {
+    await loadOptions({ subtitlesEnabled: true, revealMode: "toggle" });
+    const caughtUp = () => document.querySelector("#caught-up-option");
+    expect(caughtUp().disabled).toBe(true);
+
+    change('[name="revealJumpBack"]', (control) => { control.value = "1"; });
+    expect(caughtUp().disabled).toBe(false);
+  });
+
   it("records a new reveal key from the next key press", async () => {
     const storage = await loadOptions({ subtitlesEnabled: true });
 
@@ -471,6 +511,7 @@ describe("options page layout", () => {
       '[name="subtitleStyle"]',
       '[name="revealMode"]',
       '[name="revealAutoHide"]',
+      '[name="revealJumpBack"]',
       "#reveal-key-button",
       // Same structure as the real player: a block line inside the container,
       // so the line-level styles (including scale) apply as they do there.
@@ -531,6 +572,15 @@ describe("options page layout", () => {
       expect(chrome.getAttribute("aria-hidden"), previewId).toBe("true");
       expect(chrome.querySelector("button, a, input, [tabindex]"), previewId).toBeNull();
     }
+  });
+
+  // The settings module drops any other value, so the menus must offer
+  // exactly the values it accepts.
+  it("offers exactly the jump back and auto-hide values the settings accept", () => {
+    const values = (name) => [...document.querySelectorAll(`[name="${name}"] option`)].map((option) => option.value);
+
+    expect(values("revealJumpBack")).toEqual(["0", "1", "2", "3", "5", "10"]);
+    expect(values("revealAutoHide")).toEqual(["0", "caught-up", "3", "5", "10"]);
   });
 
   it("has no Save button, because changes save automatically", () => {

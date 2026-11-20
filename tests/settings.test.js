@@ -16,6 +16,7 @@ describe("settings", () => {
       revealMode: "hold",
       revealKey: "KeyS",
       revealAutoHide: 5,
+      revealJumpBack: 0,
     });
   });
 
@@ -35,6 +36,7 @@ describe("settings", () => {
       revealMode: "press",
       revealKey: "Space",
       revealAutoHide: 7,
+      revealJumpBack: 4,
     })).toEqual({
       difficultyEnabled: false,
       behavior: "fill-missing",
@@ -46,6 +48,7 @@ describe("settings", () => {
       revealMode: "hold",
       revealKey: "KeyS",
       revealAutoHide: 5,
+      revealJumpBack: 0,
     });
   });
 
@@ -60,7 +63,8 @@ describe("settings", () => {
       subtitleStyle: "small-faint",
       revealMode: "toggle",
       revealKey: "KeyJ",
-      revealAutoHide: 0,
+      revealAutoHide: "caught-up",
+      revealJumpBack: 3,
     })).toEqual({
       difficultyEnabled: false,
       behavior: "enhanced-everywhere",
@@ -71,7 +75,8 @@ describe("settings", () => {
       subtitleStyle: "small-faint",
       revealMode: "toggle",
       revealKey: "KeyJ",
-      revealAutoHide: 0,
+      revealAutoHide: "caught-up",
+      revealJumpBack: 3,
     });
   });
 
@@ -91,6 +96,26 @@ describe("reveal key validation", () => {
       expect(normalizeSettings({ revealKey }).revealKey).toBe("KeyS");
     },
   );
+});
+
+describe("jump back and auto-hide values", () => {
+  it.each([0, 1, 2, 3, 5, 10])("accepts a jump back of %s seconds", (revealJumpBack) => {
+    expect(normalizeSettings({ revealJumpBack }).revealJumpBack).toBe(revealJumpBack);
+  });
+
+  it.each([0.5, 4, 11, -1, "3", null])("rejects a jump back of %s", (revealJumpBack) => {
+    expect(normalizeSettings({ revealJumpBack }).revealJumpBack).toBe(0);
+  });
+
+  it.each([0, "caught-up", 3, 5, 10])("accepts auto-hide %s", (revealAutoHide) => {
+    expect(normalizeSettings({ revealAutoHide }).revealAutoHide).toBe(revealAutoHide);
+  });
+
+  // "When caught up" is kept even with jump back off; the feature treats it
+  // as Off then, so turning jump back on again restores it.
+  it("keeps When caught up stored while jump back is off", () => {
+    expect(normalizeSettings({ revealAutoHide: "caught-up", revealJumpBack: 0 }).revealAutoHide).toBe("caught-up");
+  });
 });
 
 describe("legacy Original Dreaming behavior", () => {

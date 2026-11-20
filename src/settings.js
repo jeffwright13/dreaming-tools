@@ -13,6 +13,7 @@
     revealMode: "hold",
     revealKey: "KeyS",
     revealAutoHide: 5,
+    revealJumpBack: 0,
   });
   // Reveal keys are physical key codes (KeyboardEvent.code). Only letter,
   // digit, and punctuation keys are allowed: Space, arrows, Enter, Escape,
@@ -39,8 +40,11 @@
     subtitleStyle: oneOf("blur", "small-faint", "hidden"),
     revealMode: oneOf("hold", "toggle"),
     revealKey: isRevealKeyCode,
-    // Seconds; 0 turns auto-hide off. Applies only in toggle mode.
-    revealAutoHide: oneOf(0, 3, 5, 10),
+    // Seconds of playback after the press, 0 for off, or "caught-up": hide
+    // once playback returns to where the key was pressed. Toggle mode only.
+    revealAutoHide: oneOf(0, "caught-up", 3, 5, 10),
+    // Seconds to move the video back when a press reveals; 0 is off.
+    revealJumpBack: oneOf(0, 1, 2, 3, 5, 10),
   };
   // Read storage with this key list rather than with DEFAULT_SETTINGS: passing
   // defaults would make a never-stored difficultyEnabled look explicitly saved,

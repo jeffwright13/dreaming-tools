@@ -22,6 +22,8 @@ const SHOWCASE_SETTINGS = {
   subtitleStyle: "blur",
   revealMode: "hold",
   revealKey: "KeyS",
+  // Shown set, so the store images show the feature exists.
+  revealJumpBack: 3,
   difficultyEnabled: true,
   behavior: "enhanced-everywhere",
   style: "enhanced",

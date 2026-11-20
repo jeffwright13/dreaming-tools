@@ -61,11 +61,12 @@ Test these views where available:
 - Spanish and French routes
 - First install (remove the extension, then load it again) opens the options page once; reloading or updating the extension does not
 - With a Dreaming tab open and subtitles on, reload the extension in `chrome://extensions`: without reloading the tab, a settings change still applies, and the reveal key reveals once (not twice, which would show two copies running)
-- Options page, subtitles on: holding the reveal key reveals both previews in Hold mode; in Toggle mode each press (or a click on a preview) toggles and auto-hide applies; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
+- Options page, subtitles on: holding the reveal key reveals both previews in Hold mode; in Toggle mode each press (or a click on a preview) toggles and auto-hide applies (When caught up is disabled while Jump back is Off, and stays revealed in the preview); after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
 - Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
-- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
+- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds of playback (not while paused), or stays with auto-hide off
+- Subtitles: with Jump back on reveal set, each reveal moves the video back by that amount, playing or paused, on both players; releasing or a Toggle press that hides does not; When caught up hides once playback returns to the press
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
 - Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
@@ -181,10 +182,12 @@ Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 
   3. Without a tab reload, the page's subtitle class and badge size follow the change, each card still has exactly one badge, and the tab never navigated.
 
 **Logged in**
-- **`subtitles-dreaming.logged-in.spec.js` (11, plus 1 skipped):**
+- **`subtitles-dreaming.logged-in.spec.js` (13, plus 1 skipped):**
   - each style (Blur, Small and faint, Hidden) applies, and holding `S` shows the player's own style
   - Hold with key repeat
   - Toggle with a 3 s auto-hide
+  - jump back: a reveal of a paused video moves it back 3 s and keeps it paused; the release does not move it
+  - jump back with When caught up: a 2 s jump hides once playback returns to the press
   - the stranded Toggle reveal when the player's subtitles are turned off
   - nothing revealed with the player's subtitles off
   - window blur hides a reveal
@@ -192,10 +195,11 @@ Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 
   - fullscreen, which works headless: the subtitle line settles above the controls bar and keeps its style
 
   The comment-box check skips, because free accounts have no comment box.
-- **`subtitles-youtube.logged-in.spec.js` (9):**
+- **`subtitles-youtube.logged-in.spec.js` (10):**
   - each style, with `S` held in the player
   - `S` held with focus on the Dreaming page (forwarded to the frame)
   - Toggle with auto-hide
+  - jump back: a press forwarded from the Dreaming page moves the paused YouTube video back 3 s
   - nothing visible with CC off
   - window blur on the page hides a reveal in the frame
   - fullscreen

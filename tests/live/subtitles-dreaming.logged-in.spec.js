@@ -6,6 +6,8 @@ import { dreamingPlayer, expectStyle, openWatchPage } from "./players.js";
 import { DREAMING_PLAYER_VIDEO } from "./routes.js";
 
 const AUTO_HIDE_SECONDS = 3;
+const JUMP_BACK_SECONDS = 3;
+const CAUGHT_UP_JUMP_SECONDS = 2;
 // A stretch of the pinned video with steady speech, so a subtitle line is on
 // screen (checked 2026-11-09).
 const SPOKEN_SECONDS = 40;
@@ -60,6 +62,35 @@ test(`Toggle: a press reveals, a second hides, and auto-hide hides after ${AUTO_
   await expect.poll(isRevealed).toBe(true);
   await player.page.waitForTimeout(AUTO_HIDE_SECONDS * 1_000 - 800);
   expect(await isRevealed(), "still revealed just before auto-hide").toBe(true);
+  await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+});
+
+// Paused, so the expected position is exact; the player keeps its paused
+// state across the jump.
+test("jump back: a reveal moves the video back by the setting; the release does not", async ({ setSettings }) => {
+  await setSettings({ revealJumpBack: JUMP_BACK_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.pause();
+  const before = await player.currentTime();
+
+  await player.page.keyboard.down("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await expect.poll(() => player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
+  expect((await player.state()).paused).toBe(true);
+  await player.page.keyboard.up("KeyS");
+  await expect.poll(isRevealed).toBe(false);
+  expect(await player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
+});
+
+test("jump back with When caught up: the reveal hides once playback returns to the press", async ({ setSettings }) => {
+  await setSettings({ revealMode: "toggle", revealAutoHide: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.page.waitForTimeout(1_000);
+
+  await player.page.keyboard.press("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await player.page.waitForTimeout(CAUGHT_UP_JUMP_SECONDS * 1_000 - 800);
+  expect(await isRevealed(), "still revealed before playback catches up").toBe(true);
   await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
 });
 
