@@ -18,6 +18,8 @@ Browser support claims require both automated checks and the manual release matr
 
 Vitest and jsdom cover score conversion, catalog indexing, settings, options behavior, selectors, badge insertion, dynamic updates, error handling, and privacy-relevant request behavior.
 
+`tests/subtitles-matrix.test.js` drives the subtitle reveal through every combination of reveal mode, jump back, and auto-hide, with key taps 150 to 1000 ms apart, held keys (with and without the repeat flag), and seeded random tap sequences, against a simulated video that plays, takes 120 ms to seek, and fires `timeupdate` every 250 ms. Instead of an expected result per run, it checks rules that must always hold: the video only moves back, by the setting, at most once per reveal, and every reveal jumps unless a seek is still in flight; Hold shows exactly while the key is down and ignores auto-hide; each Toggle press flips; an auto-hide that is on always hides, never before the furthest point a reveal was pressed at plus its seconds. `MATRIX_REPORT=<file> npx vitest run tests/subtitles-matrix.test.js` also writes a table of what each tap sequence does with a 3-second jump.
+
 Run:
 
 ```bash
@@ -66,7 +68,7 @@ Test these views where available:
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
 - Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds of playback (not while paused), or stays with auto-hide off
-- Subtitles: with Jump back on reveal set, each reveal moves the video back by that amount, playing or paused, on both players; releasing or a Toggle press that hides does not; When caught up hides once playback returns to the press
+- Subtitles: with Jump back on reveal set, each reveal moves the video back by that amount, playing or paused, on both players; releasing or a Toggle press that hides does not; tapping several times quickly moves back once per tap; When caught up hides once playback returns to where the taps started
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
 - Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes

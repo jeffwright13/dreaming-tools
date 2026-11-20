@@ -15,9 +15,9 @@
     Semicolon: ";",
     Slash: "/",
   };
-  // Some keyboards send auto-repeat as fresh key presses without the repeat
-  // flag; this keeps a held key from rewinding the video many times a second.
-  const JUMP_GUARD_MS = 500;
+  // Players may land a little short of a seek target, so a series of reveals
+  // continues slightly below its lowest jump.
+  const SERIES_SLACK_S = 0.5;
   const CAUGHT_UP = "caught-up";
   const TYPING_INPUT_TYPES = new Set([
     "email", "number", "password", "search", "tel", "text", "url",
@@ -62,23 +62,29 @@
     return Math.max(0, currentTime - jumpBack);
   }
 
-  function isJumpGuarded(lastJumpAt, now) {
-    return lastJumpAt !== null && now - lastJumpAt < JUMP_GUARD_MS;
+  // A series is the run of reveals that starts at one press (anchor, the
+  // playback time before its jump) and lasts while playback stays between the
+  // lowest point the jumps reached (floor) and the anchor. Tapping the key a
+  // few times to go further back is one series; a manual seek outside it, or
+  // playback reaching the anchor, ends it.
+  function continuesSeries(series, time) {
+    return series !== null && time >= series.floor - SERIES_SLACK_S && time < series.anchor;
   }
 
   // The playback time at which a toggle reveal hides again, or null for
-  // none. Measured in playback time from the press (pressTime, before any
-  // jump), so a paused video keeps its text and slower speeds take longer.
-  // "Caught up" hides once playback returns to the press; when the video did
-  // not move back (jumped is 0) there is nothing to catch up to.
-  function autoHidePoint({ revealMode, revealAutoHide }, pressTime, jumped) {
+  // none. Measured in playback time from the series anchor, so a paused video
+  // keeps its text, slower speeds take longer, and several taps back still
+  // show the text up to where the learner started. "Caught up" hides at the
+  // anchor; when the video is not behind it (landed, where this reveal left
+  // the video), there is nothing to catch up to.
+  function autoHidePoint({ revealMode, revealAutoHide }, anchor, landed) {
     if (revealMode !== "toggle" || revealAutoHide === 0) {
       return null;
     }
     if (revealAutoHide === CAUGHT_UP) {
-      return jumped > 0 ? pressTime : null;
+      return landed < anchor ? anchor : null;
     }
-    return pressTime + revealAutoHide;
+    return anchor + revealAutoHide;
   }
 
   function formatKeyCode(code) {
@@ -87,10 +93,10 @@
 
   globalThis.DreamingSubtitlesCore = {
     CAUGHT_UP,
-    JUMP_GUARD_MS,
+    SERIES_SLACK_S,
     autoHidePoint,
+    continuesSeries,
     formatKeyCode,
-    isJumpGuarded,
     jumpTarget,
     isRevealKeyPress,
     isTypingTarget,

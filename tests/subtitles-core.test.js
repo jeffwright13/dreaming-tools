@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import "../src/subtitles-core.js";
 
 const {
-  JUMP_GUARD_MS,
+  SERIES_SLACK_S,
   autoHidePoint,
+  continuesSeries,
   formatKeyCode,
-  isJumpGuarded,
   isRevealKeyPress,
   isTypingTarget,
   jumpTarget,
@@ -106,36 +106,48 @@ describe("jumpTarget", () => {
 describe("autoHidePoint", () => {
   const toggle = (revealAutoHide) => ({ revealMode: "toggle", revealAutoHide });
 
-  it("is a number of playback seconds after the press", () => {
-    expect(autoHidePoint(toggle(5), 40, 3)).toBe(45);
-    expect(autoHidePoint(toggle(5), 40, 0)).toBe(45);
+  // The anchor is where the series of reveals started; landed is where the
+  // video is after this reveal's jump.
+  it("is a number of playback seconds after the anchor", () => {
+    expect(autoHidePoint(toggle(5), 40, 37)).toBe(45);
+    expect(autoHidePoint(toggle(5), 40, 40)).toBe(45);
   });
 
-  it("is the press point itself when caught up", () => {
-    expect(autoHidePoint(toggle("caught-up"), 40, 3)).toBe(40);
+  it("is the anchor itself when caught up", () => {
+    expect(autoHidePoint(toggle("caught-up"), 40, 37)).toBe(40);
   });
 
   // Nothing to catch up to: the reveal stays until the next press.
-  it("is none when caught up but the video did not move back", () => {
-    expect(autoHidePoint(toggle("caught-up"), 40, 0)).toBeNull();
+  it("is none when caught up but the video is not behind the anchor", () => {
+    expect(autoHidePoint(toggle("caught-up"), 40, 40)).toBeNull();
   });
 
   it("is none with auto-hide off or in hold mode", () => {
-    expect(autoHidePoint(toggle(0), 40, 3)).toBeNull();
-    expect(autoHidePoint({ revealMode: "hold", revealAutoHide: 5 }, 40, 3)).toBeNull();
+    expect(autoHidePoint(toggle(0), 40, 37)).toBeNull();
+    expect(autoHidePoint({ revealMode: "hold", revealAutoHide: 5 }, 40, 37)).toBeNull();
   });
 });
 
-describe("isJumpGuarded", () => {
-  it("blocks a second jump within the guard time", () => {
-    expect(isJumpGuarded(10_000, 10_000 + JUMP_GUARD_MS - 1)).toBe(true);
+describe("continuesSeries", () => {
+  const series = { anchor: 40, floor: 34 };
+
+  it("continues while playback is between the lowest jump and the anchor", () => {
+    expect(continuesSeries(series, 34)).toBe(true);
+    expect(continuesSeries(series, 39.9)).toBe(true);
   });
 
-  it("allows a jump once the guard time has passed", () => {
-    expect(isJumpGuarded(10_000, 10_000 + JUMP_GUARD_MS)).toBe(false);
+  it("ends once playback reaches the anchor", () => {
+    expect(continuesSeries(series, 40)).toBe(false);
+    expect(continuesSeries(series, 55)).toBe(false);
   });
 
-  it("allows the first jump", () => {
-    expect(isJumpGuarded(null, 10_000)).toBe(false);
+  // Players may land a little short of a seek target.
+  it("allows a little slack below the lowest jump, but not a seek further back", () => {
+    expect(continuesSeries(series, 34 - SERIES_SLACK_S)).toBe(true);
+    expect(continuesSeries(series, 20)).toBe(false);
+  });
+
+  it("is false with no series", () => {
+    expect(continuesSeries(null, 40)).toBe(false);
   });
 });

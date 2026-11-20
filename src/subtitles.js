@@ -20,7 +20,7 @@
   const { normalizeSettings } = globalThis.DreamingToolsSettings;
   const {
     autoHidePoint,
-    isJumpGuarded,
+    continuesSeries,
     isRevealKeyPress,
     isTypingTarget,
     jumpTarget,
@@ -57,7 +57,12 @@
     // which a toggle reveal hides again (null for none).
     let watchedVideo = null;
     let hideAt = null;
-    let lastJumpAt = null;
+    // The current series of reveals ({ video, anchor, floor }), kept across
+    // hides so a few taps back count as one; see continuesSeries.
+    let series = null;
+    // Whether the reveal key is down. A keydown before its keyup is not a new
+    // press: some keyboards send auto-repeat without the repeat flag.
+    let keyHeld = false;
 
     function subtitlesShown() {
       return root.ownerDocument.querySelector(shownSelector) !== null;
@@ -79,9 +84,8 @@
     // Moves the video back by the jump-back setting and returns how far it
     // moved, or 0 when it could not or should not move.
     function jumpBack(video) {
-      const now = Date.now();
       if (settings.revealJumpBack === 0 || video.readyState < HAVE_METADATA || video.seeking
-        || (jumpBlockedSelector && video.closest(jumpBlockedSelector)) || isJumpGuarded(lastJumpAt, now)) {
+        || (jumpBlockedSelector && video.closest(jumpBlockedSelector))) {
         return 0;
       }
       const from = video.currentTime;
@@ -90,8 +94,18 @@
         return 0;
       }
       video.currentTime = to;
-      lastJumpAt = now;
       return from - to;
+    }
+
+    // Starts a series at this press, or extends the current one when the
+    // press falls inside it, and returns it.
+    function seriesFor(video, pressTime, landed) {
+      if (series?.video === video && continuesSeries(series, pressTime)) {
+        series.floor = Math.min(series.floor, landed);
+      } else {
+        series = { video, anchor: pressTime, floor: landed };
+      }
+      return series;
     }
 
     function onPlaybackTime() {
@@ -152,7 +166,7 @@
     // A reveal with a video watches it: auto-hide follows playback time,
     // and the video ending or being replaced hides. Without a video, a
     // numeric auto-hide falls back to a timer.
-    function setRevealed(next, { video = null, pressTime = 0, jumped = 0 } = {}) {
+    function setRevealed(next, { video = null, anchor = 0, landed = 0 } = {}) {
       revealed = next;
       root.classList.toggle(REVEALED_CLASS, revealed);
       clearAutoHide();
@@ -161,7 +175,7 @@
         return;
       }
       if (video) {
-        watch(video, autoHidePoint(settings, pressTime, jumped));
+        watch(video, autoHidePoint(settings, anchor, landed));
       } else if (settings.revealMode === "toggle" && typeof settings.revealAutoHide === "number"
         && settings.revealAutoHide > 0) {
         autoHideTimer = setTimeout(
@@ -184,8 +198,9 @@
         return;
       }
       const pressTime = video.currentTime;
-      const jumped = jumpBack(video);
-      setRevealed(true, { video, pressTime, jumped });
+      const landed = pressTime - jumpBack(video);
+      const { anchor } = seriesFor(video, pressTime, landed);
+      setRevealed(true, { video, anchor, landed });
     }
 
     // Releases, blurs, and timeouts change the state only when it changes:
@@ -213,10 +228,12 @@
       if (!isRevealKeyPress(event, settings.revealKey) || isTypingTarget(event.target)) {
         return;
       }
+      const newPress = !event.repeat && !keyHeld;
+      keyHeld = true;
 
       if (subtitlesShown()) {
         consume(event);
-        if (!event.repeat) {
+        if (newPress) {
           onPress();
         }
         return;
@@ -231,7 +248,7 @@
       const frames = frameTargets();
       if (frames.length > 0) {
         consume(event);
-        if (!event.repeat) {
+        if (newPress) {
           forward(frames, "press");
         }
       }
@@ -241,6 +258,7 @@
       if (event.code !== settings.revealKey) {
         return;
       }
+      keyHeld = false;
 
       // Release even if the player's subtitles were turned off while held,
       // or focus moved into a text field, but let a typed key's release
@@ -254,6 +272,7 @@
     }
 
     function onBlur() {
+      keyHeld = false;
       forward(frameTargets(), "blur");
       applyEvent("blur");
     }
@@ -311,6 +330,8 @@
       clearAutoHide();
       unwatch();
       revealed = false;
+      series = null;
+      keyHeld = false;
       for (const name of [...root.classList]) {
         if (name.startsWith(ROOT_CLASS)) {
           root.classList.remove(name);
@@ -335,6 +356,7 @@
       }
       setStyleClass(settings.subtitleStyle);
       if (previous && revealSettingsChanged(previous, settings)) {
+        series = null;
         setRevealed(false);
       }
     }

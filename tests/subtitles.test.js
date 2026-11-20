@@ -50,6 +50,12 @@ function fakeVideo(video = document.querySelector("video"), { time = 40, readySt
   };
 }
 
+// A quick press and release of the reveal key.
+function tap() {
+  press("keydown");
+  press("keyup");
+}
+
 let feature;
 
 beforeEach(() => {
@@ -173,9 +179,10 @@ describe("subtitles feature", () => {
       await feature.update({ ...TOGGLE, revealAutoHide: 0 });
 
       press("keydown");
-      press("keyup");
       expect(revealed()).toBe(true);
       expect(press("keydown", { repeat: true }).defaultPrevented).toBe(true);
+      expect(revealed()).toBe(true);
+      press("keyup");
       expect(revealed()).toBe(true);
       press("keydown");
       expect(revealed()).toBe(false);
@@ -221,10 +228,10 @@ describe("subtitles feature", () => {
       const video = fakeVideo();
       await feature.update({ ...TOGGLE, revealAutoHide: 5 });
 
-      press("keydown");
-      press("keydown");
+      tap();
+      tap();
       video.advance(42);
-      press("keydown");
+      tap();
       video.advance(46.9);
       expect(revealed()).toBe(true);
       video.advance(47);
@@ -346,9 +353,9 @@ describe("jump back on reveal", () => {
     const video = fakeVideo();
     await feature.update(TOGGLE_JUMP);
 
-    press("keydown");
+    tap();
     vi.advanceTimersByTime(1000);
-    press("keydown");
+    tap();
     expect(revealed()).toBe(false);
     expect(video.time).toBe(37);
   });
@@ -365,8 +372,7 @@ describe("jump back on reveal", () => {
     expect(video.time).toBe(34);
   });
 
-  // Some keyboards send auto-repeat as fresh presses without the repeat flag.
-  it("ignores a second jump within the guard time but still reveals", async () => {
+  it("jumps on every separate tap, however quick", async () => {
     vi.useFakeTimers();
     const video = fakeVideo();
     await feature.update(JUMP);
@@ -376,7 +382,29 @@ describe("jump back on reveal", () => {
     vi.advanceTimersByTime(100);
     press("keydown");
     expect(revealed()).toBe(true);
+    expect(video.time).toBe(34);
+  });
+
+  // Some keyboards send auto-repeat as fresh presses without the repeat flag.
+  it.each(["hold", "toggle"])("treats fresh key presses before the release as one press in %s mode", async (revealMode) => {
+    const video = fakeVideo();
+    await feature.update({ ...JUMP, revealMode, revealAutoHide: 0 });
+
+    press("keydown");
+    press("keydown");
+    expect(revealed()).toBe(true);
     expect(video.time).toBe(37);
+  });
+
+  it("counts a press again after a window blur stood in for the release", async () => {
+    const video = fakeVideo();
+    await feature.update(TOGGLE_JUMP);
+
+    press("keydown");
+    window.dispatchEvent(new Event("blur"));
+    press("keydown");
+    expect(revealed()).toBe(true);
+    expect(video.time).toBe(34);
   });
 
   it("still reveals without jumping before the video is ready", async () => {
@@ -440,6 +468,79 @@ describe("jump back on reveal", () => {
       video.advance(100);
       expect(revealed()).toBe(true);
     });
+
+    // Reveal at 40 (to 37), hide, reveal at 37.5 (to 34.5): still hides at 40.
+    it("hides where the first press of a series was", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      video.advance(37.2);
+      tap();
+      video.advance(37.5);
+      tap();
+      expect(video.time).toBe(34.5);
+      video.advance(39.9);
+      expect(revealed()).toBe(true);
+      video.advance(40);
+      expect(revealed()).toBe(false);
+    });
+
+    it("still hides when a reveal in the series could not jump", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      tap();
+      video.state.seeking = true;
+      tap();
+      expect(video.time).toBe(37);
+      video.state.seeking = false;
+      video.advance(40);
+      expect(revealed()).toBe(false);
+    });
+
+    it("starts a new series once playback has caught up", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      video.advance(40);
+      video.advance(50);
+      tap();
+      expect(video.time).toBe(47);
+      video.advance(49.9);
+      expect(revealed()).toBe(true);
+      video.advance(50);
+      expect(revealed()).toBe(false);
+    });
+
+    it("starts a new series after a manual seek further back", async () => {
+      const video = fakeVideo();
+      await feature.update(CAUGHT_UP);
+
+      tap();
+      tap();
+      video.seekTo(10);
+      tap();
+      expect(video.time).toBe(7);
+      video.advance(10);
+      expect(revealed()).toBe(false);
+    });
+  });
+
+  it("counts a numeric auto-hide from the first press of a series", async () => {
+    const video = fakeVideo();
+    await feature.update({ ...TOGGLE_JUMP, revealAutoHide: 3 });
+
+    tap();
+    tap();
+    tap();
+    expect(video.time).toBe(34);
+    video.advance(42.9);
+    expect(revealed()).toBe(true);
+    video.advance(43);
+    expect(revealed()).toBe(false);
   });
 
   it.each(["ended", "emptied"])("hides when the video fires %s", async (type) => {
@@ -454,9 +555,9 @@ describe("jump back on reveal", () => {
   it("stops watching the video once hidden or disabled", async () => {
     const video = fakeVideo();
     await feature.update({ ...TOGGLE_JUMP, revealAutoHide: 5 });
-    press("keydown");
-    press("keydown");
-    press("keydown");
+    tap();
+    tap();
+    tap();
     await feature.update({ ...ENABLED, subtitlesEnabled: false });
     await feature.update({ ...TOGGLE_JUMP, revealAutoHide: 5 });
 
