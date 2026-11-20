@@ -29,7 +29,20 @@ const SHOWCASE_SETTINGS = {
   position: "upper-right",
 };
 
-async function openOptions(colorScheme) {
+// One light screenshot per subtitle style, then one revealed, so the store
+// shows each choice; the Style menu in each shot shows the style it depicts.
+// Chrome takes at most five screenshots: these four and the badges.
+const SUBTITLE_SHOTS = [
+  { file: "1-subtitles-hidden.png", subtitleStyle: "hidden" },
+  { file: "2-subtitles-blurred.png", subtitleStyle: "blur" },
+  { file: "3-subtitles-small-and-faint.png", subtitleStyle: "small-faint" },
+  { file: "4-subtitles-revealed.png", subtitleStyle: "blur", reveal: true },
+];
+const BADGES_SHOT = "5-difficulty-badges-dark.png";
+// Space kept above the "Subtitle appearance" heading when scrolling to it.
+const SCROLL_MARGIN_PX = 24;
+
+async function openOptions(colorScheme, overrides = {}) {
   const profileDirectory = mkdtempSync(path.join(os.tmpdir(), "dreaming-tools-store-"));
   const context = await launchWithExtension(profileDirectory, extension.directory, {
     viewport: SCREENSHOT_SIZE,
@@ -38,7 +51,7 @@ async function openOptions(colorScheme) {
   });
   const worker = context.serviceWorkers().find((candidate) => candidate.url().endsWith("/src/background.js"))
     ?? await context.waitForEvent("serviceworker");
-  await worker.evaluate((settings) => chrome.storage.sync.set(settings), SHOWCASE_SETTINGS);
+  await worker.evaluate((settings) => chrome.storage.sync.set(settings), { ...SHOWCASE_SETTINGS, ...overrides });
   const page = await context.newPage();
   await page.goto(`chrome-extension://${new URL(worker.url()).host}/src/options.html`);
   await page.waitForTimeout(SETTLE_MS);
@@ -53,20 +66,34 @@ async function openOptions(colorScheme) {
   return { page, close };
 }
 
+// Start the frame at "Subtitle appearance", so the Style menu, the Reveal
+// settings, and both player previews all fit in 1280x800.
+async function scrollToSubtitleSettings(page) {
+  await page.evaluate((margin) => {
+    const heading = document.querySelector("#subtitles-feature h3");
+    window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - margin);
+  }, SCROLL_MARGIN_PX);
+  await page.waitForTimeout(SETTLE_MS);
+}
+
 async function captureOptionsScreenshots() {
-  const light = await openOptions("light");
-  await light.page.screenshot({ path: path.join(OUTPUT_DIRECTORY, "1-subtitles-blurred.png") });
-  await light.page.locator("body").click({ position: { x: 5, y: 5 } });
-  await light.page.keyboard.down("s");
-  await light.page.waitForTimeout(SETTLE_MS);
-  await light.page.screenshot({ path: path.join(OUTPUT_DIRECTORY, "2-subtitles-revealed.png") });
-  await light.page.keyboard.up("s");
-  await light.close();
+  for (const shot of SUBTITLE_SHOTS) {
+    const light = await openOptions("light", { subtitleStyle: shot.subtitleStyle });
+    if (shot.reveal) {
+      // Focus the page first; the click would undo a scroll made before it.
+      await light.page.locator("body").click({ position: { x: 5, y: 5 } });
+      await light.page.keyboard.down("s");
+    }
+    await scrollToSubtitleSettings(light.page);
+    await light.page.screenshot({ path: path.join(OUTPUT_DIRECTORY, shot.file) });
+    if (shot.reveal) await light.page.keyboard.up("s");
+    await light.close();
+  }
 
   const dark = await openOptions("dark");
   await dark.page.evaluate(() => document.querySelector("#difficulty-feature").scrollIntoView({ block: "start" }));
   await dark.page.waitForTimeout(SETTLE_MS);
-  await dark.page.screenshot({ path: path.join(OUTPUT_DIRECTORY, "3-difficulty-badges-dark.png") });
+  await dark.page.screenshot({ path: path.join(OUTPUT_DIRECTORY, BADGES_SHOT) });
   await dark.close();
 }
 
