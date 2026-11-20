@@ -1,5 +1,5 @@
 (() => {
-  const { DEFAULT_SETTINGS, SETTING_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
+  const { DEFAULT_SETTINGS, STORED_KEYS, normalizeSettings } = globalThis.DreamingToolsSettings;
 
   const DREAMING_ORIGIN = "https://app.dreaming.com";
   const DREAMING_HOSTNAME = "app.dreaming.com";
@@ -104,7 +104,7 @@
       updateFeatures(features, withFeaturesOff(normalizeSettings(stored)));
     }, { once: true });
 
-    stored = await chrome.storage.sync.get(SETTING_KEYS);
+    stored = await chrome.storage.sync.get(STORED_KEYS);
     if (replaced) {
       return;
     }

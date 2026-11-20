@@ -10,9 +10,9 @@
     position: "upper-right",
     subtitlesEnabled: false,
     subtitleStyle: "blur",
-    revealMode: "hold",
     revealKey: "KeyS",
-    revealAutoHide: 5,
+    revealAfterRelease: "hide",
+    revealJumpBack: 0,
   });
   // Reveal keys are physical key codes (KeyboardEvent.code). Only letter,
   // digit, and punctuation keys are allowed: Space, arrows, Enter, Escape,
@@ -37,18 +37,53 @@
     position: oneOf("upper-right", "lower-left", "upper-left"),
     subtitlesEnabled: oneOf(true, false),
     subtitleStyle: oneOf("blur", "small-faint", "hidden"),
-    revealMode: oneOf("hold", "toggle"),
     revealKey: isRevealKeyCode,
-    // Seconds; 0 turns auto-hide off. Applies only in toggle mode.
-    revealAutoHide: oneOf(0, 3, 5, 10),
+    // What releasing the reveal key does: "hide" at once, keep the text up
+    // until playback is back where the key was first pressed ("caught-up"),
+    // or that many seconds past it.
+    revealAfterRelease: oneOf("hide", "caught-up", 3, 5, 10),
+    // Seconds to move the video back when a press reveals; 0 is off.
+    revealJumpBack: oneOf(0, 1, 2, 3, 5, 10),
   };
   // Read storage with this key list rather than with DEFAULT_SETTINGS: passing
   // defaults would make a never-stored difficultyEnabled look explicitly saved,
   // which the legacy behavior: "original" migration treats as overriding it.
   const SETTING_KEYS = Object.freeze(Object.keys(DEFAULT_SETTINGS));
+  // Hold and Toggle, stored by 1.2.0 and earlier, became After releasing. They are
+  // read so they can be migrated, and removed from storage after an update.
+  const LEGACY_REVEAL_KEYS = Object.freeze(["revealMode", "revealAutoHide"]);
+  const STORED_KEYS = Object.freeze([...SETTING_KEYS, ...LEGACY_REVEAL_KEYS]);
   const LEGACY_ORIGINAL_BEHAVIOR = "original";
+  const LEGACY_TIMED_AUTO_HIDES = new Set([3, 5, 10]);
+  // Toggle with auto-hide Off kept the text up until the next press, which
+  // has no equivalent; the longest timed choice is the closest.
+  const LONGEST_AFTER_TAP = 10;
+  const LEGACY_DEFAULT_AUTO_HIDE = 5;
 
-  function migrateLegacySettings(settings) {
+  // The After releasing choice for settings stored by 1.2.0 and earlier, or
+  // undefined when there is nothing to migrate: no old reveal mode, or an
+  // After releasing choice is already stored (a device still on 1.2.0 can write
+  // the old keys back through sync storage).
+  function revealAfterReleaseFromLegacy({ revealMode, revealAutoHide = LEGACY_DEFAULT_AUTO_HIDE, revealAfterRelease }) {
+    if (revealAfterRelease !== undefined) {
+      return undefined;
+    }
+    if (revealMode === "hold") {
+      return "hide";
+    }
+    if (revealMode === "toggle") {
+      return LEGACY_TIMED_AUTO_HIDES.has(revealAutoHide) ? revealAutoHide : LONGEST_AFTER_TAP;
+    }
+    return undefined;
+  }
+
+  function migrateLegacyReveal(settings) {
+    const revealAfterRelease = revealAfterReleaseFromLegacy(settings);
+    return revealAfterRelease === undefined ? settings : { ...settings, revealAfterRelease };
+  }
+
+  function migrateLegacySettings(stored) {
+    const settings = migrateLegacyReveal(stored);
     if (settings.behavior !== LEGACY_ORIGINAL_BEHAVIOR) {
       return settings;
     }
@@ -69,8 +104,11 @@
 
   globalThis.DreamingToolsSettings = {
     DEFAULT_SETTINGS,
+    LEGACY_REVEAL_KEYS,
     SETTING_KEYS,
+    STORED_KEYS,
     isRevealKeyCode,
     normalizeSettings,
+    revealAfterReleaseFromLegacy,
   };
 })();

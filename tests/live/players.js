@@ -25,6 +25,31 @@ export async function openWatchPage(context, video) {
   return page;
 }
 
+// Auto-hide counts playback time, so check it against the video's own clock
+// on both sides: a buffering stall under load would fail a wall-clock wait.
+// Expects the text still up just short of hideAt and gone just past it.
+const BEFORE_HIDE_MARGIN_S = 0.8;
+const AFTER_HIDE_MARGIN_S = 1;
+const PLAYBACK_WAIT_MS = 30_000;
+const HIDE_WAIT_MS = 1_000;
+const CLOCK_POLL_MS = 100;
+
+async function waitForPlayback(player, time) {
+  await expect.poll(() => player.currentTime(), {
+    timeout: PLAYBACK_WAIT_MS, intervals: [CLOCK_POLL_MS], message: `playback should reach ${time.toFixed(2)} s`,
+  }).toBeGreaterThanOrEqual(time);
+}
+
+export async function expectHidesAtPlaybackTime(player, isRevealed, hideAt) {
+  await waitForPlayback(player, hideAt - BEFORE_HIDE_MARGIN_S);
+  expect(await isRevealed(), `still revealed just before the hide point (${hideAt.toFixed(2)} s)`).toBe(true);
+  await waitForPlayback(player, hideAt + AFTER_HIDE_MARGIN_S);
+  const passedAt = await player.currentTime();
+  await expect.poll(isRevealed, {
+    timeout: HIDE_WAIT_MS, message: `hidden once playback passed the hide point (${hideAt.toFixed(2)} s; at ${passedAt.toFixed(2)} s)`,
+  }).toBe(false);
+}
+
 // Wait until the caption element's computed style settles on a style's values.
 export async function expectStyle(readState, style) {
   await expect.poll(async () => {
@@ -117,8 +142,19 @@ export function dreamingPlayer(page) {
       return choice;
     },
 
+    // Waits for the seek to finish: a reveal pressed mid-seek does not jump.
     async seek(seconds) {
       await video.evaluate((element, time) => { element.currentTime = time; }, seconds);
+      await expect.poll(() => video.evaluate((element) => !element.seeking && element.readyState >= 1)).toBe(true);
+    },
+
+    currentTime() {
+      return video.evaluate((element) => element.currentTime);
+    },
+
+    async pause() {
+      await video.evaluate((element) => element.pause());
+      await expect.poll(() => video.evaluate((element) => element.paused)).toBe(true);
     },
 
     state() {
@@ -186,6 +222,15 @@ export function youtubePlayer(page) {
         await page.mouse.click(x, y);
       }
       await expect.poll(async () => (await player.state()).paused).toBe(false);
+    },
+
+    currentTime() {
+      return frame().evaluate(() => document.querySelector("video.html5-main-video").currentTime);
+    },
+
+    async pause() {
+      await frame().evaluate(() => document.querySelector("video.html5-main-video").pause());
+      await expect.poll(async () => (await player.state()).paused).toBe(true);
     },
 
     // "c" is YouTube's own captions shortcut; it needs focus in the frame.

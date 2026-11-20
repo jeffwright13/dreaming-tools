@@ -2,8 +2,9 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    // tests/live holds the Playwright live-site suite (npm run test:live).
-    exclude: [...configDefaults.exclude, "tests/live/**"],
+    // tests/live holds the Playwright live-site suite (npm run test:live);
+    // dist/ holds build output and scratch files, never tests to run.
+    exclude: [...configDefaults.exclude, "tests/live/**", "dist/**"],
     coverage: {
       include: ["src/*.js", "scripts/*.js"],
       // Drives a real browser through the live-suite fixtures, like tests/live,

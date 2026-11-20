@@ -18,6 +18,8 @@ Browser support claims require both automated checks and the manual release matr
 
 Vitest and jsdom cover score conversion, catalog indexing, settings, options behavior, selectors, badge insertion, dynamic updates, error handling, and privacy-relevant request behavior.
 
+`tests/subtitles-matrix.test.js` drives the subtitle reveal through every combination of After releasing the reveal key and Jump back, with key taps 150 to 1000 ms apart, held keys (with and without the repeat flag), seeded random tap sequences, slow seeks (600 and 800 ms), a pause between taps, seeks made with the player's own controls (during a tap, and back into an earlier range after catching up), a new episode loading into the same element, a key released while Cmd is down, a hold during a tap's reveal, and a tap after a hold. The simulated video plays, seeks asynchronously while reporting the target at once (120 ms unless a sequence sets more), and fires `timeupdate` every 250 ms. Instead of an expected result per run, it checks rules that must always hold: the video only moves back, by the setting, at most once per press, and every press jumps unless the video is at 0; the text shows while the key is down; with Hide on release every release hides at once; otherwise a release keeps the text up while playback is short of where the presses started (or of the last press, once playback has left that range) plus the chosen seconds, and hides within a tick of that point. Breaking the code on purpose (a release that always hides, a hide point that applies while the key is down, repeats counted as new presses) fails 23, 2, and 28 checks. `MATRIX_REPORT=<file> npx vitest run tests/subtitles-matrix.test.js` also writes a table of what each tap sequence does with a 3-second jump.
+
 Run:
 
 ```bash
@@ -61,11 +63,12 @@ Test these views where available:
 - Spanish and French routes
 - First install (remove the extension, then load it again) opens the options page once; reloading or updating the extension does not
 - With a Dreaming tab open and subtitles on, reload the extension in `chrome://extensions`: without reloading the tab, a settings change still applies, and the reveal key reveals once (not twice, which would show two copies running)
-- Options page, subtitles on: holding the reveal key reveals both previews in Hold mode; in Toggle mode each press (or a click on a preview) toggles and auto-hide applies; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
+- Options page, subtitles on: holding the reveal key (or pressing a preview) reveals both previews; with After releasing set to a number, a release keeps them up for the jump plus that many seconds; Show until caught up is disabled while Jump back is Off, and a hint appears while Jump back is on and After releasing is Hide on release; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
 - Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
-- Subtitles: Hold reveals only while the key is down; Toggle flips on each press and auto-hides after 3, 5, and 10 seconds, or stays with auto-hide off
+- Subtitles: the subtitles show while the key is down, whatever After releasing says; on release they hide by default, and with After releasing set to 3, 5, or 10 seconds stay up until playback is that far past the press (not while paused), after a quick press or a long hold alike
+- Subtitles: with Jump back on reveal set, each press moves the video back by that amount, playing or paused, on both players; releasing does not; tapping several times quickly moves back once per tap; with Show until caught up, a tap's subtitles hide once playback returns to where the taps started; on a YouTube-served video, clicking the video after a tap keeps the subtitles up
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
 - Subtitles on a YouTube-served video, in both windowed and fullscreen: with YouTube's CC on, captions follow the chosen style in their normal position above the progress bar; the reveal key works both after clicking inside the YouTube player and with focus on the Dreaming page; with CC off, nothing changes
@@ -121,9 +124,10 @@ Then:
 
 ```bash
 npm run test:live                 # packages the extension, then runs every live test
+npm run test:live:reveal          # opt-in, about 16 minutes: every Jump back x After releasing combination
 ```
 
-A full run takes about 4 minutes.
+A full run takes about 4 minutes. `npm run test:live:reveal` is separate and opt-in (it sets `LIVE_REVEAL_COMBINATIONS=1`): `reveal-combinations.logged-in.spec.js` plays Dreaming's own player through every Jump back x After releasing combination (30) with a tap, a 1.5 s hold with key repeat, and three quick taps, recording each key event and each show or hide with the video's time in the page, and checks the jump and where the text hid. It takes about 16 minutes. Playwright's key events come from the browser, not the operating system, so OS keyboard features such as macOS's press-and-hold accent menu are not exercised.
 
 Options:
 - `LIVE_BROWSER=edge` runs the installed Microsoft Edge instead of Playwright's Chromium. The tab-refresh test always uses Edge (see below).
@@ -145,6 +149,8 @@ Playwright projects:
 
 The login helper only opens a window. You log in by hand and the browser keeps the session in the profile. No script reads, types or stores credentials, which keeps to the rule in `PUBLISHING.md`. The profile stays outside the repository and is never copied into CI or shared. The current test profile uses a free account, which the YouTube-served tests depend on (see [Which player a page uses](#which-player-a-page-uses)).
 
+The persistent profile also keeps the extension's settings between tests and runs, and the `setSettings` fixture merges into them. A setting a test leaves out keeps whatever an earlier test chose, so each suite's base settings name every setting its tests depend on. A 2-second Jump back left by one test once made another test's three Toggle presses one series of reveals, which looked like a flaky auto-hide.
+
 The tests are read-only toward the account in every other way:
 - they never add to the Library or My list
 - they never submit a comment: the comment check types one letter and clears it
@@ -157,11 +163,11 @@ Each run loads the extension from a new temporary folder, so Chrome treats it as
 Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. Firefox was checked by hand (see the release browser matrix). Results on 1.1.0, 2026-11-13: Chromium 44 passed and 2 skipped; Edge logged-out 20 of 20; the test build matched the release ZIP's SHA-256. On 1.0.0, 2026-11-11: Chromium 43 passed and 2 skipped; Edge logged-out 19 of 19. On 0.10.2 the Hold reveal test failed once (see TODO.md). On 0.10.1 the results held across two consecutive full runs, and the logged-out project also passed in Edge, 19 of 19.
 
 **Logged out**
-- **`options.spec.js` (9):**
+- **`options.spec.js` (10):**
   - the page opens by itself on first install
   - auto-save and reload
   - light and dark theme
-  - Hold and Toggle previews by key and mouse
+  - previews by key and mouse: a hold, and a tap or click with a timed After releasing
   - choosing a reveal key
   - ignored keys
   - the badge preview
@@ -181,21 +187,26 @@ Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 
   3. Without a tab reload, the page's subtitle class and badge size follow the change, each card still has exactly one badge, and the tab never navigated.
 
 **Logged in**
-- **`subtitles-dreaming.logged-in.spec.js` (11, plus 1 skipped):**
+- **`subtitles-dreaming.logged-in.spec.js` (14, plus 1 skipped):**
   - each style (Blur, Small and faint, Hidden) applies, and holding `S` shows the player's own style
-  - Hold with key repeat
-  - Toggle with a 3 s auto-hide
-  - the stranded Toggle reveal when the player's subtitles are turned off
+  - a hold with key repeat
+  - a tap with the default After releasing hides on release; with Show 3 s it hides 3 s of playback past the press
+  - jump back: a press on a paused video moves it back 3 s and keeps it paused; the release does not move it
+  - three quick taps on a paused video move it back three times the jump and keep the text up
+  - Show until caught up: a tap with a 2 s jump hides once playback returns to the press
+  - a tap's reveal does not stay stranded when the player's subtitles are turned off
   - nothing revealed with the player's subtitles off
   - window blur hides a reveal
   - the glide while the controls appear
   - fullscreen, which works headless: the subtitle line settles above the controls bar and keeps its style
 
   The comment-box check skips, because free accounts have no comment box.
-- **`subtitles-youtube.logged-in.spec.js` (9):**
+- **`subtitles-youtube.logged-in.spec.js` (10):**
   - each style, with `S` held in the player
   - `S` held with focus on the Dreaming page (forwarded to the frame)
-  - Toggle with auto-hide
+  - a tap in the player with Show 3 s
+  - a tap forwarded from the Dreaming page stays up when focus moves into the player (a click on the video)
+  - jump back: a press forwarded from the Dreaming page moves the paused YouTube video back 3 s
   - nothing visible with CC off
   - window blur on the page hides a reveal in the frame
   - fullscreen
@@ -270,7 +281,7 @@ These come from the exploration on 2026-11-07 and from building the suite.
 | Edge current stable | Optional | Required | Optional |
 | Firefox current stable | Required (manual) | Optional | Optional |
 
-The live Playwright suite cannot load an extension into Firefox, so Firefox is checked by hand: load the build with `npx web-ext run` (a fresh profile each run) or as a temporary add-on in `about:debugging`, run `npx web-ext lint` on the extracted package, and exercise the INSTALL.md checklist on both players, using a free account for YouTube-served videos.
+The live Playwright suite cannot load an extension into Firefox, so Firefox is checked by hand: load the build with `npx web-ext run` (a fresh profile each run) or as a temporary add-on in `about:debugging`, run `npx web-ext lint` on the extracted package, and exercise the INSTALL.md checklist on both players, using a free account for YouTube-served videos. A build loaded this way starts without access to app.dreaming.com (its icon is greyed in the Extensions menu, and the reveal key does nothing): allow the site from that menu, or in `about:addons` under Permissions, then reload the tab. Firefox-specific check: on a YouTube-served video, with After tapping the reveal key set to a number, tap the key with focus on the Dreaming page, then click the video to pause; the subtitles must stay up (Firefox reports the focused iframe a task later than Chromium; see DECISIONS.md).
 
 `Required` coverage may come from physical machines, virtual machines, trusted testers, or a reputable browser-testing service. For each required cell, record:
 

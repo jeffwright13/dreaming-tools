@@ -10,6 +10,7 @@
     "package:dev": "node scripts/package-extension.js --dev",
     "test:live": "npm run package:dev && playwright test",
     "test:live:login": "npm run package:dev && node tests/live/login.js",
+    "test:live:reveal": "npm run package:dev && LIVE_REVEAL_COMBINATIONS=1 playwright test tests/live/reveal-combinations.logged-in.spec.js",
     "store:screenshots": "npm run package:dev && node scripts/store-screenshots.js"
   },
   "keywords": [

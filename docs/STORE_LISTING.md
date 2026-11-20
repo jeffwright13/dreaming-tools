@@ -20,7 +20,9 @@ Two optional study aids for Dreaming's website (app.dreaming.com), for Spanish a
 SUBTITLE DE-EMPHASIS, FOR LISTENING PRACTICE
 With subtitles on, it is tempting to read along instead of listening. This tool keeps the subtitles unreadable until you choose to see them:
 - Blur them, make them small and faint, or hide them.
-- Press a reveal key (S by default) to see them: while you hold the key, or as a toggle that can hide again after 3, 5, or 10 seconds.
+- Hold a reveal key (S by default) to see them while you hold it.
+- Optionally jump the video back 1 to 10 seconds each time you press the key, so you hear the line you missed while you read it; press a few times to go further back.
+- Choose what happens when you let go: hide again, keep the subtitles up until the video catches up, or for 3, 5, or 10 seconds past where you pressed.
 - Works on Dreaming's own player and on videos Dreaming serves through YouTube, windowed and in fullscreen.
 - The player's own subtitle setting stays in charge. With subtitles off, nothing changes.
 
@@ -64,10 +66,10 @@ Study aids for Dreaming's language-learning website (app.dreaming.com): subtitle
 
 **Permission justifications:**
 
-- `storage`: Saves the user's preferences (which tools are on, subtitle style, reveal key and mode, badge style, size, and position) with chrome.storage.sync.
+- `storage`: Saves the user's preferences (which tools are on, subtitle style, reveal key, after-release choice, jump back, badge style, size, and position) with chrome.storage.sync.
 - `scripting`: After an install or update, re-injects the extension's own packaged content scripts into Dreaming tabs that were already open, so they keep responding to settings changes without a reload. It injects only files from the package, never remote or generated code.
 - Host `https://app.dreaming.com/*`: Adds difficulty badges and subtitle styling to Dreaming pages, and downloads Dreaming's public video catalog (without cookies or credentials) to look up difficulty ratings.
-- Content script on `https://www.youtube.com/embed/*`: Dreaming plays some videos in an embedded YouTube player, whose captions are drawn inside that player. The script runs only when the player is embedded in a Dreaming page. It blurs, fades, or hides the captions and shows them when the reveal key is pressed. It does not read caption text, YouTube account data, or viewing activity, and makes no network requests.
+- Content script on `https://www.youtube.com/embed/*`: Dreaming plays some videos in an embedded YouTube player, whose captions are drawn inside that player. The script runs only when the player is embedded in a Dreaming page. It blurs, fades, or hides the captions and shows them when the reveal key is pressed, and, if the user turns on Jump back, moves the video back a few seconds on that press. It does not read caption text, YouTube account data, or viewing activity, and makes no network requests.
 
 **Remote code:** No. All code is in the package.
 

@@ -2,16 +2,23 @@
 // player's subtitles are set to Spanish before each test; account.teardown.js
 // restores the account's original choice afterwards.
 import { test, expect } from "./fixtures.js";
-import { dreamingPlayer, expectStyle, openWatchPage } from "./players.js";
+import { dreamingPlayer, expectHidesAtPlaybackTime, expectStyle, openWatchPage } from "./players.js";
 import { DREAMING_PLAYER_VIDEO } from "./routes.js";
 
-const AUTO_HIDE_SECONDS = 3;
+const AFTER_TAP_SECONDS = 3;
+const JUMP_BACK_SECONDS = 3;
+const CAUGHT_UP_JUMP_SECONDS = 2;
+const TAPS = 3;
 // A stretch of the pinned video with steady speech, so a subtitle line is on
 // screen (checked 2026-11-09).
 const SPOKEN_SECONDS = 40;
 const GLIDE_SAMPLES = 20;
 const GLIDE_SAMPLE_INTERVAL_MS = 25;
-const BASE_SETTINGS = { subtitlesEnabled: true, subtitleStyle: "blur", revealMode: "hold", revealKey: "KeyS", revealAutoHide: 5 };
+// Every reveal setting is spelled out: setSettings merges into the persistent
+// profile's storage, so one left out keeps another test's value.
+const BASE_SETTINGS = {
+  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterRelease: "hide", revealJumpBack: 0,
+};
 
 let player;
 test.beforeEach(async ({ context, setSettings }) => {
@@ -36,7 +43,7 @@ for (const style of ["blur", "small-faint", "hidden"]) {
   });
 }
 
-test("Hold: revealed only while the key is down, and key repeat does not toggle", async () => {
+test("a hold shows only while the key is down, and key repeat is not a new press", async () => {
   const { keyboard } = player.page;
   await keyboard.down("KeyS");
   await expect.poll(isRevealed).toBe(true);
@@ -47,24 +54,66 @@ test("Hold: revealed only while the key is down, and key repeat does not toggle"
   await expect.poll(isRevealed).toBe(false);
 });
 
-test(`Toggle: a press reveals, a second hides, and auto-hide hides after ${AUTO_HIDE_SECONDS} s`, async ({ setSettings }) => {
-  // page.clock would also freeze the player's own timers, so wait in real time.
-  await setSettings({ revealMode: "toggle", revealAutoHide: AUTO_HIDE_SECONDS });
-  const { keyboard } = player.page;
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(true);
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(false);
-
-  await keyboard.press("KeyS");
-  await expect.poll(isRevealed).toBe(true);
-  await player.page.waitForTimeout(AUTO_HIDE_SECONDS * 1_000 - 800);
-  expect(await isRevealed(), "still revealed just before auto-hide").toBe(true);
-  await expect.poll(isRevealed, { timeout: 3_000 }).toBe(false);
+test("a tap hides on release with the default After releasing", async () => {
+  await player.page.keyboard.press("KeyS");
+  await player.page.waitForTimeout(300);
+  expect(await isRevealed()).toBe(false);
 });
 
-test("a Toggle reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {
-  await setSettings({ revealMode: "toggle", revealAutoHide: 0 });
+test(`a tap with Show ${AFTER_TAP_SECONDS} s keeps the text up until that far past the press`, async ({ setSettings }) => {
+  await setSettings({ revealAfterRelease: AFTER_TAP_SECONDS });
+  const pressedAt = await player.currentTime();
+  await player.page.keyboard.press("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt + AFTER_TAP_SECONDS);
+});
+
+// Paused, so the expected position is exact; the player keeps its paused
+// state across the jump.
+test("jump back: a reveal moves the video back by the setting; the release does not", async ({ setSettings }) => {
+  await setSettings({ revealJumpBack: JUMP_BACK_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.pause();
+  const before = await player.currentTime();
+
+  await player.page.keyboard.down("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await expect.poll(() => player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
+  expect((await player.state()).paused).toBe(true);
+  await player.page.keyboard.up("KeyS");
+  await expect.poll(isRevealed).toBe(false);
+  expect(await player.currentTime()).toBeCloseTo(before - JUMP_BACK_SECONDS, 1);
+});
+
+// Paused, so the positions are exact and the text stays up: a paused video
+// never catches up.
+test(`${TAPS} quick taps move back ${TAPS} times the jump and keep the text up`, async ({ setSettings }) => {
+  await setSettings({ revealAfterRelease: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.pause();
+  const before = await player.currentTime();
+
+  for (let tap = 0; tap < TAPS; tap += 1) {
+    await player.page.keyboard.press("KeyS");
+  }
+  await expect.poll(() => player.currentTime()).toBeCloseTo(before - TAPS * CAUGHT_UP_JUMP_SECONDS, 1);
+  await player.page.waitForTimeout(1_000);
+  expect(await isRevealed()).toBe(true);
+});
+
+test("jump back with Show until caught up: a tap hides once playback returns to the press", async ({ setSettings }) => {
+  await setSettings({ revealAfterRelease: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await player.seek(SPOKEN_SECONDS);
+  await player.page.waitForTimeout(1_000);
+
+  const pressedAt = await player.currentTime();
+  await player.page.keyboard.press("KeyS");
+  await expect.poll(isRevealed).toBe(true);
+  await expectHidesAtPlaybackTime(player, isRevealed, pressedAt);
+});
+
+test("a tap's reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {
+  await setSettings({ revealAfterRelease: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
 
@@ -84,10 +133,10 @@ test("with the player's subtitles off, the reveal key reveals nothing", async ()
   await player.page.keyboard.up("KeyS");
 });
 
-test("losing window focus hides a Toggle reveal", async ({ setSettings }) => {
+test("losing window focus hides a tap's reveal", async ({ setSettings }) => {
   // Headless has no second window to switch to; dispatching the window's
   // blur event exercises the same listener a real window switch triggers.
-  await setSettings({ revealMode: "toggle", revealAutoHide: 0 });
+  await setSettings({ revealAfterRelease: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
   await player.page.evaluate(() => window.dispatchEvent(new Event("blur")));

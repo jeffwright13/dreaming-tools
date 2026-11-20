@@ -1,3 +1,9 @@
+// Chrome runs this as a service worker, which loads settings.js here;
+// Firefox runs the manifest's background scripts, settings.js first.
+if (typeof importScripts === "function") {
+  importScripts("settings.js");
+}
+
 (() => {
   const DREAMING_ORIGIN = "https://app.dreaming.com";
   // Updates and reloads of the extension orphan the content scripts already
@@ -51,10 +57,32 @@
     }
   }
 
+  // Settings stored by 1.2.0 and earlier: write the mapped After releasing
+  // choice first, then remove the old keys, so an interrupted migration loses
+  // nothing (content scripts and the options page also map them when read).
+  async function migrateRevealSettings() {
+    const { LEGACY_REVEAL_KEYS, revealAfterReleaseFromLegacy } = globalThis.DreamingToolsSettings;
+    try {
+      const stored = await chrome.storage.sync.get([...LEGACY_REVEAL_KEYS, "revealAfterRelease"]);
+      const revealAfterRelease = revealAfterReleaseFromLegacy(stored);
+      if (revealAfterRelease !== undefined) {
+        await chrome.storage.sync.set({ revealAfterRelease });
+      }
+      if (LEGACY_REVEAL_KEYS.some((key) => key in stored)) {
+        await chrome.storage.sync.remove([...LEGACY_REVEAL_KEYS]);
+      }
+    } catch (error) {
+      console.error("Dreaming Tools could not migrate its reveal settings.", error);
+    }
+  }
+
   async function onInstalled({ reason }) {
     const tasks = [];
     if (reason === "install") {
       tasks.push(openOptionsOnFirstInstall());
+    }
+    if (reason === "update") {
+      tasks.push(migrateRevealSettings());
     }
     if (REFRESH_REASONS.has(reason)) {
       tasks.push(refreshOpenTabs());
