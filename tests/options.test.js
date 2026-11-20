@@ -623,6 +623,24 @@ describe("options page layout", () => {
     expect(document.querySelector('[name="revealMode"], [name="revealAutoHide"]')).toBeNull();
   });
 
+  // The reveal key comes first, so the controls that depend on it are read
+  // after it.
+  it("lists the reveal key first in Reveal, then Jump back, then what a tap does", () => {
+    const reveal = [...document.querySelectorAll("#subtitles-feature .subsection")].find((section) => section.querySelector("h3")?.textContent === "Reveal");
+    const order = [...reveal.querySelectorAll("#reveal-key-button, [name=revealJumpBack], [name=revealAfterTap]")]
+      .map((control) => control.id || control.name);
+    expect(order).toEqual(["reveal-key-button", "revealJumpBack", "revealAfterTap"]);
+    expect(reveal.querySelector("[name=revealAfterTap]").closest("label").textContent).toContain("After tapping the reveal key");
+    expect(document.querySelector("#caught-up-option").textContent).toContain("requires Jump back");
+  });
+
+  // The previews look interactive, but they have no video to move back.
+  it("tells the user the previews do not show a jump back", () => {
+    const note = document.querySelector("#preview-note").textContent;
+    expect(note).toContain("Jump back");
+    expect(note).toContain("time");
+  });
+
   it("has no Save button, because changes save automatically", () => {
     expect(document.querySelector('#settings-form [type="submit"]')).toBeNull();
   });

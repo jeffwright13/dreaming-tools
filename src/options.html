@@ -42,6 +42,12 @@
             <div class="subsection">
               <h3>Reveal</h3>
               <label>
+                Reveal key
+                <button id="reveal-key-button" class="secondary-button key-button" type="button" aria-describedby="reveal-key-help"></button>
+                <input type="hidden" name="revealKey">
+              </label>
+              <small id="reveal-key-help" class="control-help">Click, then press a letter, digit, or punctuation key. Escape cancels.</small>
+              <label>
                 Jump back on reveal
                 <select name="revealJumpBack" aria-describedby="jump-back-help">
                   <option value="0">Off</option>
@@ -54,23 +60,17 @@
               </label>
               <small id="jump-back-help" class="control-help">Each press of the reveal key moves the video back, so you hear the line you missed while you read it.</small>
               <label>
-                After a tap
+                After tapping the reveal key
                 <select name="revealAfterTap" aria-describedby="after-tap-help">
                   <option value="hide">Hide on release</option>
-                  <option id="caught-up-option" value="caught-up">Show until caught up (needs Jump back)</option>
+                  <option id="caught-up-option" value="caught-up">Show until caught up (requires Jump back)</option>
                   <option value="3">Show 3 s past where you pressed</option>
                   <option value="5">Show 5 s past where you pressed</option>
                   <option value="10">Show 10 s past where you pressed</option>
                 </select>
               </label>
-              <small id="after-tap-help" class="control-help">Holding the key shows the subtitles until you let go. A tap, a press of under 0.3 seconds, does what you choose here; tap again to go further back.</small>
+              <small id="after-tap-help" class="control-help">Holding the key shows the subtitles until you let go. A tap (a press of under 0.3 seconds) does what you choose here; tap again to go further back.</small>
               <small id="after-tap-hint" class="control-help" hidden>With Hide on release, a quick tap moves the video back but hides the subtitles before you can read them. Choose Show until caught up to read the replayed line.</small>
-              <label>
-                Reveal key
-                <button id="reveal-key-button" class="secondary-button key-button" type="button" aria-describedby="reveal-key-help"></button>
-                <input type="hidden" name="revealKey">
-              </label>
-              <small id="reveal-key-help" class="control-help">Click, then press a letter, digit, or punctuation key. Escape cancels.</small>
             </div>
           </fieldset>
           <div class="subsection">
@@ -106,7 +106,7 @@
                 <figcaption class="preview-label">YouTube player (free accounts)</figcaption>
               </figure>
             </div>
-            <small class="control-help">Press the reveal key, or press a preview, to see the subtitles revealed.</small>
+            <small id="preview-note" class="control-help">Press the reveal key, or press a preview, to see the subtitles revealed. The previews are pictures, not videos: Jump back does not move them, and their time stays the same.</small>
           </div>
         </section>
 
