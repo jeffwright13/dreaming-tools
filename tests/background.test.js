@@ -152,27 +152,27 @@ describe("loading settings.js", () => {
 
 // 1.2.0 and earlier stored revealMode and revealAutoHide; see SPEC.
 describe("migrating the Hold and Toggle settings after an update", () => {
-  it("writes the mapped after-a-tap choice, then removes the old keys", async () => {
+  it("writes the mapped after-release choice, then removes the old keys", async () => {
     await loadBackground({ stored: { revealMode: "toggle", revealAutoHide: 3, revealKey: "KeyJ" } });
     await onInstalled({ reason: "update", previousVersion: "1.2.0" });
 
     const { set, remove, data } = chromeStub.storage.sync;
-    expect(set).toHaveBeenCalledWith({ revealAfterTap: 3 });
+    expect(set).toHaveBeenCalledWith({ revealAfterRelease: 3 });
     expect(remove).toHaveBeenCalledWith(["revealMode", "revealAutoHide"]);
     expect(set.mock.invocationCallOrder[0]).toBeLessThan(remove.mock.invocationCallOrder[0]);
-    expect(data).toEqual({ revealAfterTap: 3, revealKey: "KeyJ" });
+    expect(data).toEqual({ revealAfterRelease: 3, revealKey: "KeyJ" });
   });
 
-  it("keeps a stored after-a-tap choice and only removes old keys a 1.2.0 device wrote back", async () => {
-    await loadBackground({ stored: { revealMode: "toggle", revealAfterTap: "caught-up" } });
+  it("keeps a stored after-release choice and only removes old keys a 1.2.0 device wrote back", async () => {
+    await loadBackground({ stored: { revealMode: "toggle", revealAfterRelease: "caught-up" } });
     await onInstalled({ reason: "update", previousVersion: "1.3.0" });
 
     expect(chromeStub.storage.sync.set).not.toHaveBeenCalled();
-    expect(chromeStub.storage.sync.data).toEqual({ revealAfterTap: "caught-up" });
+    expect(chromeStub.storage.sync.data).toEqual({ revealAfterRelease: "caught-up" });
   });
 
   it("does nothing without old keys", async () => {
-    await loadBackground({ stored: { revealAfterTap: 5 } });
+    await loadBackground({ stored: { revealAfterRelease: 5 } });
     await onInstalled({ reason: "update", previousVersion: "1.3.0" });
 
     expect(chromeStub.storage.sync.set).not.toHaveBeenCalled();

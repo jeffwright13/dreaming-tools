@@ -18,7 +18,7 @@ Browser support claims require both automated checks and the manual release matr
 
 Vitest and jsdom cover score conversion, catalog indexing, settings, options behavior, selectors, badge insertion, dynamic updates, error handling, and privacy-relevant request behavior.
 
-`tests/subtitles-matrix.test.js` drives the subtitle reveal through every combination of After tapping the reveal key and Jump back, with key taps 150 to 1000 ms apart, held keys (with and without the repeat flag), seeded random tap sequences, slow seeks (600 and 800 ms), a pause between taps, seeks made with the player's own controls (during a tap, and back into an earlier range after catching up), a new episode loading into the same element, a key released while Cmd is down, a hold during a tap's reveal, and a tap after a hold. The simulated video plays, seeks asynchronously while reporting the target at once (120 ms unless a sequence sets more), and fires `timeupdate` every 250 ms. Instead of an expected result per run, it checks rules that must always hold: the video only moves back, by the setting, at most once per press, and every press jumps unless the video is at 0; the text shows while the key is down; a hold hides on release, and so does a tap with Hide on release; otherwise a tap keeps the text up while playback is short of where the taps started (or of the last press, once playback has left that range) plus the chosen seconds, and hides within a tick of that point. Breaking the code on purpose (a tap that always hides, a hide point that applies while the key is down, repeats counted as new presses) fails 23, 2, and 51 checks. `MATRIX_REPORT=<file> npx vitest run tests/subtitles-matrix.test.js` also writes a table of what each tap sequence does with a 3-second jump.
+`tests/subtitles-matrix.test.js` drives the subtitle reveal through every combination of After releasing the reveal key and Jump back, with key taps 150 to 1000 ms apart, held keys (with and without the repeat flag), seeded random tap sequences, slow seeks (600 and 800 ms), a pause between taps, seeks made with the player's own controls (during a tap, and back into an earlier range after catching up), a new episode loading into the same element, a key released while Cmd is down, a hold during a tap's reveal, and a tap after a hold. The simulated video plays, seeks asynchronously while reporting the target at once (120 ms unless a sequence sets more), and fires `timeupdate` every 250 ms. Instead of an expected result per run, it checks rules that must always hold: the video only moves back, by the setting, at most once per press, and every press jumps unless the video is at 0; the text shows while the key is down; with Hide on release every release hides at once; otherwise a release keeps the text up while playback is short of where the presses started (or of the last press, once playback has left that range) plus the chosen seconds, and hides within a tick of that point. Breaking the code on purpose (a release that always hides, a hide point that applies while the key is down, repeats counted as new presses) fails 23, 2, and 28 checks. `MATRIX_REPORT=<file> npx vitest run tests/subtitles-matrix.test.js` also writes a table of what each tap sequence does with a 3-second jump.
 
 Run:
 
@@ -63,11 +63,11 @@ Test these views where available:
 - Spanish and French routes
 - First install (remove the extension, then load it again) opens the options page once; reloading or updating the extension does not
 - With a Dreaming tab open and subtitles on, reload the extension in `chrome://extensions`: without reloading the tab, a settings change still applies, and the reveal key reveals once (not twice, which would show two copies running)
-- Options page, subtitles on: holding the reveal key (or pressing a preview) reveals both previews until release; with After tapping the reveal key set to a number, a tap or a click keeps them up for the jump plus that many seconds; Show until caught up is disabled while Jump back is Off, and a hint appears while Jump back is on and After tapping the reveal key is Hide on release; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
+- Options page, subtitles on: holding the reveal key (or pressing a preview) reveals both previews; with After releasing set to a number, a release keeps them up for the jump plus that many seconds; Show until caught up is disabled while Jump back is Off, and a hint appears while Jump back is on and After releasing is Hide on release; after choosing a new key only the new key works, and pressing the current key while choosing records it without revealing
 - Options page: each change saves without a Save button and updates an open Dreaming tab; Restore defaults
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
-- Subtitles: holding the key shows the subtitles until release, whatever After tapping the reveal key says; a tap hides on release by default, and with After tapping the reveal key set to 3, 5, or 10 seconds stays up until playback is that far past the press (not while paused)
+- Subtitles: the subtitles show while the key is down, whatever After releasing says; on release they hide by default, and with After releasing set to 3, 5, or 10 seconds stay up until playback is that far past the press (not while paused), after a quick press or a long hold alike
 - Subtitles: with Jump back on reveal set, each press moves the video back by that amount, playing or paused, on both players; releasing does not; tapping several times quickly moves back once per tap; with Show until caught up, a tap's subtitles hide once playback returns to where the taps started; on a YouTube-served video, clicking the video after a tap keeps the subtitles up
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture
@@ -124,9 +124,10 @@ Then:
 
 ```bash
 npm run test:live                 # packages the extension, then runs every live test
+npm run test:live:reveal          # opt-in, about 16 minutes: every Jump back x After releasing combination
 ```
 
-A full run takes about 4 minutes.
+A full run takes about 4 minutes. `npm run test:live:reveal` is separate and opt-in (it sets `LIVE_REVEAL_COMBINATIONS=1`): `reveal-combinations.logged-in.spec.js` plays Dreaming's own player through every Jump back x After releasing combination (30) with a tap, a 1.5 s hold with key repeat, and three quick taps, recording each key event and each show or hide with the video's time in the page, and checks the jump and where the text hid. It takes about 16 minutes. Playwright's key events come from the browser, not the operating system, so OS keyboard features such as macOS's press-and-hold accent menu are not exercised.
 
 Options:
 - `LIVE_BROWSER=edge` runs the installed Microsoft Edge instead of Playwright's Chromium. The tab-refresh test always uses Edge (see below).
@@ -166,7 +167,7 @@ Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 
   - the page opens by itself on first install
   - auto-save and reload
   - light and dark theme
-  - previews by key and mouse: a hold, and a tap or click with a timed After tapping the reveal key
+  - previews by key and mouse: a hold, and a tap or click with a timed After releasing
   - choosing a reveal key
   - ignored keys
   - the badge preview
@@ -189,7 +190,7 @@ Results on 1.2.0, 2026-11-17: Chromium 44 passed and 2 skipped; Edge logged-out 
 - **`subtitles-dreaming.logged-in.spec.js` (14, plus 1 skipped):**
   - each style (Blur, Small and faint, Hidden) applies, and holding `S` shows the player's own style
   - a hold with key repeat
-  - a tap with the default After tapping the reveal key hides on release; with Show 3 s it hides 3 s of playback past the press
+  - a tap with the default After releasing hides on release; with Show 3 s it hides 3 s of playback past the press
   - jump back: a press on a paused video moves it back 3 s and keeps it paused; the release does not move it
   - three quick taps on a paused video move it back three times the jump and keep the text up
   - Show until caught up: a tap with a 2 s jump hides once playback returns to the press

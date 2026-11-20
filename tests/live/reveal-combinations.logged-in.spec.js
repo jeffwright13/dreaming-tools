@@ -1,4 +1,4 @@
-// Every combination of Jump back and After tapping the reveal key, on
+// Every combination of Jump back and After releasing the reveal key, on
 // Dreaming's own player, with real key events from the browser: a tap, a
 // 1.5 s hold with key auto-repeat, and three quick taps. An in-page recorder
 // logs each key event and each show or hide with the video's time, and the
@@ -9,7 +9,7 @@ import { dreamingPlayer, openWatchPage } from "./players.js";
 import { DREAMING_PLAYER_VIDEO } from "./routes.js";
 
 const JUMPS = [0, 1, 2, 3, 5, 10];
-const AFTER_TAPS = ["hide", "caught-up", 3, 5, 10];
+const AFTER_RELEASES = ["hide", "caught-up", 3, 5, 10];
 const START_SECONDS = 60;
 const HOLD_MS = 1500;
 const KEY_REPEAT_MS = 50;
@@ -50,14 +50,14 @@ function installRecorder() {
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 }
 
-const keepsShown = (afterTap, jump) => afterTap !== "hide" && !(afterTap === "caught-up" && jump === 0);
-const extraSeconds = (afterTap) => (typeof afterTap === "number" ? afterTap : 0);
+const keepsShown = (afterRelease, jump) => afterRelease !== "hide" && !(afterRelease === "caught-up" && jump === 0);
+const extraSeconds = (afterRelease) => (typeof afterRelease === "number" ? afterRelease : 0);
 
 for (const revealJumpBack of JUMPS) {
-  for (const revealAfterTap of AFTER_TAPS) {
-    test(`jump ${revealJumpBack || "off"}, after a tap ${revealAfterTap}`, async ({ context, setSettings }) => {
+  for (const revealAfterRelease of AFTER_RELEASES) {
+    test(`jump ${revealJumpBack || "off"}, after release ${revealAfterRelease}`, async ({ context, setSettings }) => {
       test.setTimeout(180_000);
-      await setSettings({ ...BASE_SETTINGS, revealJumpBack, revealAfterTap });
+      await setSettings({ ...BASE_SETTINGS, revealJumpBack, revealAfterRelease });
       const page = await openWatchPage(context, DREAMING_PLAYER_VIDEO);
       const player = dreamingPlayer(page);
       await player.play();
@@ -65,8 +65,8 @@ for (const revealJumpBack of JUMPS) {
       await page.evaluate(installRecorder);
       const readLog = () => page.evaluate(() => window.__revealLog.splice(0));
       const isRevealed = () => page.evaluate(() => document.documentElement.classList.contains("dt-subtitles--revealed"));
-      const keeps = keepsShown(revealAfterTap, revealJumpBack);
-      const extra = extraSeconds(revealAfterTap);
+      const keeps = keepsShown(revealAfterRelease, revealJumpBack);
+      const extra = extraSeconds(revealAfterRelease);
       const hideWaitMs = (TAPS * revealJumpBack + extra + 5) * 1_000;
 
       async function startAt(seconds) {
@@ -75,11 +75,13 @@ for (const revealJumpBack of JUMPS) {
         await readLog();
       }
 
-      // After a tap's release, either hidden at once or kept until the hide
-      // point, measured in playback time from the first press.
-      async function expectTapOutcome(log, anchor, label) {
+      // After the release, either hidden at once or kept until the hide
+      // point, measured in playback time from the first press. A release
+      // made after the point has passed (a long hold with a short jump)
+      // hides at once.
+      async function expectReleaseOutcome(log, anchor, label) {
         const lastUp = log.findLast((entry) => entry.type === "keyup");
-        if (!keeps) {
+        if (!keeps || lastUp.time >= anchor + extra) {
           await expect.poll(isRevealed, { message: `${label}: hidden on release` }).toBe(false);
           return;
         }
@@ -100,10 +102,10 @@ for (const revealJumpBack of JUMPS) {
       expect(log.some((entry) => entry.type === "shown"), "tap: shown").toBe(true);
       const tapUp = log.find((entry) => entry.type === "keyup");
       expect(Math.abs(tapUp.time - (before - revealJumpBack)), "tap: jump amount").toBeLessThanOrEqual(JUMP_TOLERANCE_S);
-      await expectTapOutcome(log, before, "tap");
+      await expectReleaseOutcome(log, before, "tap");
 
-      // A hold: shown the whole time it is held, whatever the setting, and
-      // hidden at once on release.
+      // A hold: shown the whole time it is held, whatever the setting, then
+      // the release follows the setting, as after a tap.
       await startAt(START_SECONDS);
       before = await player.currentTime();
       await page.keyboard.down("KeyS");
@@ -120,7 +122,7 @@ for (const revealJumpBack of JUMPS) {
       expect(log.filter((entry) => entry.type === "hidden" && entry.at < holdUp.at), "hold: never hidden while held").toEqual([]);
       expect(Math.abs(holdDown.time - (before - revealJumpBack)), "hold: moved back once by the jump").toBeLessThanOrEqual(JUMP_TOLERANCE_S);
       expect(holdUp.at - holdDown.at, "hold: held long enough").toBeGreaterThanOrEqual(HOLD_MS);
-      expect(await isRevealed(), "hold: hidden on release").toBe(false);
+      await expectReleaseOutcome(log, before, "hold");
 
       // Three quick taps: each moves back, and a kept reveal hides at the
       // first press's hide point.
@@ -136,7 +138,7 @@ for (const revealJumpBack of JUMPS) {
         const elapsedS = (lastUp.at - log.find((entry) => entry.type === "keydown").at) / 1000;
         expect(Math.abs(lastUp.time - (before - TAPS * revealJumpBack)), "taps: moved back once per tap")
           .toBeLessThanOrEqual(JUMP_TOLERANCE_S + elapsedS);
-        await expectTapOutcome(log, before, "taps");
+        await expectReleaseOutcome(log, before, "taps");
       }
     });
   }

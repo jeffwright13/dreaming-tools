@@ -23,7 +23,7 @@ const SHOWCASE_SETTINGS = {
   revealKey: "KeyS",
   // Shown set, so the store images show the features exist.
   revealJumpBack: 3,
-  revealAfterTap: "caught-up",
+  revealAfterRelease: "caught-up",
   difficultyEnabled: true,
   behavior: "enhanced-everywhere",
   style: "enhanced",

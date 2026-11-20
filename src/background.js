@@ -57,16 +57,16 @@ if (typeof importScripts === "function") {
     }
   }
 
-  // Settings stored by 1.2.0 and earlier: write the mapped After a tap
+  // Settings stored by 1.2.0 and earlier: write the mapped After releasing
   // choice first, then remove the old keys, so an interrupted migration loses
   // nothing (content scripts and the options page also map them when read).
   async function migrateRevealSettings() {
-    const { LEGACY_REVEAL_KEYS, revealAfterTapFromLegacy } = globalThis.DreamingToolsSettings;
+    const { LEGACY_REVEAL_KEYS, revealAfterReleaseFromLegacy } = globalThis.DreamingToolsSettings;
     try {
-      const stored = await chrome.storage.sync.get([...LEGACY_REVEAL_KEYS, "revealAfterTap"]);
-      const revealAfterTap = revealAfterTapFromLegacy(stored);
-      if (revealAfterTap !== undefined) {
-        await chrome.storage.sync.set({ revealAfterTap });
+      const stored = await chrome.storage.sync.get([...LEGACY_REVEAL_KEYS, "revealAfterRelease"]);
+      const revealAfterRelease = revealAfterReleaseFromLegacy(stored);
+      if (revealAfterRelease !== undefined) {
+        await chrome.storage.sync.set({ revealAfterRelease });
       }
       if (LEGACY_REVEAL_KEYS.some((key) => key in stored)) {
         await chrome.storage.sync.remove([...LEGACY_REVEAL_KEYS]);

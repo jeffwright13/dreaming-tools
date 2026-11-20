@@ -115,7 +115,7 @@ test("the reveal key previews from a focused dropdown without changing it", asyn
   const style = page.locator("[name=subtitleStyle]");
   await style.selectOption("hidden");
   await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden" });
-  for (const name of ["subtitleStyle", "revealAfterTap"]) {
+  for (const name of ["subtitleStyle", "revealAfterRelease"]) {
     await page.locator(`[name=${name}]`).focus();
     await page.keyboard.down("KeyS");
     await expect(html, name).toHaveClass(REVEALED);
@@ -123,7 +123,7 @@ test("the reveal key previews from a focused dropdown without changing it", asyn
     await expect(html, name).not.toHaveClass(REVEALED);
   }
   await expect(style).toHaveValue("hidden");
-  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden", revealAfterTap: "hide" });
+  await expect.poll(getSettings).toMatchObject({ subtitleStyle: "hidden", revealAfterRelease: "hide" });
 });
 
 // The preview has no video: a tap keeps it up for the jump plus the chosen
@@ -134,9 +134,9 @@ test("a tap or a click keeps the preview up for the jump plus the chosen seconds
   const html = page.locator("html");
   await enableSubtitles(page);
   await page.locator("[name=revealJumpBack]").selectOption("3");
-  await expect(page.locator("#after-tap-hint")).toBeVisible();
-  await page.locator("[name=revealAfterTap]").selectOption("3");
-  await expect(page.locator("#after-tap-hint")).toBeHidden();
+  await expect(page.locator("#after-release-hint")).toBeVisible();
+  await page.locator("[name=revealAfterRelease]").selectOption("3");
+  await expect(page.locator("#after-release-hint")).toBeHidden();
   await page.locator("h1").click();
 
   await page.keyboard.press("KeyS");
@@ -150,7 +150,7 @@ test("a tap or a click keeps the preview up for the jump plus the chosen seconds
   await page.mouse.move(5, 5);
   await expect(html).toHaveClass(REVEALED);
 
-  await page.locator("[name=revealAfterTap]").selectOption("hide");
+  await page.locator("[name=revealAfterRelease]").selectOption("hide");
   await expect(html).not.toHaveClass(REVEALED);
 });
 

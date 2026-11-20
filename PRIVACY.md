@@ -33,9 +33,9 @@ The extension stores only these preferences:
 - Badge style
 - Badge size
 - Badge position
-- Subtitle style, reveal key, after-a-tap choice, and jump-back amount
+- Subtitle style, reveal key, after-release choice, and jump-back amount
 
-The subtitles tool listens for its reveal key on Dreaming pages, and inside YouTube video players embedded in Dreaming pages, only to show or hide subtitles and, if the user turns on jump back, to move the video back a few seconds. To tell a quick tap from a hold, it notes how long the reveal key was held; for YouTube-served videos it passes the press, the release, and that duration from the Dreaming page to the embedded player, inside the browser. It does not record, store, or transmit keystrokes or subtitle text, and none of this leaves the browser.
+The subtitles tool listens for its reveal key on Dreaming pages, and inside YouTube video players embedded in Dreaming pages, only to show or hide subtitles and, if the user turns on jump back, to move the video back a few seconds. For YouTube-served videos it passes the press and release of the reveal key from the Dreaming page to the embedded player, inside the browser. It does not record, store, or transmit keystrokes or subtitle text, and none of this leaves the browser.
 
 Preferences are stored with the browser's synchronized extension storage (`chrome.storage.sync`). Chrome may synchronize them through the user's Google account according to Google's Chrome Sync policies, and Firefox through the user's Mozilla account according to Mozilla's Firefox Sync policies. The developer does not receive or control that synchronization. Users can restore defaults from the options page, clear extension data in the browser, or uninstall the extension.
 

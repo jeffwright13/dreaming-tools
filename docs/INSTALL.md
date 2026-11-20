@@ -52,7 +52,7 @@ To help test, record the extension version, browser version, operating system, D
 - Series catalogs and series modals
 - Difficulty badges switched on and off
 - Subtitles: with the player's Settings > Subtitles set to Off, nothing changes and the reveal key does nothing; with it set to Spanish (or French), each style (Blur, Small and faint, Hidden) applies, including in fullscreen
-- Subtitles: holding the key shows the subtitles until you let go, whatever After tapping the reveal key says; a tap hides on release by default, and with After tapping the reveal key set to 3, 5, or 10 seconds stays up until playback is that far past where you pressed (not while paused)
+- Subtitles: the subtitles show while the key is down, whatever After releasing the reveal key says; on release they hide by default, and with After releasing set to 3, 5, or 10 seconds stay up until playback is that far past where you pressed (not while paused), after a quick press or a long hold alike
 - Subtitles: with Jump back on reveal set, each press moves the video back by that amount, playing or paused, and the earlier line shows; releasing the key does not move it; tapping several times quickly moves back once per tap; with Show until caught up, a tap's subtitles hide once playback returns to where you first pressed
 - Subtitles: switching to another window while revealed hides the subtitles again; the reveal key does nothing while typing in a comment box
 - Subtitles: changing the reveal key in options, including rejection of Space and Escape cancelling capture

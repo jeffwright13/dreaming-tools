@@ -11,7 +11,7 @@
     subtitlesEnabled: false,
     subtitleStyle: "blur",
     revealKey: "KeyS",
-    revealAfterTap: "hide",
+    revealAfterRelease: "hide",
     revealJumpBack: 0,
   });
   // Reveal keys are physical key codes (KeyboardEvent.code). Only letter,
@@ -38,10 +38,10 @@
     subtitlesEnabled: oneOf(true, false),
     subtitleStyle: oneOf("blur", "small-faint", "hidden"),
     revealKey: isRevealKeyCode,
-    // What a tap (a press released within TAP_MAX_MS) does: "hide" on
-    // release like a hold, keep the text up until playback is back where the
-    // key was first pressed ("caught-up"), or that many seconds past it.
-    revealAfterTap: oneOf("hide", "caught-up", 3, 5, 10),
+    // What releasing the reveal key does: "hide" at once, keep the text up
+    // until playback is back where the key was first pressed ("caught-up"),
+    // or that many seconds past it.
+    revealAfterRelease: oneOf("hide", "caught-up", 3, 5, 10),
     // Seconds to move the video back when a press reveals; 0 is off.
     revealJumpBack: oneOf(0, 1, 2, 3, 5, 10),
   };
@@ -49,7 +49,7 @@
   // defaults would make a never-stored difficultyEnabled look explicitly saved,
   // which the legacy behavior: "original" migration treats as overriding it.
   const SETTING_KEYS = Object.freeze(Object.keys(DEFAULT_SETTINGS));
-  // Hold and Toggle, stored by 1.2.0 and earlier, became After a tap. They are
+  // Hold and Toggle, stored by 1.2.0 and earlier, became After releasing. They are
   // read so they can be migrated, and removed from storage after an update.
   const LEGACY_REVEAL_KEYS = Object.freeze(["revealMode", "revealAutoHide"]);
   const STORED_KEYS = Object.freeze([...SETTING_KEYS, ...LEGACY_REVEAL_KEYS]);
@@ -60,12 +60,12 @@
   const LONGEST_AFTER_TAP = 10;
   const LEGACY_DEFAULT_AUTO_HIDE = 5;
 
-  // The After a tap choice for settings stored by 1.2.0 and earlier, or
+  // The After releasing choice for settings stored by 1.2.0 and earlier, or
   // undefined when there is nothing to migrate: no old reveal mode, or an
-  // After a tap choice is already stored (a device still on 1.2.0 can write
+  // After releasing choice is already stored (a device still on 1.2.0 can write
   // the old keys back through sync storage).
-  function revealAfterTapFromLegacy({ revealMode, revealAutoHide = LEGACY_DEFAULT_AUTO_HIDE, revealAfterTap }) {
-    if (revealAfterTap !== undefined) {
+  function revealAfterReleaseFromLegacy({ revealMode, revealAutoHide = LEGACY_DEFAULT_AUTO_HIDE, revealAfterRelease }) {
+    if (revealAfterRelease !== undefined) {
       return undefined;
     }
     if (revealMode === "hold") {
@@ -78,8 +78,8 @@
   }
 
   function migrateLegacyReveal(settings) {
-    const revealAfterTap = revealAfterTapFromLegacy(settings);
-    return revealAfterTap === undefined ? settings : { ...settings, revealAfterTap };
+    const revealAfterRelease = revealAfterReleaseFromLegacy(settings);
+    return revealAfterRelease === undefined ? settings : { ...settings, revealAfterRelease };
   }
 
   function migrateLegacySettings(stored) {
@@ -109,6 +109,6 @@
     STORED_KEYS,
     isRevealKeyCode,
     normalizeSettings,
-    revealAfterTapFromLegacy,
+    revealAfterReleaseFromLegacy,
   };
 })();

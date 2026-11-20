@@ -15,7 +15,7 @@ import "../src/subtitles-core.js";
 import "../src/subtitles.js";
 
 const { DEFAULT_SETTINGS } = globalThis.DreamingToolsSettings;
-const { TAP_MAX_MS, tapKeepsShown } = globalThis.DreamingSubtitlesCore;
+const { releaseKeepsShown } = globalThis.DreamingSubtitlesCore;
 const { createSubtitlesFeature } = globalThis.DreamingSubtitlesFeature;
 
 const AFTER_TAPS = ["hide", "caught-up", 3, 5, 10];
@@ -240,9 +240,9 @@ function run(settings, { sequence, start, seekMs }) {
   return { presses, releases, seeks: player.seeks, revealedAtEnd, hiddenAfterMs, timeWhenHidden };
 }
 
-const CONFIGS = AFTER_TAPS.flatMap((revealAfterTap) => JUMPS.map((revealJumpBack) => ({ revealAfterTap, revealJumpBack })));
+const CONFIGS = AFTER_TAPS.flatMap((revealAfterRelease) => JUMPS.map((revealJumpBack) => ({ revealAfterRelease, revealJumpBack })));
 
-const label = ({ revealAfterTap, revealJumpBack }) => `after a tap ${revealAfterTap}, jump ${revealJumpBack || "off"}`;
+const label = ({ revealAfterRelease, revealJumpBack }) => `after release ${revealAfterRelease}, jump ${revealJumpBack || "off"}`;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -251,7 +251,7 @@ afterEach(() => {
 describe.each(CONFIGS)("reveal matrix: %s", (config) => {
   const name = label(config);
   const results = SEQUENCES.map((entry) => ({ entry, result: run(config, entry) }));
-  const keepsShown = tapKeepsShown(config);
+  const keepsShown = releaseKeepsShown(config);
 
   it(`${name}: the video only ever moves back, by the jump amount, at most once per press`, () => {
     for (const { entry, result } of results) {
@@ -290,31 +290,18 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
     }
   });
 
-  it(`${name}: a hold hides on release${keepsShown ? "" : ", and so does a tap"}`, () => {
-    for (const { entry, result } of results) {
-      result.releases.forEach((release) => {
-        if (release.heldMs >= TAP_MAX_MS || !keepsShown) {
-          expect(release.after, entry.name).toBe(false);
-        }
-      });
-    }
-  });
-
   if (keepsShown) {
-    it(`${name}: a tap's reveal hides by itself as playback continues`, () => {
+    it(`${name}: a released reveal hides by itself as playback continues`, () => {
       const stuck = results.filter(({ result }) => result.revealedAtEnd && result.hiddenAfterMs === null);
       expect(stuck.map(({ entry }) => entry.name)).toEqual([]);
     });
 
-    it(`${name}: a tap keeps the text up while playback is short of where the taps started`, () => {
+    it(`${name}: a release keeps the text up while playback is short of where the presses started`, () => {
       for (const { entry, result } of results) {
         for (const release of result.releases) {
-          if (release.heldMs >= TAP_MAX_MS) {
-            continue;
-          }
           const times = result.presses.slice(0, release.pressIndex + 1).map((press) => press.time);
           const anchor = entry.anchor === "last" ? times.at(-1) : Math.max(...times);
-          const extra = config.revealAfterTap === "caught-up" ? 0 : config.revealAfterTap;
+          const extra = config.revealAfterRelease === "caught-up" ? 0 : config.revealAfterRelease;
           if (release.time < anchor + extra) {
             expect(release.after, `${entry.name}, release ${release.pressIndex + 1}`).toBe(true);
           }
@@ -333,14 +320,15 @@ describe.each(CONFIGS)("reveal matrix: %s", (config) => {
         }
         const times = result.presses.map((press) => press.time);
         const anchor = entry.anchor === "last" ? times.at(-1) : Math.max(...times);
-        const extra = config.revealAfterTap === "caught-up" ? 0 : config.revealAfterTap;
+        const extra = config.revealAfterRelease === "caught-up" ? 0 : config.revealAfterRelease;
         expect(result.timeWhenHidden + TIME_EPSILON, entry.name).toBeGreaterThanOrEqual(anchor + extra);
         expect(result.timeWhenHidden, entry.name).toBeLessThan(anchor + extra + TICK_MS / 1000 + TIME_EPSILON);
       }
     });
   } else {
-    it(`${name}: nothing stays shown after the last release`, () => {
+    it(`${name}: every release hides at once`, () => {
       for (const { entry, result } of results) {
+        result.releases.forEach((release) => expect(release.after, entry.name).toBe(false));
         expect(result.revealedAtEnd, entry.name).toBe(false);
       }
     });
@@ -351,10 +339,10 @@ const REPORT_PATH = process.env.MATRIX_REPORT;
 describe.runIf(REPORT_PATH)("reveal matrix report", () => {
   it("writes what each sequence does with a 3-second jump", () => {
     const lines = ["# Reveal matrix, jump back 3 s", "",
-      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms unless the sequence says otherwise; taps are held ${TAP_HOLD_MS} ms, holds ${TAP_MAX_MS} ms or more.`, ""];
-    for (const revealAfterTap of AFTER_TAPS) {
-      const config = { revealAfterTap, revealJumpBack: 3 };
-      lines.push(`## After a tap: ${revealAfterTap}`, "",
+      `Simulated video playing from ${START_TIME_S} s (random sequences alternate with ${NEAR_START_TIME_S} s); a seek takes ${SEEK_MS} ms unless the sequence says otherwise; taps are held ${TAP_HOLD_MS} ms.`, ""];
+    for (const revealAfterRelease of AFTER_TAPS) {
+      const config = { revealAfterRelease, revealJumpBack: 3 };
+      lines.push(`## After releasing: ${revealAfterRelease}`, "",
         "| Sequence | Jumps | Moved back | Starts at | Shown after last key | Hides after |",
         "|---|---|---|---|---|---|");
       for (const entry of SEQUENCES) {

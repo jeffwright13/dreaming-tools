@@ -5,48 +5,29 @@ import "../src/subtitles-core.js";
 
 const {
   SERIES_SLACK_S,
-  TAP_MAX_MS,
   continuesSeries,
   formatKeyCode,
   hidePoint,
   isRevealKeyPress,
-  isTap,
   isTypingTarget,
   jumpTarget,
-  previewTapMs,
-  tapKeepsShown,
+  previewShowMs,
+  releaseKeepsShown,
 } = globalThis.DreamingSubtitlesCore;
 
-describe("isTap", () => {
-  it("is a press released within the tap time", () => {
-    expect(isTap(0)).toBe(true);
-    expect(isTap(TAP_MAX_MS - 1)).toBe(true);
-  });
+describe("releaseKeepsShown", () => {
+  const settings = (revealAfterRelease, revealJumpBack = 3) => ({ revealAfterRelease, revealJumpBack });
 
-  it("is not a hold of the tap time or longer", () => {
-    expect(isTap(TAP_MAX_MS)).toBe(false);
-    expect(isTap(2000)).toBe(false);
-  });
-
-  // A forwarded release with no valid hold time counts as a hold.
-  it.each([undefined, null, -1, Number.NaN, Number.POSITIVE_INFINITY, "50"])("is not a tap for a held time of %s", (heldMs) => {
-    expect(isTap(heldMs)).toBe(false);
-  });
-});
-
-describe("tapKeepsShown", () => {
-  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
-
-  it("keeps the text up after a tap for every choice but Hide on release", () => {
-    expect(tapKeepsShown(settings("hide"))).toBe(false);
-    expect(tapKeepsShown(settings("caught-up"))).toBe(true);
-    expect(tapKeepsShown(settings(5))).toBe(true);
-    expect(tapKeepsShown(settings(5, 0))).toBe(true);
+  it("keeps the text up after release for every choice but Hide on release", () => {
+    expect(releaseKeepsShown(settings("hide"))).toBe(false);
+    expect(releaseKeepsShown(settings("caught-up"))).toBe(true);
+    expect(releaseKeepsShown(settings(5))).toBe(true);
+    expect(releaseKeepsShown(settings(5, 0))).toBe(true);
   });
 
   // With nothing to catch up to, Show until caught up acts as Hide on release.
   it("treats Show until caught up as Hide on release with jump back off", () => {
-    expect(tapKeepsShown(settings("caught-up", 0))).toBe(false);
+    expect(releaseKeepsShown(settings("caught-up", 0))).toBe(false);
   });
 });
 
@@ -112,7 +93,7 @@ describe("jumpTarget", () => {
 });
 
 describe("hidePoint", () => {
-  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
+  const settings = (revealAfterRelease, revealJumpBack = 3) => ({ revealAfterRelease, revealJumpBack });
 
   // The anchor is where the series of presses started; landed is where the
   // video is after this press's jump.
@@ -139,21 +120,21 @@ describe("hidePoint", () => {
 
 // The options preview has no video: a tap there lasts as long as it would on
 // a playing video, measured from the press.
-describe("previewTapMs", () => {
-  const settings = (revealAfterTap, revealJumpBack = 3) => ({ revealAfterTap, revealJumpBack });
+describe("previewShowMs", () => {
+  const settings = (revealAfterRelease, revealJumpBack = 3) => ({ revealAfterRelease, revealJumpBack });
 
   it("is the jump amount for Show until caught up", () => {
-    expect(previewTapMs(settings("caught-up"))).toBe(3000);
+    expect(previewShowMs(settings("caught-up"))).toBe(3000);
   });
 
   it("is the jump amount plus the seconds for a timed choice", () => {
-    expect(previewTapMs(settings(5))).toBe(8000);
-    expect(previewTapMs(settings(5, 0))).toBe(5000);
+    expect(previewShowMs(settings(5))).toBe(8000);
+    expect(previewShowMs(settings(5, 0))).toBe(5000);
   });
 
   it("is none when a tap hides on release", () => {
-    expect(previewTapMs(settings("hide"))).toBeNull();
-    expect(previewTapMs(settings("caught-up", 0))).toBeNull();
+    expect(previewShowMs(settings("hide"))).toBeNull();
+    expect(previewShowMs(settings("caught-up", 0))).toBeNull();
   });
 });
 

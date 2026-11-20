@@ -6,12 +6,11 @@ import "../src/subtitles-core.js";
 import "../src/subtitles.js";
 
 const { DEFAULT_SETTINGS } = globalThis.DreamingToolsSettings;
-const { TAP_MAX_MS } = globalThis.DreamingSubtitlesCore;
 const { createSubtitlesFeature } = globalThis.DreamingSubtitlesFeature;
 
 const ENABLED = { ...DEFAULT_SETTINGS, subtitlesEnabled: true };
 const JUMP = { ...ENABLED, revealJumpBack: 3 };
-const CAUGHT_UP = { ...JUMP, revealAfterTap: "caught-up" };
+const CAUGHT_UP = { ...JUMP, revealAfterRelease: "caught-up" };
 const SUBTITLES_ON = `
   <div class="ds-shaka-player">
     <video></video>
@@ -165,7 +164,7 @@ describe("subtitles feature", () => {
 
   it("returns to hidden when the reveal settings change", async () => {
     fakeVideo();
-    for (const change of [{ revealKey: "KeyJ" }, { revealAfterTap: 5 }, { revealJumpBack: 5 }]) {
+    for (const change of [{ revealKey: "KeyJ" }, { revealAfterRelease: 5 }, { revealJumpBack: 5 }]) {
       await feature.update(CAUGHT_UP);
       tap();
       expect(revealed()).toBe(true);
@@ -177,7 +176,7 @@ describe("subtitles feature", () => {
 
   it("removes its classes, listeners, and timer when disabled", async () => {
     document.querySelector("video").remove();
-    await feature.update({ ...ENABLED, revealAfterTap: 5 });
+    await feature.update({ ...ENABLED, revealAfterRelease: 5 });
     tap();
 
     await feature.update({ ...ENABLED, subtitlesEnabled: false });
@@ -196,25 +195,20 @@ describe("subtitles feature", () => {
   });
 });
 
-describe("tap and hold", () => {
-  it("hides on release after a hold, whatever After a tap says", async () => {
-    fakeVideo();
-    for (const revealAfterTap of ["hide", "caught-up", 3, 5, 10]) {
-      await feature.update({ ...JUMP, revealAfterTap });
-      hold();
-      expect(revealed(), String(revealAfterTap)).toBe(false);
-    }
-  });
-
-  it("tells a tap from a hold at the tap time", async () => {
-    fakeVideo();
+describe("releasing the key", () => {
+  // Every release follows the setting, however long the key was down, so
+  // no timing decides what a press means.
+  it("follows the setting after a hold just as after release", async () => {
+    const video = fakeVideo();
     await feature.update(CAUGHT_UP);
 
-    hold(TAP_MAX_MS - 1);
+    hold();
     expect(revealed()).toBe(true);
+    video.advance(40);
+    expect(revealed()).toBe(false);
 
-    await feature.update({ ...CAUGHT_UP, revealJumpBack: 5 });
-    hold(TAP_MAX_MS);
+    await feature.update(JUMP);
+    hold();
     expect(revealed()).toBe(false);
   });
 
@@ -226,7 +220,7 @@ describe("tap and hold", () => {
     expect(revealed()).toBe(false);
   });
 
-  it("keeps the text up after a tap until playback catches up", async () => {
+  it("keeps the text up after release until playback catches up", async () => {
     const video = fakeVideo();
     await feature.update(CAUGHT_UP);
 
@@ -238,9 +232,9 @@ describe("tap and hold", () => {
     expect(revealed()).toBe(false);
   });
 
-  it("keeps the text up after a tap for that many seconds past where the key was pressed", async () => {
+  it("keeps the text up after release for that many seconds past where the key was pressed", async () => {
     const video = fakeVideo();
-    await feature.update({ ...JUMP, revealAfterTap: 5 });
+    await feature.update({ ...JUMP, revealAfterRelease: 5 });
 
     tap();
     video.advance(44.9);
@@ -249,7 +243,7 @@ describe("tap and hold", () => {
     expect(revealed()).toBe(false);
   });
 
-  // H1: the hide point is set at the press but applies only after a tap's
+  // H1: the hide point is set at the press but applies only after release's
   // release; until then it is not known whether the press is a tap.
   it("keeps the text up while the key is down, even past the hide point", async () => {
     const video = fakeVideo();
@@ -286,7 +280,7 @@ describe("tap and hold", () => {
 
   it("hides on a seek past the hide point and not on one before it", async () => {
     const video = fakeVideo();
-    await feature.update({ ...JUMP, revealAfterTap: 5 });
+    await feature.update({ ...JUMP, revealAfterRelease: 5 });
 
     tap();
     video.seekTo(30);
@@ -326,7 +320,7 @@ describe("tap and hold", () => {
     });
 
     it("falls back to a timer for a timed choice", async () => {
-      await feature.update({ ...JUMP, revealAfterTap: 5 });
+      await feature.update({ ...JUMP, revealAfterRelease: 5 });
 
       tap();
       vi.advanceTimersByTime(4999);
@@ -345,18 +339,18 @@ describe("tap and hold", () => {
 
   // On macOS a key released while Cmd is down sends no keyup.
   describe("a release lost while Cmd is down", () => {
-    it("takes Cmd's release as the key's release, by how long the key was down", async () => {
+    it("takes Cmd's release as the key's release", async () => {
       fakeVideo();
       await feature.update(CAUGHT_UP);
 
       press("keydown");
       press("keydown", { ...META, metaKey: true });
-      vi.advanceTimersByTime(TAP_MS);
+      vi.advanceTimersByTime(HOLD_MS);
       press("keyup", META);
       expect(revealed()).toBe(true);
 
+      await feature.update(JUMP);
       press("keydown");
-      vi.advanceTimersByTime(HOLD_MS);
       press("keyup", META);
       expect(revealed()).toBe(false);
     });
@@ -525,7 +519,7 @@ describe("a series of presses", () => {
 
   it("counts a timed choice from the first press of the series", async () => {
     const video = fakeVideo();
-    await feature.update({ ...JUMP, revealAfterTap: 3 });
+    await feature.update({ ...JUMP, revealAfterRelease: 3 });
 
     tap();
     tap();
@@ -541,7 +535,7 @@ describe("a series of presses", () => {
   // keeps the text up, so a later press starts a new one.
   it("starts a new series after catching up while a timed choice keeps the text up", async () => {
     const video = fakeVideo();
-    await feature.update({ ...JUMP, revealAfterTap: 10 });
+    await feature.update({ ...JUMP, revealAfterRelease: 10 });
 
     tap();
     video.advance(45);
@@ -660,7 +654,7 @@ describe("YouTube-served videos on the Dreaming page", () => {
   const message = (event, extra = {}) => ({ source: "dreaming-tools", type: "subtitles-reveal", event, ...extra });
   const sent = () => frameWindow.postMessage.mock.calls.map(([data]) => data);
 
-  it("forwards the press, the release with how long the key was down, and a blur", async () => {
+  it("forwards the press, the release, and a blur", async () => {
     await topFeature.update(ENABLED);
 
     expect(press("keydown").defaultPrevented).toBe(true);
@@ -672,12 +666,12 @@ describe("YouTube-served videos on the Dreaming page", () => {
 
     expect(frameWindow.postMessage.mock.calls).toEqual([
       [message("press"), "https://www.youtube.com"],
-      [message("release", { heldMs: TAP_MS }), "https://www.youtube.com"],
+      [message("release"), "https://www.youtube.com"],
       [message("blur"), "https://www.youtube.com"],
     ]);
   });
 
-  it("forwards Cmd's release, standing in for a lost one, with how long the key was down", async () => {
+  it("forwards Cmd's release, standing in for a lost one", async () => {
     await topFeature.update(ENABLED);
 
     press("keydown");
@@ -685,7 +679,7 @@ describe("YouTube-served videos on the Dreaming page", () => {
     press("keyup", META);
     press("keyup");
 
-    expect(sent()).toEqual([message("press"), message("release", { heldMs: TAP_MS })]);
+    expect(sent()).toEqual([message("press"), message("release")]);
   });
 
   // H4: a click on the YouTube video (to pause, say) moves focus into the
@@ -795,32 +789,23 @@ describe("inside the YouTube frame", () => {
     expect(video.time).toBe(35);
   });
 
-  it("tells a forwarded tap from a hold by the hold time sent with the release", async () => {
+  it("follows the setting on a forwarded release", async () => {
     fakeVideo();
     await frameFeature.update(CAUGHT_UP);
 
     receive(message("press"));
     vi.advanceTimersByTime(HOLD_MS);
-    receive(message("release", { heldMs: TAP_MS }));
+    receive(message("release"));
     expect(revealed()).toBe(true);
 
-    await frameFeature.update({ ...CAUGHT_UP, revealJumpBack: 5 });
+    await frameFeature.update(JUMP);
     receive(message("press"));
-    receive(message("release", { heldMs: HOLD_MS }));
-    expect(revealed()).toBe(false);
-  });
-
-  it.each([undefined, -1, "80", Number.NaN])("counts a forwarded release with hold time %s as a hold", async (heldMs) => {
-    fakeVideo();
-    await frameFeature.update(CAUGHT_UP);
-
-    receive(message("press"));
-    receive(message("release", { heldMs }));
+    receive(message("release"));
     expect(revealed()).toBe(false);
   });
 
   // Focus moved into the frame mid-press: the key's release arrives here.
-  it("takes a local release after a forwarded press, timed from the press", async () => {
+  it("takes a local release after a forwarded press", async () => {
     fakeVideo();
     await frameFeature.update(CAUGHT_UP);
 
@@ -835,7 +820,7 @@ describe("inside the YouTube frame", () => {
     await frameFeature.update(CAUGHT_UP);
 
     receive(message("press"));
-    receive(message("release", { heldMs: TAP_MS }));
+    receive(message("release"));
     receive(message("blur"));
     expect(revealed()).toBe(false);
   });

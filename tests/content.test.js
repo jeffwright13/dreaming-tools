@@ -59,7 +59,7 @@ describe("initialize", () => {
 
     await initialize([feature]);
 
-    expect(feature.update).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, revealAfterTap: 3 });
+    expect(feature.update).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, revealAfterRelease: 3 });
   });
 
   it("passes merged synchronized changes to every feature and ignores other storage areas", async () => {

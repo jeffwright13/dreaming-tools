@@ -10,7 +10,7 @@ const JUMP_BACK_SECONDS = 3;
 // Every reveal setting is spelled out: setSettings merges into the persistent
 // profile's storage, so one left out keeps another test's value.
 const BASE_SETTINGS = {
-  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterTap: "hide", revealJumpBack: 0,
+  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterRelease: "hide", revealJumpBack: 0,
 };
 
 let player;
@@ -47,7 +47,7 @@ test("with focus on the Dreaming page, the reveal key still reveals the captions
 });
 
 test(`a tap in the player with Show ${AFTER_TAP_SECONDS} s keeps the captions up until that far past the press`, async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: AFTER_TAP_SECONDS });
+  await setSettings({ revealAfterRelease: AFTER_TAP_SECONDS });
   await player.focusFrame();
   const pressedAt = await player.currentTime();
   await player.page.keyboard.press("KeyS");
@@ -59,7 +59,7 @@ test(`a tap in the player with Show ${AFTER_TAP_SECONDS} s keeps the captions up
 // keeps a tap's reveal; then focus moves into the player, as a click on the
 // video to pause does. The page does not forward that blur.
 test("a forwarded tap keeps the captions up when focus moves into the player", async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: 10 });
+  await setSettings({ revealAfterRelease: 10 });
   await player.focusPage();
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
@@ -103,7 +103,7 @@ test("with YouTube's captions off, the reveal key shows nothing", async () => {
 test("losing window focus on the Dreaming page hides a reveal in the player", async ({ setSettings }) => {
   // The page forwards its window blur to the frame. Headless has no second
   // window, so dispatch the page's blur event directly.
-  await setSettings({ revealAfterTap: 10 });
+  await setSettings({ revealAfterRelease: 10 });
   await player.focusPage();
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);

@@ -17,7 +17,7 @@ const GLIDE_SAMPLE_INTERVAL_MS = 25;
 // Every reveal setting is spelled out: setSettings merges into the persistent
 // profile's storage, so one left out keeps another test's value.
 const BASE_SETTINGS = {
-  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterTap: "hide", revealJumpBack: 0,
+  subtitlesEnabled: true, subtitleStyle: "blur", revealKey: "KeyS", revealAfterRelease: "hide", revealJumpBack: 0,
 };
 
 let player;
@@ -54,14 +54,14 @@ test("a hold shows only while the key is down, and key repeat is not a new press
   await expect.poll(isRevealed).toBe(false);
 });
 
-test("a tap hides on release with the default After a tap", async () => {
+test("a tap hides on release with the default After releasing", async () => {
   await player.page.keyboard.press("KeyS");
   await player.page.waitForTimeout(300);
   expect(await isRevealed()).toBe(false);
 });
 
 test(`a tap with Show ${AFTER_TAP_SECONDS} s keeps the text up until that far past the press`, async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: AFTER_TAP_SECONDS });
+  await setSettings({ revealAfterRelease: AFTER_TAP_SECONDS });
   const pressedAt = await player.currentTime();
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
@@ -88,7 +88,7 @@ test("jump back: a reveal moves the video back by the setting; the release does 
 // Paused, so the positions are exact and the text stays up: a paused video
 // never catches up.
 test(`${TAPS} quick taps move back ${TAPS} times the jump and keep the text up`, async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await setSettings({ revealAfterRelease: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
   await player.seek(SPOKEN_SECONDS);
   await player.pause();
   const before = await player.currentTime();
@@ -102,7 +102,7 @@ test(`${TAPS} quick taps move back ${TAPS} times the jump and keep the text up`,
 });
 
 test("jump back with Show until caught up: a tap hides once playback returns to the press", async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
+  await setSettings({ revealAfterRelease: "caught-up", revealJumpBack: CAUGHT_UP_JUMP_SECONDS });
   await player.seek(SPOKEN_SECONDS);
   await player.page.waitForTimeout(1_000);
 
@@ -113,7 +113,7 @@ test("jump back with Show until caught up: a tap hides once playback returns to 
 });
 
 test("a tap's reveal does not stay stranded when the player's subtitles are turned off", async ({ setSettings }) => {
-  await setSettings({ revealAfterTap: 10 });
+  await setSettings({ revealAfterRelease: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
 
@@ -136,7 +136,7 @@ test("with the player's subtitles off, the reveal key reveals nothing", async ()
 test("losing window focus hides a tap's reveal", async ({ setSettings }) => {
   // Headless has no second window to switch to; dispatching the window's
   // blur event exercises the same listener a real window switch triggers.
-  await setSettings({ revealAfterTap: 10 });
+  await setSettings({ revealAfterRelease: 10 });
   await player.page.keyboard.press("KeyS");
   await expect.poll(isRevealed).toBe(true);
   await player.page.evaluate(() => window.dispatchEvent(new Event("blur")));

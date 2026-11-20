@@ -19,17 +19,16 @@
   // On macOS a key released while Cmd is down sends no keyup, so Cmd's own
   // release stands in for the reveal key's.
   const META_KEY = "Meta";
-  const REVEAL_SETTINGS = ["revealKey", "revealAfterTap", "revealJumpBack"];
+  const REVEAL_SETTINGS = ["revealKey", "revealAfterRelease", "revealJumpBack"];
 
   const { normalizeSettings } = globalThis.DreamingToolsSettings;
   const {
     continuesSeries,
     hidePoint,
     isRevealKeyPress,
-    isTap,
     isTypingTarget,
     jumpTarget,
-    tapKeepsShown,
+    releaseKeepsShown,
   } = globalThis.DreamingSubtitlesCore;
 
   // The feature never edits the player. It only sets classes on <html>, and
@@ -37,8 +36,8 @@
   // the player removes and re-creates is styled without observing the page.
   //
   // A press jumps the video back (when Jump back is on) and shows the
-  // subtitles while the key is down. A hold hides on release; a tap (released
-  // within TAP_MAX_MS) follows the After a tap setting. See docs/SPEC.md.
+  // subtitles while the key is down; the release follows the After releasing
+  // setting, however long the key was down. See docs/SPEC.md.
   //
   // YouTube-served videos draw captions inside a cross-origin YouTube frame,
   // where a second instance of this feature runs. Keys pressed while focus is
@@ -64,20 +63,20 @@
     let listening = false;
     // While shown: the video watched for the hide point, the hide point (a
     // playback time, or null), and whether it applies yet. It applies only
-    // after a tap's release, because until then the press may be a hold.
+    // after the release: while the key is down the text always shows.
     let watchedVideo = null;
     let hideAt = null;
     let hideArmed = false;
-    // A timed After a tap with no video to watch falls back to this.
+    // A timed After releasing with no video to watch falls back to this.
     let fallbackTimer = null;
     // The current series of presses ({ video, anchor, floor }), kept across
     // hides so a few taps back count as one; see continuesSeries.
     let series = null;
-    // The event.timeStamp of the press waiting for its release (a local
-    // keydown or a forwarded press), or null. A keydown while one is pending
-    // is not a new press: some keyboards send auto-repeat without the repeat
-    // flag. A release with none pending does nothing.
-    let pressedAt = null;
+    // Whether a press (a local keydown or a forwarded press) is waiting for
+    // its release. A keydown while one is pending is not a new press: some
+    // keyboards send auto-repeat without the repeat flag. A release with
+    // none pending does nothing.
+    let pressPending = false;
     // A blur waits one task before deciding whether to forward; see onBlur.
     let blurCheck = null;
 
@@ -192,7 +191,7 @@
     }
 
     // Shows the subtitles; with a video, watches it for the hide point
-    // (pending until a tap's release) and for the video ending.
+    // (pending until the release) and for the video ending.
     function show(video, point) {
       revealed = true;
       root.classList.add(REVEALED_CLASS);
@@ -214,7 +213,7 @@
       hideArmed = false;
     }
 
-    // Every press jumps back and shows, including one while a tap keeps the
+    // Every press jumps back and shows, including one while a release keeps the
     // text up; a press inside the current series keeps its hide point.
     function onPress() {
       const video = findVideo();
@@ -228,15 +227,15 @@
       show(video, hidePoint(settings, anchor, landed));
     }
 
-    // A hold hides on release; so does a tap with Hide on release. Any other
-    // tap keeps the text up until its hide point, and hides at once if that
-    // has already passed. With no video, a timed choice uses a timer and
-    // Show until caught up has nothing to catch up to.
-    function onRelease(heldMs) {
+    // With Hide on release, the text hides on release. Otherwise it stays
+    // up until its hide point, and hides at once if that has already passed.
+    // With no video, a timed choice uses a timer and Show until caught up has
+    // nothing to catch up to.
+    function onRelease() {
       if (!revealed) {
         return;
       }
-      if (!isTap(heldMs) || !tapKeepsShown(settings)) {
+      if (!releaseKeepsShown(settings)) {
         hide();
         return;
       }
@@ -245,8 +244,8 @@
         onPlaybackTime();
         return;
       }
-      if (typeof settings.revealAfterTap === "number") {
-        fallbackTimer = setTimeout(hide, settings.revealAfterTap * MILLISECONDS_PER_SECOND);
+      if (typeof settings.revealAfterRelease === "number") {
+        fallbackTimer = setTimeout(hide, settings.revealAfterRelease * MILLISECONDS_PER_SECOND);
         return;
       }
       hide();
@@ -254,7 +253,7 @@
 
     // A press while the player shows no subtitles belongs to the page: it
     // does not jump, it hides a shown reveal, and it ends the series, so a
-    // reveal kept up by a tap does not reappear when subtitles come back.
+    // reveal kept up after a release does not reappear when subtitles come back.
     function hideWithoutSubtitles() {
       if (revealed) {
         hide();
@@ -291,9 +290,9 @@
       if (!isRevealKeyPress(event, settings.revealKey) || isTypingTarget(event.target)) {
         return;
       }
-      const newPress = !event.repeat && pressedAt === null;
+      const newPress = !event.repeat && !pressPending;
       if (newPress) {
-        pressedAt = event.timeStamp;
+        pressPending = true;
       }
 
       if (subtitlesShown()) {
@@ -319,20 +318,17 @@
       }
     }
 
-    // Hold time comes from the events' own timestamps, so a busy page does
-    // not turn a tap into a hold.
-    function release(event, frames) {
-      const heldMs = event.timeStamp - pressedAt;
-      pressedAt = null;
-      forward(frames, { event: "release", heldMs });
-      onRelease(heldMs);
+    function release(frames) {
+      pressPending = false;
+      forward(frames, { event: "release" });
+      onRelease();
     }
 
     function onKeyUp(event) {
       const frames = frameTargets();
       if (event.key === META_KEY) {
-        if (pressedAt !== null) {
-          release(event, frames);
+        if (pressPending) {
+          release(frames);
         }
         return;
       }
@@ -345,8 +341,8 @@
       if (!isTypingTarget(event.target) && (subtitlesShown() || frames.length > 0)) {
         consume(event);
       }
-      if (pressedAt !== null) {
-        release(event, frames);
+      if (pressPending) {
+        release(frames);
       }
     }
 
@@ -362,7 +358,7 @@
     // A real window blur therefore reaches the frame one task late, while
     // its window is in the background.
     function onBlur() {
-      pressedAt = null;
+      pressPending = false;
       if (revealed) {
         hide();
       }
@@ -395,22 +391,20 @@
           hideWithoutSubtitles();
           return;
         }
-        pressedAt = event.timeStamp;
+        pressPending = true;
         onPress();
         return;
       }
 
-      // A release's hold time was measured on the Dreaming page; isTap
-      // treats a missing or invalid one as a hold.
       if (data.event === "release") {
-        if (pressedAt !== null) {
-          pressedAt = null;
-          onRelease(data.heldMs);
+        if (pressPending) {
+          pressPending = false;
+          onRelease();
         }
         return;
       }
 
-      pressedAt = null;
+      pressPending = false;
       if (revealed) {
         hide();
       }
@@ -445,7 +439,7 @@
       clearBlurCheck();
       hide();
       endSeries();
-      pressedAt = null;
+      pressPending = false;
       for (const name of [...root.classList]) {
         if (name.startsWith(ROOT_CLASS)) {
           root.classList.remove(name);
@@ -470,7 +464,7 @@
       }
       setStyleClass(settings.subtitleStyle);
       if (previous && revealSettingsChanged(previous, settings)) {
-        pressedAt = null;
+        pressPending = false;
         endSeries();
         hide();
       }
