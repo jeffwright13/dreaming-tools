@@ -112,15 +112,17 @@ Many Dreaming videos are served through YouTube for accounts without premium (se
 
 The same video can play in either player, depending on the account. This is observed behavior, not documented by Dreaming, and may change.
 
-| Account | Video also published on Dreaming's YouTube channel | Video not on YouTube |
-|---|---|---|
-| Premium | Dreaming's player | Dreaming's player |
-| Free | YouTube embed | Dreaming's player |
-| Logged out | Sign-up prompt, no player | Sign-up prompt, no player |
+| Account | YouTube copy on Dreaming's channel, embedding allowed | YouTube copy with embedding turned off | Video not on YouTube |
+|---|---|---|---|
+| Premium | Dreaming's player | Dreaming's player | Dreaming's player |
+| Free | YouTube embed | Dreaming's player | Dreaming's player |
+| Logged out | Sign-up prompt, no player | Sign-up prompt, no player | Sign-up prompt, no player |
 
 Evidence, 2026-11-13: watch page `6aec7f74a1ddb669a07fb7e5` played in Dreaming's player for the maintainer's premium account, and as an embed of YouTube video `ZxeljjcqOUE` (the same video on Dreaming's public channel) for the free test account. The maintainer also saw it switch from Dreaming's player to the YouTube embed after signing out and refreshing; a browser that had never signed in showed the sign-up prompt for it and for both pinned live-suite videos. `6ae0934444135614096a680f`, the live suite's YouTube-served video, is YouTube only for free accounts; `5e4d121caac87f3820954cb5`, its Dreaming-player video, uses Dreaming's player for both.
 
-Consequences: a video ID alone does not say which player a page will use, and "YouTube-served" means "YouTube-served for this account". Both players need support, because free accounts see YouTube embeds wherever a YouTube copy exists. See [TESTING.md](TESTING.md#which-player-a-page-uses) for how this affects testing.
+Evidence, 2026-11-20: watch page `6a391aae09d2527916e0419e` ("How True Are These Common Stereotypes?") has a public, listed copy on Dreaming's channel, YouTube video `BlqSM45E8V4`, but YouTube reports it as not playable in embeds (`playableInEmbed: false`, and its oEmbed request returns `Unauthorized`). The free test account got Dreaming's player for it, while `6aec7f74a1ddb669a07fb7e5`, whose copy allows embedding, was still a YouTube embed for the same account. In a new, empty Edge profile, both pages showed the sign-up prompt and no player.
+
+Consequences: a video ID alone does not say which player a page will use, and "YouTube-served" means "YouTube-served for this account". Both players need support, because free accounts see YouTube embeds wherever an embeddable YouTube copy exists. Whether a copy allows embedding is Dreaming's per-video choice on YouTube and can change without anything changing on Dreaming's site. See [TESTING.md](TESTING.md#which-player-a-page-uses) for how this affects testing.
 
 Keys go to whichever frame has focus. Inside the YouTube frame, the feature handles the reveal key itself. On the Dreaming page, when Dreaming's own subtitle container is absent but a YouTube player is present, the feature consumes the reveal key (it cannot see whether YouTube captions are on) and forwards `press` (not repeats), `release`, and window `blur` with `postMessage({ source: "dreaming-tools", type: "subtitles-reveal", event }, "https://www.youtube.com")`. The frame applies only messages whose origin is `https://app.dreaming.com` and whose fields match exactly. It deliberately does not check `event.source`: any Dreaming-origin sender may send these messages, which can only show or hide captions. Focus moving between the page and the frame blurs one of them, which re-hides the captions.
 
