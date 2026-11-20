@@ -1,6 +1,6 @@
 # Privacy Policy for Dreaming Tools
 
-Effective date: 2026-11-17
+Effective date: 2026-11-19
 
 Dreaming Tools is an independent browser extension that adds companion tools to Dreaming pages, currently difficulty badges and series difficulty ranges, and subtitle de-emphasis for listen-only practice. It is not affiliated with or endorsed by Dreaming.
 
@@ -33,9 +33,9 @@ The extension stores only these preferences:
 - Badge style
 - Badge size
 - Badge position
-- Subtitle style, reveal mode, reveal key, and auto-hide delay
+- Subtitle style, reveal mode, reveal key, auto-hide choice, and jump-back amount
 
-The subtitles tool listens for its reveal key on Dreaming pages, and inside YouTube video players embedded in Dreaming pages, only to show or hide subtitles. It does not record, store, or transmit keystrokes or subtitle text.
+The subtitles tool listens for its reveal key on Dreaming pages, and inside YouTube video players embedded in Dreaming pages, only to show or hide subtitles and, if the user turns on jump back, to move the video back a few seconds. It does not record, store, or transmit keystrokes or subtitle text.
 
 Preferences are stored with the browser's synchronized extension storage (`chrome.storage.sync`). Chrome may synchronize them through the user's Google account according to Google's Chrome Sync policies, and Firefox through the user's Mozilla account according to Mozilla's Firefox Sync policies. The developer does not receive or control that synchronization. Users can restore defaults from the options page, clear extension data in the browser, or uninstall the extension.
 
@@ -45,7 +45,7 @@ The `storage` permission saves and synchronizes the preferences listed above.
 
 The `scripting` permission lets the extension, right after it is installed or updated, re-run its own packaged script and stylesheet in Dreaming tabs that were already open, so those tabs keep working without a reload. It is used only on Dreaming pages, only with files included in the extension, and does not read page content or browsing activity.
 
-Access to `https://app.dreaming.com/*` lets the extension add badges to supported Dreaming pages and retrieve public language catalogs. The extension also runs a small script and stylesheet in YouTube embedded players (`https://www.youtube.com/embed/*`), because Dreaming serves many videos through YouTube and their captions are drawn inside YouTube's player. The script first checks that the player is embedded directly in a Dreaming page and does nothing otherwise. Inside Dreaming it only blurs, fades, or hides YouTube's captions and shows them when the reveal key is pressed; it does not read caption text, YouTube account data, or viewing activity. Chrome and Firefox describe this access as reading and changing data on www.youtube.com.
+Access to `https://app.dreaming.com/*` lets the extension add badges to supported Dreaming pages and retrieve public language catalogs. The extension also runs a small script and stylesheet in YouTube embedded players (`https://www.youtube.com/embed/*`), because Dreaming serves many videos through YouTube and their captions are drawn inside YouTube's player. The script first checks that the player is embedded directly in a Dreaming page and does nothing otherwise. Inside Dreaming it only blurs, fades, or hides YouTube's captions and shows them when the reveal key is pressed, and, if the user turns on jump back, moves the video back a few seconds on that press; it does not read caption text, YouTube account data, or viewing activity. Chrome and Firefox describe this access as reading and changing data on www.youtube.com.
 
 The extension does not use cookie, history, tabs, web-request, or credential permissions.
 
