@@ -40,7 +40,15 @@ Dreaming Tools is an independent, unofficial project. It is not affiliated with,
 
 **Icon:** `icons/icon-128.png` (from the package).
 
-**Screenshots and promo tile:** generated from the packaged extension with `npm run store:screenshots` (which builds the test package in `dist/dev/` first), into `dist/store-assets/`: three 1280x800 options-page screenshots (subtitles blurred, subtitles revealed while the key is held, difficulty badges in dark mode) and a 440x280 small promo tile. They show only the extension's own pages and preview art, not Dreaming's site, whose thumbnails and branding are Dreaming's.
+**Screenshots and promo tile:** generated from the packaged extension with `npm run store:screenshots` (which builds the test package in `dist/dev/` first), into `dist/store-assets/`: five 1280x800 options-page screenshots, the most Chrome accepts, and a 440x280 small promo tile. They show only the extension's own pages and preview art, not Dreaming's site, whose thumbnails and branding are Dreaming's. Each subtitle shot starts at "Subtitle appearance" so the Style menu and both player previews fit, and the Style menu shows the style the previews depict. The Chrome Web Store shows no captions; Firefox Add-ons takes these, one per screenshot:
+
+| File | Caption |
+|---|---|
+| `1-subtitles-hidden.png` | Subtitles hidden: the Dreaming and YouTube player previews show no subtitle until you press the reveal key |
+| `2-subtitles-blurred.png` | Subtitles blurred: a line is there but unreadable, in both player previews |
+| `3-subtitles-small-and-faint.png` | Subtitles small and faint: readable only with deliberate effort |
+| `4-subtitles-revealed.png` | Subtitles revealed while the reveal key is held |
+| `5-difficulty-badges-dark.png` | Difficulty badges in the upper-right corner (the default): a rating on a video, a range on a series, in dark mode |
 
 **Homepage URL:** https://github.com/jeffwright13/dreaming-tools
 
@@ -112,6 +120,6 @@ Desktop Firefox and Chrome, not the Dreaming mobile app or mobile browsers. In p
 
 **Data collection** (from the package): `browser_specific_settings.gecko.data_collection_permissions` declares `none`.
 
-**Screenshots:** the same 1280x800 images from `dist/store-assets/`.
+**Screenshots:** the same five 1280x800 images from `dist/store-assets/`, in order, each with its caption from the table above.
 
 **Homepage, support, and privacy policy URLs:** the same as the Chrome listing.

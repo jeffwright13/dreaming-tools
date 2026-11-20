@@ -72,7 +72,7 @@ export function launchWithExtension(profileDirectory, extensionDirectory, option
 // blank tab, which fires no "page" event, so poll every tab's URL instead.
 const FIRST_INSTALL_TAB_TIMEOUT_MS = 5_000;
 const FIRST_INSTALL_TAB_POLL_MS = 50;
-async function closeFirstInstallOptionsPage(context) {
+export async function closeFirstInstallOptionsPage(context) {
   const isOptionsPage = (page) => /^chrome-extension:\/\/[^/]+\/src\/options\.html$/.test(page.url());
   const deadline = Date.now() + FIRST_INSTALL_TAB_TIMEOUT_MS;
   let optionsPage = context.pages().find(isOptionsPage);

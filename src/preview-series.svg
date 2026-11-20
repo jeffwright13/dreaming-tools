@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice">
   <!-- Original artwork for the options-page series preview: a portrait
-       "series cover" of a coastline with a lighthouse at dusk. Shown blurred. -->
+       "series cover" of a coastline with a lighthouse at dusk, titled across the
+       top like a poster. Shown blurred. -->
   <defs>
     <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#3c5a8c"/>
@@ -39,4 +40,9 @@
   <!-- Gulls -->
   <path d="M30 70 q6 -6 12 0 q6 -6 12 0" fill="none" stroke="#2b2a27" stroke-width="2"/>
   <path d="M118 46 q4 -4 8 0 q4 -4 8 0" fill="none" stroke="#2b2a27" stroke-width="1.6"/>
+  <!-- Poster title, in the spirit of Dreaming's series covers -->
+  <g font-family="Impact, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" text-anchor="middle" fill="#fdf6e8">
+    <text x="92" y="74" font-size="13" letter-spacing="5" font-weight="700">HISTORIAS DEL</text>
+    <text x="92" y="130" font-size="58" font-weight="900" stroke="#1d2a44" stroke-width="1.5" paint-order="stroke">FARO</text>
+  </g>
 </svg>
