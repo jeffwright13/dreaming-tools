@@ -99,7 +99,7 @@ The package process must fail if required files are missing, versions disagree, 
 - [x] Upload the ZIP and complete all listing fields.
 - [x] Save the submitted ZIP and listing text with the release records.
 - [ ] Address review feedback without weakening permissions, privacy, or security controls.
-- [x] Publish initially to a limited audience if the store supports the desired rollout. Published Unlisted: 1.0.0 approved 2026-11-13, 1.1.0 published 2026-11-15. Store listing: https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc
+- [x] Publish initially to a limited audience if the store supports the desired rollout. Published Unlisted: 1.0.0 approved 2026-11-13, 1.1.0 published 2026-11-15, 1.2.0 published 2026-11-17. Switched to Public with 1.2.0, submitted 2026-11-22. Store listing: https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc
 - [ ] Verify installation from the store on a clean Chrome profile.
 - [ ] Announce only after store installation and automatic updates are confirmed.
 
@@ -110,10 +110,11 @@ The same ZIP that goes to the Chrome Web Store is submitted to Firefox Add-ons (
 - [x] Create an AMO developer account (Mozilla account with two-step authentication) and accept the Firefox Add-on Distribution Agreement.
 - [ ] Set the developer profile's display name to Jefe Labs, matching the Chrome publisher.
 - [x] Confirm the add-on ID in `manifest.json` (`dreaming-tools@jefelabs`). It is permanent once submitted.
-- [ ] Submit the 1.2.0 ZIP as a listed add-on ("On this site"), answering that it contains no minified, concatenated, or machine-generated code, so no source upload is needed.
-- [ ] Complete the listing: summary, description, category, MIT license, support and homepage URLs, privacy policy link, and screenshots.
+- [x] Submit the 1.2.0 ZIP as a listed add-on ("On this site"), answering that it contains no minified, concatenated, or machine-generated code, so no source upload is needed.
+- [x] Complete the listing: summary, description, category, MIT license, support and homepage URLs, privacy policy link, and screenshots. AMO approved 1.2.0 on 2026-11-20: https://addons.mozilla.org/firefox/addon/dreaming-tools/
 - [ ] Address review feedback without weakening permissions, privacy, or security controls.
-- [ ] Install the published add-on in a clean Firefox profile, then link the listing from `README.md` and `docs/INSTALL.md`.
+- [ ] Install the published add-on in a clean Firefox profile.
+- [x] Link the listing from `README.md` and `docs/INSTALL.md`.
 
 ## 7. Release checklist
 
@@ -164,4 +165,4 @@ This should be occasional maintenance, but a Dreaming frontend redesign may requ
 
 Microsoft Edge is an initial compatibility target because it uses Chromium and can install Chrome Web Store extensions. A separate Edge Add-ons listing is optional and should be considered only after Chrome publication is stable.
 
-Firefox is not currently supported. Treat Firefox as a separate feature requiring manifest/API review, automated testing, manual validation, packaging, and its own store/privacy submission. Do not claim Firefox compatibility before that work is complete.
+Firefox is supported from 1.2.0 and listed on Firefox Add-ons; see section 6a and the 2026-11-17 entry in `docs/DECISIONS.md`.
