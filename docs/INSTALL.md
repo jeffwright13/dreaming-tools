@@ -1,12 +1,12 @@
 # Installing and Testing a Release
 
-Most people should install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc), which keeps it up to date automatically. The listing is Unlisted for now, so it is reachable by that link but not through store search.
+Most people should install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc) or from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/dreaming-tools/). Each store keeps its install up to date automatically.
 
 The rest of this page covers installing an unpacked build from an official GitHub release of this repository, for testing a release before it reaches the store. Remove the store version first, or use a separate Chrome profile, so the two copies do not both run on Dreaming pages.
 
 ## Firefox
 
-From 1.2.0, Dreaming Tools also runs in desktop Firefox; the Firefox Add-ons listing will be linked here once it is published. To test a release build in Firefox before then, open `about:debugging`, select **This Firefox**, then **Load Temporary Add-on…**, and choose `manifest.json` in the extracted directory. Firefox removes a temporary add-on when it quits. The steps below are for Chrome.
+From 1.2.0, Dreaming Tools also runs in desktop Firefox; install it from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/dreaming-tools/). To test a release build in Firefox before it reaches the store, open `about:debugging`, select **This Firefox**, then **Load Temporary Add-on…**, and choose `manifest.json` in the extracted directory. Firefox removes a temporary add-on when it quits. The steps below are for Chrome.
 
 ## Before installing
 

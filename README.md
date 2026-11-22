@@ -110,7 +110,7 @@ Switch the difficulty tool off and on and change each behavior mode in Extension
 
 ## Installing
 
-Install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc). The listing is Unlisted for now: anyone with the link can install it, but it does not appear in store search. Chrome keeps a store install up to date.
+Install Dreaming Tools from the [Chrome Web Store](https://chromewebstore.google.com/detail/dreaming-tools/pbjdmcekjgbjjiedeckkbppcchhfngdc) or from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/dreaming-tools/). Each store keeps its install up to date.
 
 To test a release before it reaches the store, install the unpacked build from this repository's official GitHub releases; see [docs/INSTALL.md](docs/INSTALL.md) for installation, update, test, and reporting instructions.
 
@@ -120,4 +120,4 @@ Use the [GitHub issue chooser](https://github.com/jeffwright13/dreaming-tools/is
 
 ## Publishing and maintenance
 
-Dreaming outreach, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness. The extension is published in the Chrome Web Store as an Unlisted item.
+Dreaming outreach, GitHub community setup, Chrome Web Store submission, release checklist, package allowlist, and maintenance plan are in [docs/PUBLISHING.md](docs/PUBLISHING.md). That checklist is the source of truth for publication readiness. The extension is published in the Chrome Web Store and on Firefox Add-ons.

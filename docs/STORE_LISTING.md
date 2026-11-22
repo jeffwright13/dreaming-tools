@@ -91,12 +91,12 @@ No login needed for badges; subtitles need a free Dreaming account (app.dreaming
 ## Distribution
 
 - **Package:** the published release ZIP, unchanged, with its SHA-256 matching the GitHub release.
-- **Visibility:** Unlisted first. Install from the store on a clean Chrome profile and confirm an update goes through, then switch to Public.
+- **Visibility:** Unlisted from 1.0.0 through 1.2.0, then switched to Public, submitted 2026-11-22.
 - **Regions:** all.
 
 ## Firefox Add-ons (AMO)
 
-Submitted from 1.2.0 with the same ZIP as the Chrome Web Store. Mozilla shows the name, version, icon, and add-on ID from the package.
+Submitted from 1.2.0 with the same ZIP as the Chrome Web Store. Mozilla shows the name, version, and add-on ID from the package. The icon is not taken from the package: the listing showed Firefox's default puzzle piece until `icons/icon-128.png` was uploaded by hand on the listing. Listing URL: https://addons.mozilla.org/firefox/addon/dreaming-tools/
 
 **Distribution:** listed ("On this site").
 
@@ -120,6 +120,6 @@ Desktop Firefox and Chrome, not the Dreaming mobile app or mobile browsers. In p
 
 **Data collection** (from the package): `browser_specific_settings.gecko.data_collection_permissions` declares `none`.
 
-**Screenshots:** the same five 1280x800 images from `dist/store-assets/`, in order, each with its caption from the table above.
+**Screenshots:** the same five 1280x800 images from `dist/store-assets/`, in order, each with its caption from the table above. The 1.2.0 listing went up with the three screenshots that existed then; the five come with the next release, on both stores.
 
 **Homepage, support, and privacy policy URLs:** the same as the Chrome listing.
