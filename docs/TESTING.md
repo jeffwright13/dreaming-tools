@@ -84,7 +84,7 @@ Confirm that the extension never exposes premium video content or modifies playb
 Dreaming picks the player by account, not by video, so the same watch page can look different to two people (rule and evidence in [SPEC.md](SPEC.md#which-player-a-video-uses)):
 
 - **Premium accounts** always get Dreaming's player.
-- **Free accounts** get a YouTube embed for any video that is also on Dreaming's YouTube channel, and Dreaming's player otherwise.
+- **Free accounts** get a YouTube embed for a video whose copy on Dreaming's YouTube channel allows embedding, and Dreaming's player otherwise (including when that copy has embedding turned off).
 - **Logged out**, no video plays; the page shows a sign-up prompt.
 
 How to tell which player a page is using:
